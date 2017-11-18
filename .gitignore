@@ -78,6 +78,9 @@ target/
 *.db
 *.rdb
 
+# vim swp
+*.swp
+
 # Pycharm
 .idea
 

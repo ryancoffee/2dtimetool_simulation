@@ -1,0 +1,131 @@
+#!/bin/bash
+
+starttime=$(date +%s);
+
+export nthreads=1;
+export datadir='./data/raw/';
+mkdir -p $datadir;
+
+export nimages=5;
+export delays_mean=-700;
+export delays_std=25;
+#export delays_std=2000;
+
+export drifting_alpha=0.1;
+
+export xray_pos_distribution_normal_mean=0;
+export xray_pos_distribution_normal_std=0.1;
+export laser_pos_distribution_normal_mean=0;
+export laser_pos_distribution_normal_std=0.2;
+
+export laser_distribution_lognormal_mean=0.0;
+export laser_distribution_lognormal_std=0.1;
+export xray_distribution_lognormal_mean=0.0;
+export xray_distribution_lognormal_std=0.5;
+
+export lambda0=600;
+export lambda_width=300;
+export lambda_onoff=100;
+#export tspan=8192;
+export tspan=16384;
+#export tspan=32768;
+export ngroupsteps=1; # figure out how to handle the group delays
+export groupdelay=2.5;
+export backdelay=0.0; 
+export netalon=1; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
+export etalon=.5; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
+# n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
+export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
+# this should be n(omega)*thickness/C = 1.5*10microns/(.3micronsPfs) = 15/.3 in femtoseconds
+# try delays again... etalon delay is the round trip of the light, .3microns/fs is C, so 1fs in .3 microns, double passed means 6fs in a SiN of 1 micron thick... N=2, C=.3microns/fs, thickness = 2 microns, double pass gives 4 microns of delay... so 2/.3*2*2 = 8/.3 
+# 1.3/.3*10microns*2 double pass for liquid water sheet = 86.6 fs.
+# diamond n=2.4, thickness 50 microns 2.4/C*2 = 800 fs delay 		5*2.4*1fs/.3mu*2 = 40 fs
+# diamond etalon 1.4/3.4 = 0.41
+
+export noisescale=.00005;
+export noisesampleskip=5;
+export printnoisesamples=0; # use this to control wheter to printout noise samples
+
+export sampleinterval=4;
+
+export nu_low=0.4;
+export nu_high=0.65;
+export tstart=0; #-250; #-512; #-2000.0;
+export tstep=10; #10; # not used when computing the fiber delays, only tstart and tstop are the time differenc eacross the input of the fiber.
+export tstop=250; #2000.0;
+export delaystepgausscenter=200; #not using this, rather we are using the width xraydiam and laserdiam to control the signal level roll off versus fiberdiam
+export delaystepgausswidth=1000; #not using this, rather we are using the width xraydiam and laserdiam to control the signal level roll off versus fiberdiam
+
+##################################################################
+########## Calculating for simulating Fiber bundles. #############
+##################################################################
+export nfibers=109;
+export fiberdiam=0.11;
+export laserdiam=0.7;
+export xraydiam=0.5;
+export bundle_fsPmm=500.;
+
+export stepwidth=25.0;
+export attenuation=1.;
+export phase=0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
+# phase should be the optical phase which is a function of optical frequency Dn(omega)*C/thickness/omega
+# Dn(omega)*thickness/C*omega = deltan*10microns/(.3micronsPfs)*2pi(nu) = 1e-3*10microns/.3micronsPfs*2pi*(0.5PHz)
+# dn = 1e-3, 10 microns/.3miconsPfs (/period in fs or * freq in PHz) * 2 pi for radians = .1 if pi=3 and 600nm=2fs period
+# diamond phase 50microns * 1e-5/.3*2pi*0.5PHz = 5e-3
+# water phase 10 microns * 1e-5/.3*spi*0.5PHz = 1e-3 for 10 microns and 1e-5 change in index when pumped.
+
+# signal decay parameters, one fast one slow, inverse femtseconds decay rates, a and b really define the ratio of two decays
+export a=2.0;
+export alpha=0.0001;
+export b=1.0;
+export beta=0.00002;
+
+# adding interferrometric pulse delay step and then retime step
+
+# backdelay = 3 times the groupdelay?? I guess.
+# 0.2 microns SiN = 0.68 fs
+# 0.5 microns SiN = 1.7 fs
+# 2 microns SiN = 6.8 fs
+# 75 microns quartz (1.55 - 1.0)*l/c = 138 fs
+# 150 mircons quartz = 275 fs
+# 55 microns diamond = 257 fs
+# 500 microns GGG =
+# 500 microns CeYAG = 
+
+# indices 
+#	SiN = 2.04, R=(1.04)**2/(2.04)**2 = 0.26, reflectance R is not the amplitude and it should be R*R for twice reflected waves, but then amplitude sum, so just use R.
+# 	quartz = 1.55, R = 0.0465
+#	diamond = 2.42, R = 0.172
+#	GGG
+#	CeYAG
+
+#	BBO... n = 1.68 @ 500nm 
+#	(so 2mm of BBO gives an etalon delay of 1.26/3e10*.2 = 8400fs)
+#	(birefringent delay is delta n / 3e10 * thickness --> 0.1235 / 3e10 * .2 = 823 fs
+# 	n**2 = 2.7405 + ( 0.0184 / (lam**2 - 0.0179) ) - (0.0155 * lam**2)
+
+touch logfile
+# call to main #
+export doublepulse=0; #bool that tells whether to expect a double pulse
+export doublepulsedelay=200;
+export chirp=-1220; # typically a value of -1200 is about the usual chirp we use in spectral timing.
+export TOD=0;
+export FOD=0;
+export fifthOD=0;
+# noise values to simulate unstable continuum, should be positive
+export chirpnoise=0; 
+export TODnoise=0;
+export FODnoise=0;
+export fifthODnoise=0;
+export interferedelay=2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferephase=1;
+export gain=16000000;
+export saturate=4096;
+
+#export filebase=$datadir"simulation_delay"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_atten"$attenuation"_phase"$phase"_";
+export filebase=$datadir"simulation"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+echo $filebase
+./scan_material
+stoptime=$(date +%s);
+echo "$(expr $stoptime - $starttime)s runtime"
+
