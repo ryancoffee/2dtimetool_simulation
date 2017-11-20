@@ -12,15 +12,15 @@ _HEADS=Pulse.hpp MatResponse.hpp Refraction.hpp FiberBundle.hpp scan_material.hp
 OBJECTS=$(patsubst %,$(ODIR)/%,$(_SRCS:.cpp=.o))
 HEADERS=$(patsubst %,$(IDIR)/%,$(_HEADS))
 SOURCES=$(patsubst %,$(SDIR)/%,$(_SRCS))
-EXECUTABLE=scan_material
+EXECUTABLE ?= scan_material
 
 all: $(SOURCES) $(EXECUTABLE)
 	
-$(EXECUTABLE): $(OBJECTS) $(HEADERS)
-	$(CC) $(CFLAGS) $(OBJECTS) $(LDFLAGS) -o $@
+$(EXECUTABLE): $(OBJECTS) 
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
-$(ODIR)/%.o: $(HEADERS) $(SDIR)/%.cpp 
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(CFLAGS)
+$(ODIR)/%.o: $(SDIR)/%.cpp $(HEADERS) 
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
 .PHONY: clean
 
