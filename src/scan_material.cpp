@@ -32,9 +32,6 @@ int main(int argc, char* argv[])
 	//rng.seed(dtm.count());
 
 
-	const size_t nfibers = boost::lexical_cast<size_t>(atoi(getenv("nfibers")));
-	const float fiberdiam = boost::lexical_cast<float>(atof(getenv("fiberdiam")));
-	FiberBundle bundle(nfibers);
 	/*
 	HERE HERE HERE HERE
 		Add a method to include slow drift for x-ray center (x,y) and delay center, and also the angle of the delay relative to the input coordinates.
@@ -42,11 +39,12 @@ int main(int argc, char* argv[])
 
 		Also simulate various x-ray diameters.
 	*/
+	FiberBundle bundle(boost::lexical_cast<size_t>(atoi(getenv("nfibers"))));
 	bundle.fiberdiameter(boost::lexical_cast<float>(atof(getenv("fiberdiam"))));
 	bundle.laserdiameter(boost::lexical_cast<float>(atof(getenv("laserdiam"))));
 	bundle.xraydiameter(boost::lexical_cast<float>(atof(getenv("xraydiam"))));
 	bundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
-	bundle.set_polarcoords();
+	bundle.scalePolarCoords();
 	bundle.shuffle_output();
 	bundle.Ixray(float(1.));
 	bundle.Ilaser(float(1.));
@@ -135,11 +133,9 @@ int main(int argc, char* argv[])
 
 
 		//HERE HERE HERE HERE 
-		masterpulse.addchirp(chirpvec);					// chirp that ref pulse
-		//PulseFreq * pulsearray[ntsteps];				// An array of pointers to PulseFreq objects
-		PulseFreq * pulsearray[nfibers];				// An array of pointers to PulseFreq objects
-		//PulseFreq * crosspulsearray[ntsteps];				// An array of pointers to PulseFreq objects
-		PulseFreq * crosspulsearray[nfibers];				// An array of pointers to PulseFreq objects
+		masterpulse.addchirp(chirpvec);							// chirp that ref pulse
+		PulseFreq * pulsearray[bundle.get_nfibers()];					// An array of pointers to PulseFreq objects
+		PulseFreq * crosspulsearray[bundle.get_nfibers()];				// An array of pointers to PulseFreq objects
 
 
 		MatResponse masterresponse(
@@ -193,8 +189,7 @@ int main(int argc, char* argv[])
 			tid = omp_get_thread_num();
 
 #pragma omp for // ordered 
-			for(i = 0; i< nfibers; i++){ // begin fibers loop
-			//for(i = 0; i< ntsteps; i++){ // begin ntsteps loop
+			for(i = 0; i< bundle.get_nfibers(); i++){ // begin fibers loop
 				std::normal_distribution<double> chirpnoiseDist( 
 						(double)( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),(int)2), 
 						(double)( atof( getenv("chirpnoise") ) ) / std::pow(fsPau<float>(),(int)2) );
@@ -329,7 +324,6 @@ int main(int argc, char* argv[])
 				crosspulsearray[i]->fft_tofreq();
 
 				pulsearray[i]->delay(interferedelay); // expects this in fs // time this back up to the crosspulse
-				//crosspulsearray[i]->phase((double)atof(getenv("interferephase"))); // phase error due to poor polarization
 
 				//#pragma omp flush(pulseref)
 
@@ -339,7 +333,7 @@ int main(int argc, char* argv[])
 				onepulsedelayPtr = NULL;
 				crosspulsedelayPtr = NULL;
 				oneresponsePtr = NULL;
-			} // end ntsteps/nfibers loop
+			} // end nfibers loop
 
 
 		} // end parallel region
@@ -347,13 +341,6 @@ int main(int argc, char* argv[])
 
 		pulseref.delay((double)atof(getenv("interferedelay"))); // expects this in fs
 		pulseref.phase((double)atof(getenv("interferephase"))); // expects in units of pi
-
-
-		// file for normal spectral encoding
-		//filename = filebase + "spectrum.out";
-		//ofstream outstream(filename.c_str(),ios::out); // use app to append delays to same file.
-		//std::cout << "filename out = " << filename << std::endl;
-		// file for interference (cross phase)
 
 		filename = filebase + "interference.out." + std::to_string(n);
 		ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
@@ -373,44 +360,17 @@ int main(int argc, char* argv[])
 		// file for delay bins
 		filename = filebase + "delaybins.out";
 		ofstream outbins(filename.c_str(),ios::out); 
-		//for (i=0;i<ntsteps;i++){
-		for (i=0;i<nfibers;i++){
+		for (i=0;i<bundle.get_nfibers();i++){
 			outbins << bundle.delay(i) << "\n";
-			//outbins << (tstart + i * tstep) << "\n";
-			//double amp = gauss((double)i,double(ntsteps/2),double(ntsteps/8));
-			//double amp = gauss((double)i,double(atof(getenv("delaystepgausscenter"))),double(atof(getenv("delaystepgausswidth"))));
-			//*(crosspulsearray[i]) *= amp; 
-			//pulsearray[i]->appendfrequency(&outstream);
 			*(pulsearray[i]) -= *(crosspulsearray[i]);
-			//*(pulsearray[i]) *= amp; 
 			*(pulsearray[i]) *= bundle.Ilaser(size_t(i)); 
-			//pulsearray[i]->appendfrequency(&interferestream);
 			pulsearray[i]->appendwavelength(&interferestream);
 		}
 		//outstream.close();
 		interferestream.close();
 		outbins.close();
 
-		/*
-		   for (unsigned i=0;i<ntsteps;i+=ntsteps/10){
-		   filename = filebase + "step_" + std::to_string((int)i) + "_spectrum.out";
-		//filename = filebase + "single_spectrum.out";
-		outstream.open(filename.c_str(),ios::out);
-		pulsearray[i]->printfrequency(&outstream);
-		outstream.close();
-		}
-		 */
-
-
-		/*
-		filename = filebase + "refspectrum.out";
-		outstream.open(filename.c_str(),ios::out);// app); use app to append delays to same file.
-		pulseref.printfrequency(&outstream);
-		outstream.close();
-		*/
-
-		//for (unsigned i=0;i<ntsteps;i++){
-		for (unsigned i=0;i<nfibers;i++){
+		for (unsigned i=0;i<bundle.get_nfibers();i++){
 			delete pulsearray[i];
 			delete crosspulsearray[i];
 		}

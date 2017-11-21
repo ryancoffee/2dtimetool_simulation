@@ -6,7 +6,7 @@ export nthreads=1;
 export datadir='./data/raw/';
 mkdir -p $datadir;
 
-export nimages=5;
+export nimages=1;
 export delays_mean=-700;
 export delays_std=25;
 #export delays_std=2000;
@@ -32,14 +32,15 @@ export tspan=16384;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.5;
 export backdelay=0.0; 
-export netalon=1; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
+export netalon=0; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
 export etalon=.5; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
 export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
 # this should be n(omega)*thickness/C = 1.5*10microns/(.3micronsPfs) = 15/.3 in femtoseconds
 # try delays again... etalon delay is the round trip of the light, .3microns/fs is C, so 1fs in .3 microns, double passed means 6fs in a SiN of 1 micron thick... N=2, C=.3microns/fs, thickness = 2 microns, double pass gives 4 microns of delay... so 2/.3*2*2 = 8/.3 
 # 1.3/.3*10microns*2 double pass for liquid water sheet = 86.6 fs.
-# diamond n=2.4, thickness 50 microns 2.4/C*2 = 800 fs delay 		5*2.4*1fs/.3mu*2 = 40 fs
+# diamond n=2.4, thickness 50 microns 2.4/C*2 = 800 fs delay 		
+# diamond, 5mu*2.4*1fs/.3mu*2 = 80 fs
 # diamond etalon 1.4/3.4 = 0.41
 
 export noisescale=.00005;
@@ -59,7 +60,8 @@ export delaystepgausswidth=1000; #not using this, rather we are using the width 
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-export nfibers=109;
+#export nfibers=109;
+export nfibers=17;
 export fiberdiam=0.11;
 export laserdiam=0.7;
 export xraydiam=0.5;
