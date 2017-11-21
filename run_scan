@@ -6,7 +6,11 @@ export nthreads=1;
 export datadir='./data/raw/';
 mkdir -p $datadir;
 
-export nimages=1;
+# for Omar, testing the addition of random phase
+export randphase_mean=0;
+export randphase_std=3; # in radians
+
+export nimages=3;
 export delays_mean=-700;
 export delays_std=25;
 #export delays_std=2000;
@@ -61,7 +65,7 @@ export delaystepgausswidth=1000; #not using this, rather we are using the width 
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
 #export nfibers=109;
-export nfibers=17;
+export nfibers=7;
 export fiberdiam=0.11;
 export laserdiam=0.7;
 export xraydiam=0.5;

@@ -134,6 +134,7 @@ int main(int argc, char* argv[])
 
 		//HERE HERE HERE HERE 
 		masterpulse.addchirp(chirpvec);							// chirp that ref pulse
+		masterpulse.addrandomphase();
 		PulseFreq * pulsearray[bundle.get_nfibers()];					// An array of pointers to PulseFreq objects
 		PulseFreq * crosspulsearray[bundle.get_nfibers()];				// An array of pointers to PulseFreq objects
 

@@ -202,6 +202,9 @@ public:
 			killvectors();
 		}
 	}
+
+	bool addrandomphase();
+
 	inline unsigned getsamples(void) {
 		return samples;
 	}

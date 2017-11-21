@@ -122,6 +122,39 @@ PulseFreq & PulseFreq::normamps(const PulseFreq &rhs){
         return *this;
 }
 
+bool PulseFreq::addrandomphase(void)
+{
+	if (!infreq){
+		cerr << "died here at addrandomphase()" << endl;
+		return false;
+	}
+	std::random_device rng;
+	std::normal_distribution<double> distribution(
+			double(atof(getenv("randphase_mean"))),
+			double(atof(getenv("randphase_std")))
+			);
+
+	double randphase;
+	randphase = distribution(rng);
+	gsl_complex z;
+
+	phivec->data[0] += randphase;
+	phivec->data[samples/2] -= randphase;
+	z = gsl_complex_polar(rhovec->data[0],phivec->data[0]);
+	gsl_vector_complex_set(cvec,0,z);
+	z = gsl_complex_polar(rhovec->data[samples/2],phivec->data[samples/2]);
+	gsl_vector_complex_set(cvec,samples/2,z);
+	for (size_t i = 1; i<samples/2;i++){
+		randphase = distribution(rng);
+		phivec->data[i] += randphase;
+		phivec->data[samples-i] -= randphase;
+		z = gsl_complex_polar(rhovec->data[i],phivec->data[i]);
+		gsl_vector_complex_set(cvec,i,z);
+		z = gsl_complex_polar(rhovec->data[samples-i],phivec->data[samples-i]);
+		gsl_vector_complex_set(cvec,samples-i,z);
+	}
+	return true;
+}
 
 
 void PulseTime::setstrength(const double in)
