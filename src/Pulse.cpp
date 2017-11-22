@@ -6,6 +6,10 @@
 // my headers
 #include <Pulse.hpp>
 #include <boost/math/interpolators/barycentric_rational.hpp>
+#include <fftw3.h>
+#include <algorithm>
+#include <Constants.hpp>
+#include <boost/lexical_cast.hpp>
 
 /*
 PulseFreq & PulseFreq::operator=(const PulseFreq &rhs)
@@ -128,26 +132,68 @@ bool PulseFreq::addrandomphase(void)
 		cerr << "died here at addrandomphase()" << endl;
 		return false;
 	}
-	std::random_device rng;
-	std::normal_distribution<double> distribution(
-			double(atof(getenv("randphase_mean"))),
-			double(atof(getenv("randphase_std")))
+
+	double * randphase = (double *) fftw_malloc(sizeof(double) * samples);
+	double * randphaseFT = (double *) fftw_malloc(sizeof(double) * samples);
+
+	fftw_plan plan_r2hc = fftw_plan_r2r_1d(samples,
+			randphase,
+			randphaseFT,
+			FFTW_R2HC,
+			FFTW_MEASURE
+			);
+	fftw_plan plan_hc2r = fftw_plan_r2r_1d(samples,
+			randphaseFT,
+			randphase,
+			FFTW_HC2R,
+			FFTW_MEASURE
 			);
 
-	double randphase;
-	randphase = distribution(rng);
-	gsl_complex z;
 
-	phivec->data[0] += randphase;
-	phivec->data[samples/2] -= randphase;
+	std::random_device rng;
+	/*
+	std::normal_distribution<double> norm_distribution(
+		double(atof(getenv("randphase_mean")))*Constants::pi<double>(),
+		double(atof(getenv("randphase_std")))*Constants::pi<double>()
+		);
+	*/
+	std::uniform_real_distribution<double> distribution(
+		0.,
+		double(atof(getenv("randphase_std")))*Constants::pi<double>()
+		);
+
+	double phase = distribution(rng);
+	randphase[0] = phase;
+	randphase[samples/2] = -phase;
+	for (size_t i = 1; i<samples/2;i++){
+		phase = distribution(rng);
+		randphase[i] = phase;
+		randphase[samples-i] = -phase;
+	}
+
+	size_t lowpass = boost::lexical_cast<size_t>(atoi(getenv("phaseNoiseLowpass")));
+	std::cerr << "\n\n======== lowpass is " << lowpass << " =======\n\n" << std::flush;
+
+	fftw_execute_r2r(plan_r2hc,randphase,randphaseFT);
+	std::fill(randphaseFT+lowpass,randphaseFT+samples-lowpass,0.);
+	for (size_t i=1;i<lowpass;++i){
+		double filter = std::pow(std::cos(double(i)/(double(lowpass)) * Constants::half_pi<double>() ),int(2));
+		randphaseFT[i] *= filter;
+		randphaseFT[samples-i] *= filter;
+	}
+	randphaseFT[samples/2] = 0.;
+	fftw_execute_r2r(plan_hc2r,randphaseFT,randphase);
+
+	for (size_t i=0;i<samples;++i){
+		phivec->data[i] += randphase[i];
+	}
+
+	gsl_complex z;
 	z = gsl_complex_polar(rhovec->data[0],phivec->data[0]);
 	gsl_vector_complex_set(cvec,0,z);
 	z = gsl_complex_polar(rhovec->data[samples/2],phivec->data[samples/2]);
 	gsl_vector_complex_set(cvec,samples/2,z);
 	for (size_t i = 1; i<samples/2;i++){
-		randphase = distribution(rng);
-		phivec->data[i] += randphase;
-		phivec->data[samples-i] -= randphase;
 		z = gsl_complex_polar(rhovec->data[i],phivec->data[i]);
 		gsl_vector_complex_set(cvec,i,z);
 		z = gsl_complex_polar(rhovec->data[samples-i],phivec->data[samples-i]);

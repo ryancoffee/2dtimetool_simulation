@@ -5,7 +5,7 @@ SDIR=./src
 ODIR=./objects
 IDIR=./include
 CFLAGS=-Wall -I/usr/local/include -I$(CPPINCLUDE) -I$(BOOSTROOT) -I$(IDIR) -std=gnu++14 -c -D_USE_MATH_DEFINES -DHAVE_INLINE -O3 -fopenmp
-LDFLAGS=-L/usr/local/lib -lgsl -lgslcblas -lm -fopenmp
+LDFLAGS=-L/usr/local/lib -lgsl -lfftw3 -lgslcblas -lm -fopenmp
 _SRCS=Pulse.cpp MatResponse.cpp FiberBundle.cpp scan_material.cpp
 _HEADS=Pulse.hpp MatResponse.hpp Refraction.hpp FiberBundle.hpp scan_material.hpp 
 
