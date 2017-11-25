@@ -170,17 +170,18 @@ bool PulseFreq::addrandomphase(void)
 		cerr << "died here at addrandomphase()" << endl;
 		return false;
 	}
+	size_t sz = samples*2; // doubling the vector to mirror it so that DFT hansles the phase well
 
-	double * randphase = (double *) fftw_malloc(sizeof(double) * samples);
-	double * randphaseFT = (double *) fftw_malloc(sizeof(double) * samples);
+	double * randphase = (double *) fftw_malloc(sizeof(double) * sz);
+	double * randphaseFT = (double *) fftw_malloc(sizeof(double) * sz);
 
-	fftw_plan plan_r2hc = fftw_plan_r2r_1d(samples,
+	fftw_plan plan_r2hc = fftw_plan_r2r_1d(sz,
 			randphase,
 			randphaseFT,
 			FFTW_R2HC,
 			FFTW_MEASURE
 			);
-	fftw_plan plan_hc2r = fftw_plan_r2r_1d(samples,
+	fftw_plan plan_hc2r = fftw_plan_r2r_1d(sz,
 			randphaseFT,
 			randphase,
 			FFTW_HC2R,
@@ -196,8 +197,8 @@ bool PulseFreq::addrandomphase(void)
 		);
 	*/
 	std::uniform_real_distribution<double> distribution(
-		0.,
-		double(atof(getenv("randphase_std")))*Constants::pi<double>()
+		(double(atof(getenv("randphase_mean")))-double(atof(getenv("randphase_std"))))*Constants::pi<double>(),
+		(double(atof(getenv("randphase_mean")))+double(atof(getenv("randphase_std"))))*Constants::pi<double>()
 		);
 
 	double phase = distribution(rng);
@@ -208,22 +209,25 @@ bool PulseFreq::addrandomphase(void)
 		randphase[i] = phase;
 		randphase[samples-i] = -phase;
 	}
+	for (size_t i=sz-1;i>sz/2-1;--i){
+		randphase[i] = randphase[sz-i];
+	}
 
 	size_t lowpass = boost::lexical_cast<size_t>(atoi(getenv("phaseNoiseLowpass")));
 	std::cerr << "\n\n======== lowpass is " << lowpass << " =======\n\n" << std::flush;
 
 	fftw_execute_r2r(plan_r2hc,randphase,randphaseFT);
-	std::fill(randphaseFT+lowpass,randphaseFT+samples-lowpass,0.);
+	std::fill(randphaseFT+lowpass,randphaseFT+sz-lowpass,0.);
 	for (size_t i=1;i<lowpass;++i){
 		double filter = std::pow(std::cos(double(i)/(double(lowpass)) * Constants::half_pi<double>() ),int(2));
 		randphaseFT[i] *= filter;
-		randphaseFT[samples-i] *= filter;
+		randphaseFT[sz-i] *= filter;
 	}
-	randphaseFT[samples/2] = 0.;
+	randphaseFT[sz/2] = 0.;
 	fftw_execute_r2r(plan_hc2r,randphaseFT,randphase);
 
 	for (size_t i=0;i<samples;++i){
-		phivec->data[i] += randphase[i];
+		phivec->data[i] += randphase[i]/samples;
 	}
 
 	gsl_complex z;

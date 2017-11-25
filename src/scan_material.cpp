@@ -124,7 +124,7 @@ HERE: use nfibers to do this.  Hijack the tstart and tstep tstop for that.  This
 
 
 	if (atof(getenv("addrandomphase"))>0){
-		//masterpulse.addrandomphase();
+		masterpulse.addrandomphase();
 		std::string filename = filebase + "_spectralphaseFTpower.dat";
 		std::ofstream outfile(filename,std::ios::out);
 		masterpulse.print_phase_powerspectrum(outfile);

@@ -8,21 +8,21 @@ mkdir -p $datadir;
 
 # for Omar, testing the addition of random phase
 export addrandomphase=1;
-export phaseNoiseLowpass=150; # this is in units of total number of time samples... and that is enormous.
+export phaseNoiseLowpass=10000; # this is in units of total number of time samples... and that is enormous.
 export randphase_mean=0;
-export randphase_std=.2; # in units of pi
+export randphase_std=5; # in units of pi
 
-export nimages=3;
+export nimages=10;
 export delays_mean=-700;
-export delays_std=25;
+export delays_std=100;
 #export delays_std=2000;
 
 export drifting_alpha=0.1;
 
 export xray_pos_distribution_normal_mean=0;
-export xray_pos_distribution_normal_std=0.1;
+export xray_pos_distribution_normal_std=0.01; #0.1
 export laser_pos_distribution_normal_mean=0;
-export laser_pos_distribution_normal_std=0.2;
+export laser_pos_distribution_normal_std=0.02; #0.2
 
 export laser_distribution_lognormal_mean=0.0;
 export laser_distribution_lognormal_std=0.1;
