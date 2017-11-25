@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <Constants.hpp>
 #include <boost/lexical_cast.hpp>
+#include <DataOps.hpp>
 
 /*
 PulseFreq & PulseFreq::operator=(const PulseFreq &rhs)
@@ -124,6 +125,43 @@ PulseFreq & PulseFreq::normamps(const PulseFreq &rhs){
                 gsl_vector_set_zero(phivec);
         }
         return *this;
+}
+
+void PulseFreq::print_amp(std::ofstream & outfile)
+{
+	outfile << "# amp\n";
+	for (size_t i = 0; i<samples;++i){
+		outfile << rhovec->data[i] << "\n";
+	}
+	outfile << std::endl;
+}
+void PulseFreq::print_phase(std::ofstream & outfile)
+{
+	outfile << "# phase\n";
+	for (size_t i = 0; i<samples;++i){
+		outfile << phivec->data[i] << "\n";
+	}
+	outfile << std::endl;
+}
+void PulseFreq::print_phase_powerspectrum(std::ofstream & outfile)
+{
+	double * phase = (double *) fftw_malloc(sizeof(double) * samples);
+	double * phaseFT = (double *) fftw_malloc(sizeof(double) * samples);
+	fftw_plan plan_r2hc = fftw_plan_r2r_1d(samples,
+			phase,
+			phaseFT,
+			FFTW_R2HC,
+			FFTW_MEASURE
+			);
+	fftw_execute_r2r(plan_r2hc,phase,phaseFT);
+
+	outfile << "# power spectrum of the phaseFT\n";
+	outfile << std::pow(phaseFT[0],int(2)) << "\n";
+	for (size_t i = 1; i<samples/2;++i){
+		outfile << std::pow(phaseFT[i],int(2)) + std::pow(phaseFT[samples-i],int(2)) << "\n";
+	}
+	outfile << std::pow(phaseFT[samples/2],int(2)) << std::endl;
+	outfile << std::endl;
 }
 
 bool PulseFreq::addrandomphase(void)
@@ -254,6 +292,7 @@ void PulseFreq::delay(double delayin){ // expects delay in fs
 		fft_totime();
 	}
 }
+
 
 void PulseFreq::printfrequency(ofstream * outfile){
 	double nu,lambda;

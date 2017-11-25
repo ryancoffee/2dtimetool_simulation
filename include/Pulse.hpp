@@ -145,7 +145,6 @@ public:
 		m_noisescale = (double)( atof( getenv("noisescale") ) );
 		m_sampleinterval = (unsigned)(atoi(getenv("sampleinterval")));
 		m_saturate = uint16_t( atoi( getenv("saturate")));
-
 	}
 	PulseFreq(PulseFreq &rhs): // copy constructor
 		omega_center(rhs.omega_center),
@@ -385,6 +384,9 @@ public:
 
 		return 0;
 	}
+	void print_amp(std::ofstream & outfile);
+	void print_phase(std::ofstream & outfile);
+	void print_phase_powerspectrum(std::ofstream & outfile);
 	void printwavelengthbins(ofstream * outfile);
 	void appendwavelength(ofstream * outfile);
 	void appendfrequency(ofstream * outfile);

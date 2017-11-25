@@ -10,7 +10,7 @@ mkdir -p $datadir;
 export addrandomphase=1;
 export phaseNoiseLowpass=150; # this is in units of total number of time samples... and that is enormous.
 export randphase_mean=0;
-export randphase_std=2; # in units of pi
+export randphase_std=.2; # in units of pi
 
 export nimages=3;
 export delays_mean=-700;
