@@ -106,6 +106,7 @@ class PulseFreq {
 public:
 PulseFreq & operator=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 PulseFreq & operator+=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
+PulseFreq * operator+=(const PulseFreq *rhs);
 PulseFreq & operator-=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 PulseFreq & operator*=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 PulseFreq & operator/=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition

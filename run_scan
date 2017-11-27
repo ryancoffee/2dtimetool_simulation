@@ -7,15 +7,15 @@ export datadir='./data/raw/';
 mkdir -p $datadir;
 
 # for Omar, testing the addition of random phase
-export addrandomphase=1;
+export addrandomphase=0;
 export phaseNoiseLowpass=10000; # this is in units of total number of time samples... and that is enormous.
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-export nimages=10;
-export delays_mean=-700;
-export delays_std=100;
-#export delays_std=2000;
+export nimages=100;
+export delays_mean=-1800;
+#export delays_std=100;
+export delays_std=2000;
 
 export drifting_alpha=0.1;
 
@@ -36,10 +36,10 @@ export lambda_onoff=100;
 export tspan=16384;
 #export tspan=32768;
 export ngroupsteps=1; # figure out how to handle the group delays
-export groupdelay=2.5;
-export backdelay=0.0; 
-export netalon=0; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
-export etalon=.5; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
+export groupdelay=2.4;
+export backdelay=0.5; 
+export netalon=3; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
+export etalon=.4; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
 export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
 # this should be n(omega)*thickness/C = 1.5*10microns/(.3micronsPfs) = 15/.3 in femtoseconds
@@ -57,17 +57,12 @@ export sampleinterval=4;
 
 export nu_low=0.4;
 export nu_high=0.65;
-export tstart=0; #-250; #-512; #-2000.0;
-export tstep=10; #10; # not used when computing the fiber delays, only tstart and tstop are the time differenc eacross the input of the fiber.
-export tstop=250; #2000.0;
-export delaystepgausscenter=200; #not using this, rather we are using the width xraydiam and laserdiam to control the signal level roll off versus fiberdiam
-export delaystepgausswidth=1000; #not using this, rather we are using the width xraydiam and laserdiam to control the signal level roll off versus fiberdiam
 
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
 #export nfibers=109;
-export nfibers=7;
+export nfibers=50;
 export fiberdiam=0.11;
 export laserdiam=0.7;
 export xraydiam=0.5;
@@ -125,13 +120,13 @@ export chirpnoise=0;
 export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
-export interferedelay=2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=2500; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
-export gain=16000000;
+export gain=8000000;
 export saturate=4096;
 
 #export filebase=$datadir"simulation_delay"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_atten"$attenuation"_phase"$phase"_";
-export filebase=$datadir"simulation"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+export filebase=$datadir"debug"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 echo $filebase
 ./scan_material
 stoptime=$(date +%s);

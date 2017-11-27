@@ -54,6 +54,15 @@ PulseFreq & PulseFreq::operator=(const PulseFreq &rhs)
 
 using namespace Constants;
 
+PulseFreq * PulseFreq::operator+=(const PulseFreq *rhs){
+	gsl_vector_complex_add(cvec,rhs->cvec);
+	for (unsigned i=0;i<samples;i++){
+		gsl_vector_set(rhovec,i,gsl_complex_abs(gsl_vector_complex_get(cvec,i)));
+		gsl_vector_set(phivec,i,gsl_complex_arg(gsl_vector_complex_get(cvec,i)));
+	}
+	return this;
+}
+
 PulseFreq & PulseFreq::operator+=(const PulseFreq &rhs){
 	gsl_vector_complex_add(cvec,rhs.cvec);
 	for (unsigned i=0;i<samples;i++){
@@ -283,6 +292,10 @@ void PulseFreq::phase(double phasein){ // expects delay in units of pi , i.e. 1.
 	}
 }
 void PulseFreq::delay(double delayin){ // expects delay in fs
+	/* 
+	Somehow, this seems to casue errors, as only when etalon effect is added do we see the artifact.
+	But how, it looks from this that we are adding to an existing delay... maybe mis-handeling the negative frequencies?
+	*/
 	gsl_complex z;
 	if(intime){
 		fft_tofreq();

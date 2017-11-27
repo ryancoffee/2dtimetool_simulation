@@ -1,5 +1,6 @@
 #include "MatResponse.hpp"
 
+void MatResponse::setstepvec_full(PulseFreq & pulse){ setstepvec_full( &pulse); }
 void MatResponse::setstepvec_full(PulseFreq * pulse){
         double arg;
         for (unsigned i = 0 ; i < pulse->getsamples(); i++){
@@ -22,6 +23,7 @@ void MatResponse::setstepvec_full(PulseFreq * pulse){
         }
 }
 
+void MatResponse::setstepvec_amp(PulseFreq & pulse){ setstepvec_amp(&pulse); }
 void MatResponse::setstepvec_amp(PulseFreq * pulse){
         double arg;
         for (unsigned i = 0 ; i < pulse->getsamples(); i++){
@@ -69,6 +71,7 @@ void MatResponse::setstepvec_amp(gsl_vector * modamp,double dt){
 		}
 	}
 }
+void MatResponse::setstepvec_phase(PulseFreq & pulse){ setstepvec_phase(&pulse); }
 void MatResponse::setstepvec_phase(PulseFreq * pulse){
         double arg;
         for (unsigned i = 0 ; i < pulse->getsamples(); i++){
@@ -132,6 +135,7 @@ void MatResponse::buffervectors(gsl_vector * modamp,gsl_vector * modphase,double
 		modamp->data[modamp->size/2-i] += 1.0;
 	}
 }
+void MatResponse::buffervectors(PulseFreq & pulse){ buffervectors(&pulse); }
 void MatResponse::buffervectors(PulseFreq * pulse){
         // nominally setting this to 10 times the fastest twidth to minimize its effect on spectral broadening
         unsigned bufferwidth = static_cast<unsigned>(10.0*twidth/pulse->getdt());
@@ -177,6 +181,7 @@ void MatResponse::addstepvec_amp(gsl_vector * modamp,double dt,double delay){
         }
 
 }
+void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay){ addstepvec_amp(&pulse,delay); }
 void MatResponse::addstepvec_amp(PulseFreq * pulse,double delay){
         double arg;
         double thisamp;
@@ -228,6 +233,7 @@ void MatResponse::addstepvec_phase(gsl_vector * modphase,double dt,double delay)
         }
 
 }
+void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay){ addstepvec_phase(&pulse,delay); }
 void MatResponse::addstepvec_phase(PulseFreq * pulse,double delay){
         double arg;
         double thisphase;
