@@ -45,7 +45,7 @@ class PulseTime {
 
 public:
   PulseTime(double strength_in = 1e-3 * 0.696, double width_in = 50, double t0_in = 0.0) : 
-    strength(strength_in * auenergy<float>()/Eh<float>() * gsl_pow_2(aufor10PW<float>())), 
+    strength(strength_in * auenergy<float>()/Eh<float>() * std::pow(aufor10PW<float>(),int(2))), 
     Ctau(width_in * M_SQRTPI / fsPau<float>() / 2.0),
     t0(t0_in / fsPau<float>())
   {
@@ -67,7 +67,7 @@ public:
   inline bool getenvelope(const double t,double *FF,double *dFFdt) 
     {
       if ( inpulse(t) ){
-	*FF = strength * ( gsl_pow_2( cos(M_PI_2*(t-t0)/Ctau) ) );
+	*FF = strength * ( std::pow( cos(M_PI_2*(t-t0)/Ctau) , int(2)) );
 	*dFFdt = -strength/2 * ( M_PI/Ctau * sin(M_PI*(t-t0)/Ctau));
 	return true;
       } else {
@@ -79,7 +79,7 @@ public:
   inline bool getenvelope(const double t,double *FF) 
     {
       if ( inpulse(t) ){
-	*FF = strength * ( gsl_pow_2( cos(M_PI_2*(t-t0)/Ctau) ) );
+	*FF = strength * ( std::pow( cos(M_PI_2*(t-t0)/Ctau), int(2) ) );
       return true;
       } else {
 	*FF = 0.0;
@@ -187,6 +187,10 @@ public:
 		
 		// point tables to parent //
 		// copy vectors explicitly //
+	//	fftw_complex * cvec = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * samples);
+	//	rhovec = DataOps::clone(rhs.rhovec);
+	//	phivec = DataOps::clone(rhs.rhovec);
+		
 		gsl_vector_memcpy(rhovec,rhs.rhovec);
 		gsl_vector_memcpy(phivec,rhs.phivec);
 		gsl_vector_complex_memcpy(cvec,rhs.cvec);

@@ -22,6 +22,21 @@ namespace DataOps
 {
 
 template <typename T>
+std::vector<T>& clone(const std::vector<T> & rhs)
+{
+	std::vector<T> lhs(rhs.size());
+	std::copy(rhs.begin(), rhs.end(), lhs.begin());
+	return lhs;
+}
+template <typename T>
+std::vector<T>& clone(std::vector<T> & lhs, const std::vector<T> & rhs)
+{
+	lhs.resize(rhs.size());
+	std::copy(rhs.begin(), rhs.end(), lhs.begin());
+	return lhs;
+}
+
+template <typename T>
 T& gauss(const T & xin, const T& x0, const T& w,T& a =T(1),T& y0 = T(0)){
 	T x = xin-x0;
 	return (T) (y0+a*std::exp(- std::pow(x/w,int(2)))) ;
