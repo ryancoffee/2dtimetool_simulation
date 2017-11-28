@@ -22,6 +22,13 @@ namespace DataOps
 {
 
 template <typename T>
+T * clone(const T* rhs,const size_t n)
+{
+	std::copy(rhs, rhs + n, lhs);
+	return lhs;
+}
+
+template <typename T>
 std::vector<T>& clone(const std::vector<T> & rhs)
 {
 	std::vector<T> lhs(rhs.size());
@@ -232,6 +239,45 @@ std::ostream& operator << (std::ostream & outs, std::vector< std::vector <T> > &
 	}
 	outs << std::flush;
 	return outs;
+}
+
+template <typename T>
+std::complex<T>* sum(std::complex<T>* lhs,std::complex<T>* rhs,const size_t n)
+{
+	std::transform(lhs,lhs+n,rhs,rhs+n,lhs,[](std::complex<T> d_lhs, std::complex<T> d_rhs){
+			return d_lhs + d_rhs;
+			});
+	return lhs;
+}
+template <typename T>
+std::complex<T>* diff(std::complex<T>* lhs,std::complex<T>* rhs,const size_t n)
+{
+	std::transform(lhs,lhs+n,rhs,rhs+n,lhs,[](std::complex<T> d_lhs, std::complex<T> d_rhs){
+			return d_lhs - d_rhs;
+			});
+	return lhs;
+}
+template <typename T>
+std::complex<T>* mul(std::complex<T>* lhs,std::complex<T>* rhs,const size_t n)
+{
+	std::transform(lhs,lhs+n,rhs,rhs+n,lhs,[](std::complex<T> d_lhs, std::complex<T> d_rhs){
+			return d_lhs * d_rhs;
+			});
+	return lhs;
+}
+std::complex<T>* mul(std::complex<T>* lhs,std::complex<T> scale,const size_t n)
+{
+	std::transform(lhs, lhs+n, lhs, std::bind2nd(std::multiplies<std::complex<T> >(),scale));
+	return lhs;
+}
+
+template <typename T>
+std::complex<T>* sum(std::complex<T>* lhs,std::complex<T>* rhs,const size_t n)
+{
+	std::transform(lhs,lhs+n,rhs,rhs+n,lhs,[](std::complex<T> d_lhs, std::complex<T> d_rhs){
+			return d_lhs / d_rhs;
+			});
+	return lhs;
 }
 
 	template <typename T>
