@@ -21,6 +21,12 @@
 namespace DataOps 
 {
 
+template <typename T>
+T& gauss(const T & xin, const T& x0, const T& w,T& a =T(1),T& y0 = T(0)){
+	T x = xin-x0;
+	return (T) (y0+a*std::exp(- std::pow(x/w,int(2)))) ;
+}
+
 template <typename X_t,typename Y_t> 
 Y_t polynomial(const X_t xin,const std::vector<Y_t> c){
 	assert(c.size()>1);

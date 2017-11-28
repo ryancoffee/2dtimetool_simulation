@@ -1,5 +1,6 @@
 CC=g++
 BOOSTROOT=$(HOME)/computing/boost
+OPENCVROOT=$(HOME)/computing/opencv/
 CPPINCLUDE=$(HOME)/cpp/include
 SDIR=./src
 ODIR=./objects
