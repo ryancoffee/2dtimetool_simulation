@@ -12,6 +12,7 @@
 
 using namespace std;
 
+/*
 // gsl includes
 #include <gsl/gsl_const_num.h> 
 #include <gsl/gsl_const_mksa.h>
@@ -22,6 +23,7 @@ using namespace std;
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_fft_complex.h>
+*/
 
 // my headers
 #include "Constants.hpp"
@@ -35,14 +37,14 @@ class MatResponse {
         
 public: 
 	MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in = 0.95,double phase_in = 0.03) :
-	t0(t0_in / fsPau<float>()),
-	twidth(width_in * M_SQRTPI / fsPau<float>() / 2.0),
+	t0(t0_in / fsPau<double>()),
+	twidth(width_in * root_pi<double>()/ fsPau<double>() / 2.0),
 	attenuation(atten_in),
 	phase(phase_in)
 	{     
 		a=0.75;
 		b=0.25;
-		alpha=5.0e-4*fsPau<float>();
+		alpha=5.0e-4*fsPau<double>();
 		beta=0.0;
 	}        
 
@@ -52,16 +54,19 @@ public:
 	void aalphabbeta(double ain,double alphain,double bin,double betain){
 		a=ain/(ain+bin);
 		b=bin/(ain+bin);
-		alpha=fsPau<float>()*alphain;
-		beta=fsPau<float>()*betain;
+		alpha=fsPau<double>()*alphain;
+		beta=fsPau<double>()*betain;
 	}
 
 	void setstepvec_full(PulseFreq & pulse);
 	void setstepvec_full(PulseFreq * pulse);
+	/*
 	void setstepvec_amp(gsl_vector * modamp,double dt);
 	void setstepvec_phase(gsl_vector * modphase,double dt);
 	void addstepvec_amp(gsl_vector * modamp,double dt,double delay);
 	void addstepvec_phase(gsl_vector * modphase,double dt,double delay);
+	void setstepvec_marco(gsl_vector * modamp,double dt);
+	*/
 	void setstepvec_amp(PulseFreq & pulse);
 	void setstepvec_amp(PulseFreq * pulse);
 	void setstepvec_phase(PulseFreq & pulse);
@@ -71,11 +76,12 @@ public:
 	void addstepvec_phase(PulseFreq & pulse,double delay);
 	void addstepvec_phase(PulseFreq * pulse,double delay);
 	
+	/*
 	void buffervectors(gsl_vector * modamp,gsl_vector * modphase,double dt);
+	*/
 	void buffervectors(PulseFreq & pulse);
 	void buffervectors(PulseFreq * pulse);
 
-	void setstepvec_marco(gsl_vector * modamp,double dt);
 	
 	inline void setdelay(double tin){ t0 = tin/fsPau<float>(); }
 	inline void setatten(double attenin){ attenuation = attenin; }
@@ -95,8 +101,6 @@ private:
 	
 	double t0,twidth,attenuation,phase,a,alpha,b,beta;
 	double etalondelay, reflectance;
-
-
 };
 
 #endif

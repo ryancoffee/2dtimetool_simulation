@@ -1,6 +1,6 @@
 // Pulse clas implimentation
 // standard includes
-#include <math.h>
+#include <cmath>
 
 
 // my headers
@@ -14,18 +14,95 @@
 #include <random>
 
 using namespace Constants;
+
+PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<float>()),const double omwidth_in=(0.15*fsPau<float>()),const double omonoff_in=(0.1*fsPau<float>()), double tspan_in=(10000.0/fsPau<float>())): // default constructor
+	omega_center(omcenter_in),
+	omega_width(omwidth_in ),
+	omega_high( std::max(4.0*(omcenter_in + omwidth_in),10.0*omcenter_in) ),
+	domega( 2.0*pi<double>()/tspan_in),
+	omega(NULL),
+	intime(false),
+	infreq(true),
+	time(NULL),
+	parent(true),
+	child(false),
+	i_low( (unsigned)(double( atof( getenv("nu_low") ) )* 2.0*pi<double>()*fsPau<double>()/domega) ),
+	i_high( (unsigned)(double( atof( getenv("nu_high") ) )* 2.0*pi<double>()*fsPau<double>()/domega) ),
+	m_noisescale(1e-3),
+	m_sampleinterval(2),
+	m_saturate(4096),
+	m_gain(1000000),
+	m_lamsamples(2048)
+{
+	samples = (( (unsigned)(2.0 * omega_high / domega))/SAMPLEROUND + 1 ) *SAMPLEROUND;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
+	dtime = tspan_in/double(samples);
+	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
+	buildvectors();
+	nu0=omcenter_in/(2.0*pi<double>())*fsPau<float>();
+	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
+	m_gain = (unsigned long)(atoi( getenv("gain")));
+	m_noisescale = (double)( atof( getenv("noisescale") ) );
+	m_sampleinterval = (unsigned)(atoi(getenv("sampleinterval")));
+	m_saturate = uint16_t( atoi( getenv("saturate")));
+}
+
+PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
+	omega_center(rhs.omega_center),
+	omega_width(rhs.omega_width),
+	omega_high(rhs.omega_high),
+	omega_onwidth(rhs.omega_onwidth),
+	domega(rhs.domega),
+	intime(rhs.intime),
+	infreq(rhs.infreq),
+	omega(rhs.omega), // these are static vectors... i'm trying not to make copies just yet
+	time(rhs.time), // these are static vectors... i'm trying not to make copies just yet
+	parent(false),
+	child(true),
+	i_low(rhs.i_low), 
+	i_high(rhs.i_high), 
+	m_noisescale(rhs.m_noisescale),
+	m_sampleinterval(rhs.m_sampleinterval),
+	m_saturate(rhs.m_saturate),
+	m_gain(rhs.m_gain),
+	m_lamsamples(rhs.m_lamsamples)
+{
+	samples = rhs.samples;
+	startind = rhs.startind;stopind=rhs.stopind;onwidth=rhs.onwidth;offwidth=rhs.offwidth;
+	tspan = rhs.tspan;
+	lambda_center=rhs.lambda_center;lambda_width=rhs.lambda_width;
+	phase_GDD=rhs.phase_GDD;phase_TOD=rhs.phase_TOD;phase_4th=rhs.phase_4th;phase_5th=rhs.phase_5th;
+
+	dtime = rhs.dtime;time_center=rhs.time_center;time_wdith=rhs.time_wdith;
+
+
+	nu0=rhs.nu0;
+	buildvectors();
+
+	DataOps::clone(rhovec,rhs.rhovec);
+	DataOps::clone(phivec,rhs.phivec);
+	DataOps::clone(cvec,rhs.cvec,samples);
+	DataOps::clone(modamp,rhs.modamp);
+	DataOps::clone(modphase,rhs.modphase);
+}
+PulseFreq::~PulseFreq(void){
+	if(child){
+		killtheseonly();
+	} else {
+		killvectors();
+	}
+}
 void PulseFreq::rhophi2cvec(void)
 {
-        for (size_t i=0;i<samples;i++){
+	for (size_t i=0;i<samples;i++){
 		cvec[i] = std::polar(rhovec[i],phivec[i]);
-        }
+	}
 }
 void PulseFreq::cvec2rhophi(void)
 {
-        for (size_t i=0;i<samples;i++){
+	for (size_t i=0;i<samples;i++){
 		rhovec[i] = std::abs(cvec[i]);
 		phivec[i] = std::arg(cvec[i]);
-        }
+	}
 }
 
 PulseFreq * PulseFreq::operator+=(const PulseFreq *rhs){*this += *rhs;return this;}

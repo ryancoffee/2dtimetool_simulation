@@ -47,7 +47,7 @@ void MatResponse::setstepvec_amp(PulseFreq * pulse){
                 }
         }
 }
-
+/*
 void MatResponse::setstepvec_amp(gsl_vector * modamp,double dt){
 	double arg;
 	for (unsigned i = 0 ; i < modamp->size; i++){
@@ -71,6 +71,7 @@ void MatResponse::setstepvec_amp(gsl_vector * modamp,double dt){
 		}
 	}
 }
+*/
 void MatResponse::setstepvec_phase(PulseFreq & pulse){ setstepvec_phase(&pulse); }
 void MatResponse::setstepvec_phase(PulseFreq * pulse){
         double arg;
@@ -94,6 +95,7 @@ void MatResponse::setstepvec_phase(PulseFreq * pulse){
         }
 }
 
+/*
 void MatResponse::setstepvec_phase(gsl_vector * modphase,double dt){
 	double arg;
 	for (unsigned i = 0 ; i < modphase->size; i++){
@@ -135,6 +137,8 @@ void MatResponse::buffervectors(gsl_vector * modamp,gsl_vector * modphase,double
 		modamp->data[modamp->size/2-i] += 1.0;
 	}
 }
+*/
+
 void MatResponse::buffervectors(PulseFreq & pulse){ buffervectors(&pulse); }
 void MatResponse::buffervectors(PulseFreq * pulse){
         // nominally setting this to 10 times the fastest twidth to minimize its effect on spectral broadening
@@ -146,7 +150,7 @@ void MatResponse::buffervectors(PulseFreq * pulse){
         pulse->modamp->data[pulse->getsamples()/2] = 1.0;
         for (unsigned i=0; i < bufferwidth ; i++) {
                 arg = ((double)i)/((double)bufferwidth);
-                bufferscale = gsl_pow_2( sin(M_PI_2*(arg) ) ) ; // buffering the vector back to 0.0 so it can be periodic.
+                bufferscale = std::pow( sin(M_PI_2*(arg) ) , int(2)) ; // buffering the vector back to 0.0 so it can be periodic.
                 pulse->modphase->data[pulse->getsamples()/2-i] *= bufferscale;
                 pulse->modamp->data[pulse->getsamples()/2-i] -= 1.0;
                 pulse->modamp->data[pulse->getsamples()/2-i] *= bufferscale;
@@ -155,6 +159,7 @@ void MatResponse::buffervectors(PulseFreq * pulse){
 }
 
 
+/*
 void MatResponse::addstepvec_amp(gsl_vector * modamp,double dt,double delay){
         double arg;
 	double thisamp;
@@ -181,6 +186,7 @@ void MatResponse::addstepvec_amp(gsl_vector * modamp,double dt,double delay){
         }
 
 }
+*/
 void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay){ addstepvec_amp(&pulse,delay); }
 void MatResponse::addstepvec_amp(PulseFreq * pulse,double delay){
         double arg;
@@ -199,7 +205,7 @@ void MatResponse::addstepvec_amp(PulseFreq * pulse,double delay){
                         if (arg < 0.0) {
                                 thisamp = 1.0;
                         } else {
-                                thisamp = -1.0* (1.0-attenuation) * gsl_pow_2( sin(M_PI_2*arg/twidth ) ) ;
+                                thisamp = -1.0* (1.0-attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2) ) ;
                                 thisamp *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
                                 thisamp += 1.0;
                         }
@@ -209,6 +215,7 @@ void MatResponse::addstepvec_amp(PulseFreq * pulse,double delay){
 
 }
 
+/*
 void MatResponse::addstepvec_phase(gsl_vector * modphase,double dt,double delay){
         double arg;
 	double thisphase;
@@ -233,6 +240,7 @@ void MatResponse::addstepvec_phase(gsl_vector * modphase,double dt,double delay)
         }
 
 }
+*/
 void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay){ addstepvec_phase(&pulse,delay); }
 void MatResponse::addstepvec_phase(PulseFreq * pulse,double delay){
         double arg;
@@ -250,7 +258,7 @@ void MatResponse::addstepvec_phase(PulseFreq * pulse,double delay){
                         if (arg < 0.0) {
                                 thisphase = 0.0;
                         } else {
-                                thisphase = phase * gsl_pow_2( sin(M_PI_2*arg/twidth ) ) ;
+                                thisphase = phase * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
                                 thisphase *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
                         }
                 }
@@ -260,6 +268,7 @@ void MatResponse::addstepvec_phase(PulseFreq * pulse,double delay){
 }
 
 
+/*
 void MatResponse::setstepvec_marco(gsl_vector * modamp,double dt){
 	double arg;
 	const double aa = 0.09;
@@ -280,6 +289,7 @@ void MatResponse::setstepvec_marco(gsl_vector * modamp,double dt){
 		modamp->data[i] *= (1.0-fraction_nodecay)*exp(-arg/tau_decay + fraction_nodecay);
 	}
 }
+*/
 /*
 def
 step(t,a=0.02,t0=0,sig=10e-15,tau_formation=10e-15,fraction_nodecay=0.8,tau_decay=200e-15):
