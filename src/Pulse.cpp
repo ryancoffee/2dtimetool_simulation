@@ -14,6 +14,7 @@
 #include <random>
 
 using namespace Constants;
+using namespace DataOps;
 
 PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<float>()),const double omwidth_in=(0.15*fsPau<float>()),const double omonoff_in=(0.1*fsPau<float>()), double tspan_in=(10000.0/fsPau<float>())): // default constructor
 	omega_center(omcenter_in),
@@ -162,18 +163,12 @@ PulseFreq & PulseFreq::normamps(const PulseFreq &rhs){
 void PulseFreq::print_amp(std::ofstream & outfile)
 {
 	outfile << "# amp\n";
-	for (size_t i = 0; i<samples;++i){
-		outfile << rhovec->data[i] << "\n";
-	}
-	outfile << std::endl;
+	outfile << rhovec << std::endl;
 }
 void PulseFreq::print_phase(std::ofstream & outfile)
 {
 	outfile << "# phase\n";
-	for (size_t i = 0; i<samples;++i){
-		outfile << phivec->data[i] << "\n";
-	}
-	outfile << std::endl;
+	outfile << phivec << std::endl;
 }
 void PulseFreq::print_phase_powerspectrum(std::ofstream & outfile)
 {
@@ -308,7 +303,7 @@ void PulseFreq::delay(double delayin){ // expects delay in fs
 }
 
 
-void PulseFreq::printfrequency(ofstream * outfile){
+void PulseFreq::printfrequency(std::ofstream * outfile){
 	double nu,lambda;
 	(*outfile) << ("#omega[fs^-1]\tlambda[nm]\trho\tphi\n");
 	for (unsigned i = i_low;i<i_high;i+=(unsigned)(atoi(getenv("sampleinterval")))){
@@ -317,7 +312,7 @@ void PulseFreq::printfrequency(ofstream * outfile){
 		(*outfile) << nu << "\t" << lambda << "\t" << rhovec->data[i] << "\t" << phivec->data[i] << "\n";
 	}
 }
-void PulseFreq::printwavelengthbins(ofstream * outfile)
+void PulseFreq::printwavelengthbins(std::ofstream * outfile)
 {
 	std::vector<double> x(2);
 	x.front() = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low];
@@ -329,7 +324,7 @@ void PulseFreq::printwavelengthbins(ofstream * outfile)
 	(*outfile) << "\n";
 	return;
 }
-void PulseFreq::appendwavelength(ofstream * outfile)
+void PulseFreq::appendwavelength(std::ofstream * outfile)
 {
 	std::vector<double> x(i_high-i_low);
 	std::vector<double> y(i_high-i_low);	
@@ -345,7 +340,7 @@ void PulseFreq::appendwavelength(ofstream * outfile)
 	(*outfile) << std::endl;
 	return;
 }
-void PulseFreq::appendfrequency(ofstream * outfile){
+void PulseFreq::appendfrequency(std::ofstream * outfile){
         for (unsigned i = i_low;i<i_high;i+=m_sampleinterval){ 
 		uint16_t val = std::min(unsigned(rhovec->data[i] * m_gain),unsigned(m_saturate));
        		(*outfile) << val << "\t";
@@ -353,7 +348,7 @@ void PulseFreq::appendfrequency(ofstream * outfile){
 	(*outfile) << std::endl;
 }
 
-void PulseFreq::appendnoisy(ofstream * outfile){
+void PulseFreq::appendnoisy(std::ofstream * outfile){
 	std::normal_distribution<double> norm_dist( 0.0, m_noisescale);
         for (unsigned i = i_low;i<i_high;i+=m_sampleinterval){ 
 		double outval = rhovec[i] + norm_dist(rng);
@@ -362,7 +357,7 @@ void PulseFreq::appendnoisy(ofstream * outfile){
 	(*outfile) << std::endl;
 }
 
-void PulseFreq::printfrequencybins(ofstream * outfile){
+void PulseFreq::printfrequencybins(std::ofstream * outfile){
 	double nu,lam;
         for (unsigned i = i_low;i<i_high;i+=(unsigned)(atoi(getenv("sampleinterval")))){
 		nu = (omega[i]/(2.0*pi<double>())/fsPau<double>());
@@ -371,7 +366,7 @@ void PulseFreq::printfrequencybins(ofstream * outfile){
         }
 	(*outfile) << "\n";
 }
-void PulseFreq::appendfrequencybins(ofstream * outfile){
+void PulseFreq::appendfrequencybins(std::ofstream * outfile){
 	double nu,lam;
         for (unsigned i = i_low;i<i_high;i+=(unsigned)(atoi(getenv("sampleinterval")))){
 		nu = (omega[i]/(2.0*pi<double>())/fsPau<double>());
@@ -379,7 +374,7 @@ void PulseFreq::appendfrequencybins(ofstream * outfile){
         }
 	(*outfile) << "\n";
 }
-void PulseFreq::printfrequencydelay(ofstream * outfile, const double *delay){
+void PulseFreq::printfrequencydelay(std::ofstream * outfile, const double *delay){
 	double nu,lambda,thisdelay;
 	thisdelay = (*delay)*fsPau<double>();
 	(*outfile) << ("#omega[fs^-1]\tlambda[nm]\trho\tphi\tdelay[fs]\n");
@@ -390,7 +385,7 @@ void PulseFreq::printfrequencydelay(ofstream * outfile, const double *delay){
 	}
 	(*outfile) << "\n";
 }
-void PulseFreq::printfrequencydelaychirp(ofstream * outfile, const double *delay,const double *chirp){
+void PulseFreq::printfrequencydelaychirp(std::ofstream * outfile, const double *delay,const double *chirp){
 	double nu,lambda,thisdelay,thischirp,reltime;
 	thisdelay = (*delay)*fsPau<double>();
 	thischirp = (*chirp)*std::pow(fsPau<double>(),int(2));
@@ -404,7 +399,7 @@ void PulseFreq::printfrequencydelaychirp(ofstream * outfile, const double *delay
 	(*outfile) << "\n";
 }
 
-void PulseFreq::printwavelength(ofstream * outfile,const double *delay){
+void PulseFreq::printwavelength(std::ofstream * outfile,const double *delay){
 	double nu,lambda,lamlast;
 	lamlast=0;
         for (unsigned i = i_high;i>i_low;i-=(unsigned)(atoi(getenv("sampleinterval")))){
@@ -418,7 +413,7 @@ void PulseFreq::printwavelength(ofstream * outfile,const double *delay){
 	(*outfile) << "\n";
 }
 
-void PulseFreq::printtime(ofstream * outfile){
+void PulseFreq::printtime(std::ofstream * outfile){
 	(*outfile) << ("#time\treal\timag\n");
 	for (unsigned i = samples/2;i<samples;i++){
 		(*outfile) << (time[i]*fsPau<double>()) << "\t" << cvec[i].real() << "\t" << cvec[i].imag() << "\n";
