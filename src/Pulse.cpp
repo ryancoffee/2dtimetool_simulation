@@ -194,7 +194,7 @@ void PulseFreq::print_phase_powerspectrum(std::ofstream & outfile)
 bool PulseFreq::addrandomphase(void)
 {
 	if (!infreq){
-		cerr << "died here at addrandomphase()" << endl;
+		std::cerr << "died here at addrandomphase()" << std::endl;
 		return false;
 	}
 	size_t sz = samples*2; // doubling the vector to mirror it so that DFT hansles the phase well

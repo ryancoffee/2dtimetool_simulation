@@ -243,7 +243,7 @@ namespace DataOps
 		}
 
 	template <typename T>
-		std::complex<T>* sum(std::complex<T>* lhs,std::complex<T>* rhs,const size_t n)
+		std::complex<T>*& sum(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
 			std::transform(lhs,lhs+n,rhs,lhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
 					return *d_lhs + *d_rhs;
@@ -252,7 +252,7 @@ namespace DataOps
 		}
 
 	template <typename T>
-		std::complex<T>* diff(std::complex<T>* lhs,std::complex<T>* rhs,const size_t n)
+		std::complex<T>* diff(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
 			std::transform(lhs,lhs+n,rhs,lhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
 					return *d_lhs - *d_rhs;
@@ -261,7 +261,7 @@ namespace DataOps
 		}
 
 	template <typename T>
-		std::complex<T>* mul(std::complex<T>* lhs,std::complex<T>* rhs,const size_t n)
+		std::complex<T>* mul(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
 			std::transform(lhs,lhs+n,rhs,lhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
 					return (*d_lhs) * (*d_rhs);
@@ -270,7 +270,13 @@ namespace DataOps
 		}
 
 	template <typename T>
-		std::complex<T>* mul(std::complex<T>* lhs,std::complex<T>& scale,const size_t n)
+		std::complex<T>* mul(std::complex<T>*& lhs,const T& scale,const size_t n)
+		{
+			std::transform(lhs, lhs+n, lhs, std::bind2nd(std::multiplies<std::complex<T> >(),scale));
+			return lhs;
+		}
+	template <typename T>
+		std::complex<T>* mul(std::complex<T>*& lhs,std::complex<T>& scale,const size_t n)
 		{
 			std::transform(lhs, lhs+n, lhs, std::bind2nd(std::multiplies<std::complex<T> >(),scale));
 			return lhs;
@@ -278,7 +284,7 @@ namespace DataOps
 
 
 	template <typename T>
-		std::complex<T>* div(std::complex<T>* lhs,std::complex<T>* rhs,const size_t n)
+		std::complex<T>* div(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
 			std::transform(lhs,lhs+n,rhs,lhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
 					return *d_lhs / *d_rhs;
@@ -316,14 +322,15 @@ namespace DataOps
 		}
 
 	template <typename T>
-		std::vector<T> & operator *= (std::vector<T>& vec,T val)
+		std::vector<T> & operator *= (std::vector<T>& vec,T const val)
 		{
 			std::transform(vec.begin(), vec.end(), vec.begin(), std::bind2nd(std::multiplies<T>(),val));
 			return vec;
 		}
 
+	//================ HERE HERE HERE HERE ================//
 	template <typename T>
-		std::vector<T> & operator /= (std::vector<T>& vec,T val)
+		std::vector<T> & operator /= (std::vector<T>& vec,const T val)
 		{
 			assert(std::abs(val) != T(0) );
 			std::transform(vec.begin(), vec.end(), vec.begin(), std::bind2nd(std::divides<T>(),val));
@@ -331,14 +338,14 @@ namespace DataOps
 		}
 
 	template <typename T>
-		std::vector<T> & operator += (std::vector<T>& vec, T val)
+		std::vector<T> & operator += (std::vector<T>& vec, const T val)
 		{
 			std::transform(vec.begin(), vec.end(), vec.begin(), std::bind2nd(std::plus<T>(),val));
 			return vec;
 		}
 
-	template <typename T>
-		std::vector<T> & operator -= (std::vector<T>& vec, T val)
+	template <typename T,typename T2>
+		std::vector<T> & operator -= (std::vector<T>& vec, const T2 val)
 		{
 			std::transform(vec.begin(), vec.end(), vec.begin(), std::bind2nd(std::minus<T>(),val));
 			return vec;
