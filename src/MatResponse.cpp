@@ -1,4 +1,5 @@
 #include "MatResponse.hpp"
+#include "Constants.hpp"
 
 void MatResponse::setstepvec_full(PulseFreq & pulse){ setstepvec_full( &pulse); }
 void MatResponse::setstepvec_full(PulseFreq * pulse){
@@ -9,15 +10,15 @@ void MatResponse::setstepvec_full(PulseFreq * pulse){
                         arg -= (pulse->getdt()*pulse->getsamples());
                 }
                 if( arg > twidth){
-                        pulse->modphase->data[i] = phase;
-                        pulse->modphase->data[i] *= a*std::exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
+                        pulse->modphase[i] = phase;
+                        pulse->modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
 
                 } else {
                         if (arg < 0.0) {
-                                pulse->modphase->data[i] = 0.0;
+                                pulse->modphase[i] = 0.0;
                         } else {
-                                pulse->modphase->data[i] = phase * std::pow( std::sin(M_PI_2*arg/twidth ), int(2) ) ;
-                                pulse->modphase->data[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
+                                pulse->modphase[i] = phase * std::pow( std::sin(half_pi<double>()*arg/twidth ), int(2) ) ;
+                                pulse->modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
                         }
                 }
         }
@@ -32,17 +33,17 @@ void MatResponse::setstepvec_amp(PulseFreq * pulse){
                         arg -= (pulse->getdt()*pulse->getsamples());
                 }
                 if (arg > twidth) {
-                        pulse->modamp->data[i] = -1.0*(1.0-attenuation);
-                        pulse->modamp->data[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
-                        pulse->modamp->data[i] += 1.0;
+                        pulse->modamp[i] = -1.0*(1.0-attenuation);
+                        pulse->modamp[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
+                        pulse->modamp[i] += 1.0;
                
                 } else {
                         if (arg < 0.0) {
-                                pulse->modamp->data[i] = 1.0;
+                                pulse->modamp[i] = 1.0;
                         } else {
-                                pulse->modamp->data[i] = -1.0* (1.0-attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
-                                pulse->modamp->data[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
-                                pulse->modamp->data[i] += 1.0;
+                                pulse->modamp[i] = -1.0* (1.0-attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
+                                pulse->modamp[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
+                                pulse->modamp[i] += 1.0;
                         }
                 }
         }
@@ -81,15 +82,15 @@ void MatResponse::setstepvec_phase(PulseFreq * pulse){
                         arg -= (pulse->getdt()*pulse->getsamples());
                 }
                 if( arg > twidth){
-                        pulse->modphase->data[i] = phase;
-                        pulse->modphase->data[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
+                        pulse->modphase[i] = phase;
+                        pulse->modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
 
                 } else {
                         if (arg < 0.0) {
-                                pulse->modphase->data[i] = 0.0;
+                                pulse->modphase[i] = 0.0;
                         } else {
-                                pulse->modphase->data[i] = phase * std::pow( sin(M_PI_2*arg/twidth ) ,int(2) ) ;
-                                pulse->modphase->data[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
+                                pulse->modphase[i] = phase * std::pow( sin(M_PI_2*arg/twidth ) ,int(2) ) ;
+                                pulse->modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
                         }
                 }
         }
@@ -146,15 +147,15 @@ void MatResponse::buffervectors(PulseFreq * pulse){
         double bufferscale;
         double arg;
 
-        pulse->modphase->data[pulse->getsamples()/2] *= 0.0;
-        pulse->modamp->data[pulse->getsamples()/2] = 1.0;
+        pulse->modphase[pulse->getsamples()/2] *= 0.0;
+        pulse->modamp[pulse->getsamples()/2] = 1.0;
         for (unsigned i=0; i < bufferwidth ; i++) {
                 arg = ((double)i)/((double)bufferwidth);
                 bufferscale = std::pow( sin(M_PI_2*(arg) ) , int(2)) ; // buffering the vector back to 0.0 so it can be periodic.
-                pulse->modphase->data[pulse->getsamples()/2-i] *= bufferscale;
-                pulse->modamp->data[pulse->getsamples()/2-i] -= 1.0;
-                pulse->modamp->data[pulse->getsamples()/2-i] *= bufferscale;
-                pulse->modamp->data[pulse->getsamples()/2-i] += 1.0;
+                pulse->modphase[pulse->getsamples()/2-i] *= bufferscale;
+                pulse->modamp[pulse->getsamples()/2-i] -= 1.0;
+                pulse->modamp[pulse->getsamples()/2-i] *= bufferscale;
+                pulse->modamp[pulse->getsamples()/2-i] += 1.0;
         }
 }
 
@@ -210,7 +211,7 @@ void MatResponse::addstepvec_amp(PulseFreq * pulse,double delay){
                                 thisamp += 1.0;
                         }
                 }
-                pulse->modamp->data[i] *= thisamp;
+                pulse->modamp[i] *= thisamp;
         }
 
 }
@@ -262,7 +263,7 @@ void MatResponse::addstepvec_phase(PulseFreq * pulse,double delay){
                                 thisphase *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
                         }
                 }
-                pulse->modphase->data[i] += thisphase;
+                pulse->modphase[i] += thisphase;
         }
 
 }

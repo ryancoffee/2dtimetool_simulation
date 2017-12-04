@@ -107,3 +107,7 @@ bin/
 
 # exclude external models from source control
 /src/external/
+
+# exclude the executable
+scan_material
+

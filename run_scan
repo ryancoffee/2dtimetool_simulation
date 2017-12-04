@@ -2,7 +2,7 @@
 
 starttime=$(date +%s);
 
-export nthreads=1;
+export nthreads=4;
 export datadir='./data/raw/';
 mkdir -p $datadir;
 
@@ -120,13 +120,12 @@ export chirpnoise=0;
 export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
-export interferedelay=250; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=2500; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=8000000;
 export saturate=4096;
 
-#export filebase=$datadir"simulation_delay"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_atten"$attenuation"_phase"$phase"_";
-export filebase=$datadir"random"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+export filebase=$datadir"debug_nogsl"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 echo $filebase
 ./scan_material
 stoptime=$(date +%s);

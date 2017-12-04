@@ -8,6 +8,8 @@
 #include <random>
 #include <chrono>
 
+#include <DebugOps.hpp>
+
 using namespace std;
 using namespace Constants;
 
@@ -108,6 +110,7 @@ int main(int argc, char* argv[])
 
 	if (atof(getenv("addrandomphase"))>0){
 		masterpulse.addrandomphase();
+		//std::cerr << "\n\n=========== MADE IT HERE ============\n\n" << std::endl;
 		std::string filename = filebase + "_spectralphaseFTpower.dat";
 		std::ofstream outfile(filename,std::ios::out);
 		masterpulse.print_phase_powerspectrum(outfile);
@@ -123,8 +126,16 @@ int main(int argc, char* argv[])
 	}
 	masterpulse.addchirp(chirpvec);							// chirp that ref pulse
 
+	/*
 	PulseFreq * pulsearray[bundle.get_nfibers()];					// An array of pointers to PulseFreq objects
 	PulseFreq * crosspulsearray[bundle.get_nfibers()];				// An array of pointers to PulseFreq objects
+	*/
+	std::vector< PulseFreq* > pulsearray(bundle.get_nfibers());
+	std::vector< PulseFreq* > crosspulsearray(bundle.get_nfibers());
+	for (size_t i=0;i<pulsearray.size();++i){
+		pulsearray[i] = new PulseFreq(masterpulse);
+		crosspulsearray[i] = new PulseFreq(masterpulse);
+	}
 
 	MatResponse masterresponse(
 			0.0,    // step delay doesn't matter in the reference, only the etalon relative to itself         // stepdelay
@@ -183,8 +194,6 @@ int main(int argc, char* argv[])
 
 				startdelay = bundle.delay(i) + t0;
 
-				pulsearray[i] = new PulseFreq(masterpulse);
-				crosspulsearray[i] = new PulseFreq(masterpulse);
 				std::vector<double> chirpvec(4,0.);
 				chirpvec[0] = chirpnoiseDist(rng);
 				chirpvec[1] = TODnoiseDist(rng);
@@ -323,21 +332,19 @@ int main(int argc, char* argv[])
 		ofstream outbins(filename.c_str(),ios::out); 
 		for (i=0;i<bundle.get_nfibers();i++){
 			outbins << bundle.delay(i) << "\n";
-			*(pulsearray[i]) -= *(crosspulsearray[i]);
-			*(pulsearray[i]) *= bundle.Ilaser(size_t(i)); 
+			*pulsearray[i] -= *crosspulsearray[i];
+			*pulsearray[i] *= bundle.Ilaser(size_t(i)); 
 			pulsearray[i]->appendwavelength(&interferestream);
 		}
 		interferestream.close();
 		outbins.close();
 
-		for (unsigned i=0;i<bundle.get_nfibers();i++){
-			delete pulsearray[i];
-			delete crosspulsearray[i];
-		}
-
-
-
 	} // outermost loop for nimages to produce //
+
+	for (size_t i=0;i<pulsearray.size();++i){
+		delete pulsearray[i];
+		delete crosspulsearray[i];
+	}
 
 	return 0;
 }

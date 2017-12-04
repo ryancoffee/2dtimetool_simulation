@@ -74,7 +74,7 @@ bool FiberBundle::set_polarcoords(size_t n)
 	}
 
 	setnrows(n);
-	std::cout << "\n========== running " << nfibers << " fibers ============\n\n" << std::flush;
+	std::cout << "\n========== running " << nfibers << " fibers ============\n" << std::flush;
 	zvals.resize(nfibers);
 
 	std::complex<float> z(0.0f,0.0f);

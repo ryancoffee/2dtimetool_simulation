@@ -27,10 +27,11 @@
 #include <gsl/gsl_fft_complex.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
-*/
+ */
 
 // my headers
-#include "Constants.hpp"
+#include <Constants.hpp>
+#include <DataOps.hpp>
 
 // my definitions
 #define SAMPLEROUND 1000
@@ -46,72 +47,68 @@ using namespace Constants;
 class PulseTime {
 
 
-public:
-  PulseTime(double strength_in = 1e-3 * 0.696, double width_in = 50, double t0_in = 0.0) : 
-    strength(strength_in * auenergy<float>()/Eh<float>() * std::pow(aufor10PW<float>(),int(2))), 
-    Ctau(width_in * root_pi<double>() / fsPau<float>() / 2.0),
-    t0(t0_in / fsPau<float>())
-  {
-    //    std::clog << "Creating Pulse " << this << std::endl;
-  }
-  ~PulseTime()
-  {
-    //    std::clog << "Destroying Pulse " << this << std::endl;
-  }
-  
-  void setstrength(const double in);
-  void setwidth(const double in);
-  void sett0(const double in);
-  
-  inline double getstrength() { return strength; }
-  inline double getCtau() { return Ctau; }
-  inline double gett0() { return t0; }
-  
-  inline bool getenvelope(const double t,double *FF,double *dFFdt) 
-    {
-      if ( inpulse(t) ){
-	*FF = strength * ( std::pow( cos(half_pi<double>()*(t-t0)/Ctau) , int(2)) );
-	*dFFdt = -strength/2 * ( pi<double>()/Ctau * sin(pi<double>()*(t-t0)/Ctau));
-	return true;
-      } else {
-      *FF = 0.0;
-      *dFFdt = 0.0;
-      return false;
-      }
-    }
-  inline bool getenvelope(const double t,double *FF) 
-    {
-      if ( inpulse(t) ){
-	*FF = strength * ( std::pow( cos(half_pi<double>()*(t-t0)/Ctau), int(2) ) );
-      return true;
-      } else {
-	*FF = 0.0;
-      return false;
-      }
-    }
-  
- private:
-  double strength, Ctau, t0;
-  
-  inline bool inpulse(const double t) 
-    {
-      if (t >= -Ctau && t <= Ctau){
-	return true;
-      } else {
-	return false;
-      }
-    }
+	public:
+		PulseTime(double strength_in = 1e-3 * 0.696, double width_in = 50, double t0_in = 0.0) : 
+			strength(strength_in * auenergy<float>()/Eh<float>() * std::pow(aufor10PW<float>(),int(2))), 
+			Ctau(width_in * root_pi<double>() / fsPau<float>() / 2.0),
+			t0(t0_in / fsPau<float>())
+	{
+		//    std::clog << "Creating Pulse " << this << std::endl;
+	}
+		~PulseTime()
+		{
+			//    std::clog << "Destroying Pulse " << this << std::endl;
+		}
+
+		void setstrength(const double in);
+		void setwidth(const double in);
+		void sett0(const double in);
+
+		inline double getstrength() { return strength; }
+		inline double getCtau() { return Ctau; }
+		inline double gett0() { return t0; }
+
+		inline bool getenvelope(const double t,double *FF,double *dFFdt) 
+		{
+			if ( inpulse(t) ){
+				*FF = strength * ( std::pow( cos(half_pi<double>()*(t-t0)/Ctau) , int(2)) );
+				*dFFdt = -strength/2 * ( pi<double>()/Ctau * sin(pi<double>()*(t-t0)/Ctau));
+				return true;
+			} else {
+				*FF = 0.0;
+				*dFFdt = 0.0;
+				return false;
+			}
+		}
+		inline bool getenvelope(const double t,double *FF) 
+		{
+			if ( inpulse(t) ){
+				*FF = strength * ( std::pow( cos(half_pi<double>()*(t-t0)/Ctau), int(2) ) );
+				return true;
+			} else {
+				*FF = 0.0;
+				return false;
+			}
+		}
+
+	private:
+		double strength, Ctau, t0;
+
+		inline bool inpulse(const double t) 
+		{
+			if (t >= -Ctau && t <= Ctau){
+				return true;
+			} else {
+				return false;
+			}
+		}
 };
 
 
 class PulseFreq {
 
 	public:
-		PulseFreq & operator=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
-		PulseFreq * operator+=(const PulseFreq *rhs);
-		PulseFreq * operator-=(const PulseFreq *rhs);
-		PulseFreq * operator*=(const PulseFreq *rhs);
-		PulseFreq * operator/=(const PulseFreq *rhs);
+		PulseFreq & operator=(PulseFreq const & rhs); // assignment
 		PulseFreq & operator+=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator-=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator*=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
@@ -137,6 +134,7 @@ class PulseFreq {
 		inline void fft_totime(void) {
 
 			fftw_execute(FTplan_backward);
+			//DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq = false;
 			intime = true;
@@ -145,6 +143,7 @@ class PulseFreq {
 			if (infreq)
 				std::cerr << "died here at fft_tofreq()" << std::endl;
 			fftw_execute(FTplan_forward);
+			//DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq=true;
 			intime=false;
@@ -317,7 +316,7 @@ class PulseFreq {
 		unsigned long m_gain;
 		unsigned m_saturate;
 
-		const bool parent,child;
+		bool parent,child;
 		bool intime,infreq;
 		unsigned samples;
 		unsigned startind,stopind,onwidth,offwidth;

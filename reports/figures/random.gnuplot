@@ -164,26 +164,28 @@ set loadpath
 set fontpath 
 set psdir
 set fit brief errorvariables nocovariancevariables errorscaling prescale nowrap v5
-GNUTERM = "qt"
+file(x) = sprintf('../../data/raw/random2500_crossphase1_chirp-1220_pm0_pmTOD0_pmFOD0_interference.out.%d',x)
 x = 0.0
-## Last datafile plotted: "simulation2500_crossphase1_chirp-1220_pm0_pmTOD0_pmFOD0_interference.out.2"
-file(x) = sprintf('../../data/raw/simulation2500_crossphase1_chirp-1220_pm0_pmTOD0_pmFOD0_interference.out.%d',x);
-set term png size 700,800
-set output 'random.full.png'
-set multiplot layout 2,2
+## Last datafile plotted: "random2500_crossphase1_chirp-1220_pm0_pmTOD0_pmFOD0_interference.out.1"
+set xrange [1150:1375]
+set yrange [0:60]
 unset tics
 unset colorbox
-set auto cb
-#set cbrange [:2000]
-set xrange [200:512]
-set auto x
-set title '-754.915 fs'
-splot file(0) mat
-set title '-647.756 fs'
-splot file(2) mat
-set title '-763.113 fs '
-splot file(6) mat
-set title '-711.983 fs'
+#set auto cb
+set term png size 700,800
+set output 'random.zoom.png'
+set multiplot layout 2,2
+set cbrange [:1.5e3]
+set title '-3634.7 fs'
+splot file(7) mat
+set cbrange [:700]
+set title '-3593.21 fs'
 splot file(8) mat
+set title '-1187.78 fs'
+set cbrange [:3.5e3]
+splot file(2) mat
+set title '-1231.15 fs'
+set cbrange [:1.8e3]
+splot file(5) mat
 unset multiplot
 #    EOF

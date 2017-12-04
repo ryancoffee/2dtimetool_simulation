@@ -32,7 +32,7 @@ namespace DataOps
 		std::vector<T>& clone(std::vector<T> & lhs, const std::vector<T> & rhs)
 		{
 			lhs.resize(rhs.size());
-			std::copy(rhs.begin(), rhs.end(), lhs.begin());
+			std::copy(rhs.begin(),rhs.end(),lhs.begin()); 
 			return lhs;
 		}
 
@@ -245,27 +245,42 @@ namespace DataOps
 	template <typename T>
 		std::complex<T>*& sum(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
-			std::transform(lhs,lhs+n,rhs,lhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
+			for (size_t i = 0;i<n;++i){
+				lhs[i] += rhs[i];
+			}
+			/*
+			std::transform(lhs,lhs+n,rhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
 					return *d_lhs + *d_rhs;
 					});
+			*/
 			return lhs;
 		}
 
 	template <typename T>
 		std::complex<T>* diff(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
-			std::transform(lhs,lhs+n,rhs,lhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
+			for (size_t i = 0;i<n;++i){
+				lhs[i] -= rhs[i];
+			}
+			/*
+			std::transform(lhs,lhs+n,rhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
 					return *d_lhs - *d_rhs;
 					});
+			*/
 			return lhs;
 		}
 
 	template <typename T>
 		std::complex<T>* mul(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
+			for (size_t i = 0;i<n;++i){
+				lhs[i] *= rhs[i];
+			}
+			/*
 			std::transform(lhs,lhs+n,rhs,lhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
 					return (*d_lhs) * (*d_rhs);
 					});
+			*/
 			return lhs;
 		}
 
@@ -286,9 +301,14 @@ namespace DataOps
 	template <typename T>
 		std::complex<T>* div(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
+			for (size_t i=0;i<n;++i){
+				lhs[i] /= rhs[i];
+			}
+			/*
 			std::transform(lhs,lhs+n,rhs,lhs,[](std::complex<T>* d_lhs, std::complex<T>* d_rhs){
 					return *d_lhs / *d_rhs;
 					});
+			*/
 			return lhs;
 		}
 
@@ -352,7 +372,7 @@ namespace DataOps
 		}
 
 	template <typename T>
-		std::vector<T>& operator += (std::vector<T>& resvec,std::vector<T>& srcvec)
+		std::vector<T>& operator += (std::vector<T>& resvec,const std::vector<T> & srcvec)
 		{
 			assert(resvec.size() == srcvec.size());
 			for (unsigned i=0;i<resvec.size();++i){
@@ -360,6 +380,36 @@ namespace DataOps
 			}
 			return resvec;
 		}
+
+	template <typename T>
+		std::vector<T>& operator -= (std::vector<T>& resvec,const std::vector<T> & srcvec)
+		{
+			assert(resvec.size() == srcvec.size());
+			for (unsigned i=0;i<resvec.size();++i){
+				resvec[i] -= srcvec[i];
+			}
+			return resvec;
+		}
+	template <typename T>
+		std::vector<T>& operator *= (std::vector<T>& resvec,const std::vector<T> & srcvec)
+		{
+			assert(resvec.size() == srcvec.size());
+			for (unsigned i=0;i<resvec.size();++i){
+				resvec[i] *= srcvec[i];
+			}
+			return resvec;
+		}
+	template <typename T>
+		std::vector<T>& operator /= (std::vector<T>& resvec,const std::vector<T> & srcvec)
+		{
+			assert(resvec.size() == srcvec.size());
+			for (unsigned i=0;i<resvec.size();++i){
+				resvec[i] /= srcvec[i];
+			}
+			return resvec;
+		}
+
+
 
 	template <typename T>
 		inline T projection(std::vector<T> &in1,std::vector<T> in2,std::vector<bool> & mask){

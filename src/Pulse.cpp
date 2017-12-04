@@ -1,6 +1,7 @@
 // Pulse clas implimentation
 // standard includes
 #include <cmath>
+#include <iterator>
 
 
 // my headers
@@ -55,10 +56,6 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
 	domega(rhs.domega),
 	intime(rhs.intime),
 	infreq(rhs.infreq),
-	omega(rhs.omega), // these are static vectors... i'm trying not to make copies just yet
-	time(rhs.time), // these are static vectors... i'm trying not to make copies just yet
-	parent(false),
-	child(true),
 	i_low(rhs.i_low), 
 	i_high(rhs.i_high), 
 	m_noisescale(rhs.m_noisescale),
@@ -67,6 +64,11 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
 	m_gain(rhs.m_gain),
 	m_lamsamples(rhs.m_lamsamples)
 {
+	DataOps::clone(omega,rhs.omega);
+	DataOps::clone(time,rhs.time);
+
+	parent=false;
+	child=true;
 	samples = rhs.samples;
 	startind = rhs.startind;stopind=rhs.stopind;onwidth=rhs.onwidth;offwidth=rhs.offwidth;
 	tspan = rhs.tspan;
@@ -85,6 +87,48 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
 	DataOps::clone(modamp,rhs.modamp);
 	DataOps::clone(modphase,rhs.modphase);
 }
+
+PulseFreq & PulseFreq::operator=(PulseFreq const & rhs) // assignment
+{
+	omega_center=rhs.omega_center;
+	omega_width=rhs.omega_width;
+	omega_high=rhs.omega_high;
+	omega_onwidth=rhs.omega_onwidth;
+	domega=rhs.domega;
+	intime=rhs.intime;
+	infreq=rhs.infreq;
+	omega=rhs.omega; // these are static vectors... i'm trying not to make copies just yet
+	time=rhs.time; // these are static vectors... i'm trying not to make copies just yet
+	parent=false;
+	child=true;
+	i_low=rhs.i_low; 
+	i_high=rhs.i_high; 
+	m_noisescale=rhs.m_noisescale;
+	m_sampleinterval=rhs.m_sampleinterval;
+	m_saturate=rhs.m_saturate;
+	m_gain=rhs.m_gain;
+	m_lamsamples=rhs.m_lamsamples;
+
+	samples = rhs.samples;
+	startind = rhs.startind;stopind=rhs.stopind;onwidth=rhs.onwidth;offwidth=rhs.offwidth;
+	tspan = rhs.tspan;
+	lambda_center=rhs.lambda_center;lambda_width=rhs.lambda_width;
+	phase_GDD=rhs.phase_GDD;phase_TOD=rhs.phase_TOD;phase_4th=rhs.phase_4th;phase_5th=rhs.phase_5th;
+
+	dtime = rhs.dtime;time_center=rhs.time_center;time_wdith=rhs.time_wdith;
+
+
+	nu0=rhs.nu0;
+	buildvectors();
+
+	DataOps::clone(rhovec,rhs.rhovec);
+	DataOps::clone(phivec,rhs.phivec);
+	DataOps::clone(cvec,rhs.cvec,samples);
+	DataOps::clone(modamp,rhs.modamp);
+	DataOps::clone(modphase,rhs.modphase);
+	return *this;
+}
+
 PulseFreq::~PulseFreq(void){
 	if(child){
 		killtheseonly();
@@ -105,11 +149,6 @@ void PulseFreq::cvec2rhophi(void)
 		phivec[i] = std::arg(cvec[i]);
 	}
 }
-
-PulseFreq * PulseFreq::operator+=(const PulseFreq *rhs){*this += *rhs;return this;}
-PulseFreq * PulseFreq::operator-=(const PulseFreq *rhs){*this -= *rhs;return this;}
-PulseFreq * PulseFreq::operator*=(const PulseFreq *rhs){*this *= *rhs;return this;}
-PulseFreq * PulseFreq::operator/=(const PulseFreq *rhs){*this /= *rhs;return this;}
 
 PulseFreq & PulseFreq::operator+=(const PulseFreq &rhs){
 	DataOps::sum(cvec,rhs.cvec,samples);
@@ -240,7 +279,7 @@ bool PulseFreq::addrandomphase(void)
 	}
 
 	size_t lowpass = boost::lexical_cast<size_t>(atoi(getenv("phaseNoiseLowpass")));
-	std::cerr << "\n\n======== lowpass is " << lowpass << " =======\n\n" << std::flush;
+	std::cerr << "\n======== lowpass is " << lowpass << " =======\n" << std::flush;
 
 	fftw_execute_r2r(plan_r2hc,randphase,randphaseFT);
 	std::fill(randphaseFT+lowpass,randphaseFT+sz-lowpass,0.);
@@ -309,7 +348,7 @@ void PulseFreq::printfrequency(std::ofstream * outfile){
 	for (unsigned i = i_low;i<i_high;i+=(unsigned)(atoi(getenv("sampleinterval")))){
 		nu = (omega[i]/(2.0*pi<double>())/fsPau<double>());
 		lambda = C_nmPfs<double>()/nu;
-		(*outfile) << nu << "\t" << lambda << "\t" << rhovec->data[i] << "\t" << phivec->data[i] << "\n";
+		(*outfile) << nu << "\t" << lambda << "\t" << rhovec[i] << "\t" << phivec[i] << "\n";
 	}
 }
 void PulseFreq::printwavelengthbins(std::ofstream * outfile)
@@ -330,7 +369,7 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 	std::vector<double> y(i_high-i_low);	
 	for (size_t i=0;i<y.size();++i){
 		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
-		y[i] = std::min(rhovec->data[i_low+i] * m_gain,double(m_saturate));
+		y[i] = std::min(rhovec[i_low+i] * m_gain,double(m_saturate));
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
 	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
@@ -342,7 +381,7 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 }
 void PulseFreq::appendfrequency(std::ofstream * outfile){
         for (unsigned i = i_low;i<i_high;i+=m_sampleinterval){ 
-		uint16_t val = std::min(unsigned(rhovec->data[i] * m_gain),unsigned(m_saturate));
+		uint16_t val = std::min(unsigned(rhovec[i] * m_gain),unsigned(m_saturate));
        		(*outfile) << val << "\t";
         }
 	(*outfile) << std::endl;
@@ -381,7 +420,7 @@ void PulseFreq::printfrequencydelay(std::ofstream * outfile, const double *delay
 	for (unsigned i = i_low;i<i_high;i+=(unsigned)(atoi(getenv("sampleinterval")))){
 		nu = (omega[i]/(2.0*pi<double>())/fsPau<double>());
 		lambda = C_nmPfs<double>()/nu;
-		(*outfile) << nu << "\t" << lambda << "\t" << rhovec->data[i] << "\t" << phivec->data[i] << "\t" << thisdelay << "\n";
+		(*outfile) << nu << "\t" << lambda << "\t" << rhovec[i] << "\t" << phivec[i] << "\t" << thisdelay << "\n";
 	}
 	(*outfile) << "\n";
 }
@@ -394,7 +433,7 @@ void PulseFreq::printfrequencydelaychirp(std::ofstream * outfile, const double *
 		nu = (omega[i]/(2.0*pi<double>())/fsPau<double>());
 		lambda = C_nmPfs<double>()/nu;
 		reltime = (nu-nu0)*thischirp*10.0;
-		(*outfile) << nu << "\t" << lambda << "\t" << rhovec->data[i] << "\t" << phivec->data[i] << "\t" << thisdelay << "\t" << thischirp << "\t" << reltime << "\n";
+		(*outfile) << nu << "\t" << lambda << "\t" << rhovec[i] << "\t" << phivec[i] << "\t" << thisdelay << "\t" << thischirp << "\t" << reltime << "\n";
 	}
 	(*outfile) << "\n";
 }
@@ -406,7 +445,7 @@ void PulseFreq::printwavelength(std::ofstream * outfile,const double *delay){
                 nu = (omega[i]/(2.0*pi<double>())/fsPau<double>());
                 lambda = (double)((int)((C_nmPfs<double>()/nu)*10.0))/10.0;
 		if (lambda>lamlast & (int)(lambda*10)%5 == 0){
-                	(*outfile) << lambda << "\t" << (*delay) << "\t" << rhovec->data[i] << "\n";
+                	(*outfile) << lambda << "\t" << (*delay) << "\t" << rhovec[i] << "\n";
 			lamlast = lambda;
 		}
         }
@@ -426,16 +465,13 @@ void PulseFreq::printtime(std::ofstream * outfile){
 
 
 void PulseFreq::buildvectors(void){
-		
-	if (cvec != NULL){
-		delete cvec;
-		cvec = NULL;
-	}
 	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * samples);
-	std::fill(cvec,samples,std::complex<double>(0));
+	for (size_t i=0;i<samples;++i){
+		cvec[i] = std::complex<double>(0);
+	}
 
-	FTplan_forward = fftw_plan_dft_1d(samples, cvec, cvec, FFTW_FORWARD, FFTW_ESTIMATE);
-	FTplan_backward = fftw_plan_dft_1d(samples, cvec, cvec, FFTW_BACKWARD, FFTW_ESTIMATE);
+	FTplan_forward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_FORWARD, FFTW_ESTIMATE);
+	FTplan_backward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_BACKWARD, FFTW_ESTIMATE);
 
 	static std::complex<double> z;
 	//factorization();
@@ -446,8 +482,7 @@ void PulseFreq::buildvectors(void){
 	modphase.resize(samples,0.0);
 	omega.resize(samples);
 	time.resize(samples);
-	//omega = new double[samples];
-	//time = new double[samples];
+
 	omega[0] = 0.0;
 	time[0] = 0.0;
 	omega[samples/2] = -(double)(samples/2)*domega;
@@ -468,18 +503,18 @@ void PulseFreq::buildvectors(void){
 		time[i] = dtime*i;
 		rhovec[i] = rising(i);
 		cvec[i] = std::polar(rhovec[i],phivec[i]);
-		omega[samples-i] = -domega*i_dbl;
-		time[samples-i] = -dtime*i_dbl;
+		omega[samples-i] = -domega*(double)i;
+		time[samples-i] = -dtime*(double)i;
 		rhovec[samples-i] = rising(i);
 		cvec[samples-i] = std::polar(rhovec[samples-i],phivec[samples-i]);
 	}
 	for (unsigned i = startind+onwidth;i<stopind-offwidth; i++){
 		omega[i] = domega*i;
 		time[i] = dtime*i;
-		rhovec->data[i] = 1.0;
+		rhovec[i] = 1.0;
 		cvec[i] = std::polar(rhovec[i],phivec[i]);
-		omega[samples-i] = -domega*i_dbl;
-		time[samples-i] = -dtime*i_dbl;
+		omega[samples-i] = -domega*(double)i;
+		time[samples-i] = -dtime*(double)i;
 		rhovec[samples-i] = 1.0;
 		cvec[samples-i] = std::polar(rhovec[samples-i],phivec[samples-i]);
 	}
@@ -490,7 +525,7 @@ void PulseFreq::buildvectors(void){
 		cvec[i] = std::polar(rhovec[i],phivec[i]);
 		omega[samples-i] = -domega*i;
 		time[samples-i] = -dtime*i;
-		rhovec->data[samples-i] = falling(i);
+		rhovec[samples-i] = falling(i);
 		cvec[samples - i] = std::polar(rhovec[samples - i],phivec[samples - i]);
 	}
 	for (unsigned i = stopind;i<samples/2; i++){
@@ -502,14 +537,15 @@ void PulseFreq::buildvectors(void){
 	
 }
 void PulseFreq::killvectors(void){
-	fftw_destroy_plan(FTplan);
+	fftw_destroy_plan(FTplan_forward);
+	fftw_destroy_plan(FTplan_backward);
 	fftw_free(cvec);
-	delete omega;
-	delete time;
-	omega = time = NULL;
+	cvec = NULL;
 }
 void PulseFreq::killtheseonly(void){
-	fftw_destroy_plan(FTplan);
+	fftw_destroy_plan(FTplan_forward);
+	fftw_destroy_plan(FTplan_backward);
 	fftw_free(cvec);
+	cvec = NULL;
 }
 
