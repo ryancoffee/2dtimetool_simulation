@@ -2,7 +2,7 @@
 
 starttime=$(date +%s);
 
-export nthreads=2;
+export nthreads=1;
 export datadir='./data/raw/';
 mkdir -p $datadir;
 

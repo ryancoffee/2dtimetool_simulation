@@ -66,9 +66,12 @@ public:
 	void buffervectors(PulseFreq * pulse);
 
 	
-	inline void setdelay(double tin){ t0 = tin/fsPau<float>(); }
-	inline void setatten(double attenin){ attenuation = attenin; }
-	inline void setphase(double phasein){ phase = phasein; }
+	inline void set_delay(double in) { setdelay(in); }
+	inline void setdelay(double in){ t0 = in/fsPau<float>(); }
+	inline void set_attenuation(double in) { setatten(in); }
+	inline void setatten(double in){ attenuation = in; }
+	inline void set_phase(double in) { setphase(in); }
+	inline void setphase(double in){ phase = in; }
 
 
         inline void setreflectance(const double reflectancein){reflectance = reflectancein;}
