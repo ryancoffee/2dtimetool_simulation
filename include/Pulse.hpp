@@ -32,8 +32,6 @@ using namespace Constants;
 
 class PulseTime {
 
-	friend class MatResponse;
-
 	public:
 		PulseTime(double strength_in = 1e-3 * 0.696, double width_in = 50, double t0_in = 0.0) : 
 			strength(strength_in * auenergy<float>()/Eh<float>() * std::pow(aufor10PW<float>(),int(2))), 
@@ -108,7 +106,6 @@ class PulseFreq {
 		PulseFreq & interfere(const PulseFreq &rhs);
 
 	public:
-		PulseFreq(void); // default constructor
 		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in);
 		PulseFreq(PulseFreq &rhs); // copy constructor
 		~PulseFreq(void);

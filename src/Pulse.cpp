@@ -24,8 +24,8 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<float>()),const double
 	domega( 2.0*pi<double>()/tspan_in),
 	intime(false),
 	infreq(true),
-	i_low( (unsigned)(double( atof( getenv("nu_low") ) )* 2.0*pi<double>()*fsPau<double>()/domega) ),
-	i_high( (unsigned)(double( atof( getenv("nu_high") ) )* 2.0*pi<double>()*fsPau<double>()/domega) ),
+	i_low( (unsigned)(double( atof( getenv("nu_low") ) )* twopi<double>()*fsPau<double>()/domega) ),
+	i_high( (unsigned)(double( atof( getenv("nu_high") ) )* twopi<double>()*fsPau<double>()/domega) ),
 	m_noisescale(1e-3),
 	m_sampleinterval(2),
 	m_saturate(4096),
@@ -34,27 +34,17 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<float>()),const double
 	sampleround(1000)
 {
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
-	std::cerr << "\n\t========== samples = " << samples << " ===========\n" << std::flush;
 	dtime = tspan_in/double(samples);
 	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
-	std::cerr << "trying to resize rhovec first" << std::endl;
+	/*
 	rhovec.resize(samples,0.0);
-	std::cerr << "rhovec.size() = " << rhovec.size() << std::endl;
-	std::cerr << "trying to resize modamp first" << std::endl;
 	modamp.resize(samples,1.0);
-	std::cerr << "modamp.size() = " << modamp.size() << std::endl;
-	std::cerr << "trying to resize phivec first" << std::endl;
 	phivec.resize(samples,0.0);
-	std::cerr << "trying to resize modphase first" << std::endl;
 	modphase.resize(samples,0.0);
-	std::cerr << "trying to resize omega first" << std::endl;
 	omega.resize(samples);
-	std::cerr << "trying to resize time first" << std::endl;
 	time.resize(samples);
-	std::cerr << "resized vecs OK" << std::endl;
-	std::cerr << "before PulseFreq::buildvectors()" << std::endl;
+	*/
 	buildvectors();
-	std::cerr << "after PulseFreq::buildvectors()" << std::endl;
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<float>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
 	m_gain = (unsigned long)(atoi( getenv("gain")));
@@ -470,18 +460,13 @@ void PulseFreq::buildvectors(void){
 	for (size_t i=0;i<samples;++i){
 		cvec[i] = std::complex<double>(0);
 	}
-	std::cerr << "Here in PulseFreq::buildvectors(void)" << std::endl;
 
 	FTplan_forward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_FORWARD, FFTW_ESTIMATE);
 	FTplan_backward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_BACKWARD, FFTW_ESTIMATE);
 
-	std::cerr << "Here in PulseFreq::buildvectors(void)" << std::endl;
 	static std::complex<double> z;
 	//factorization();
 
-	std::cerr << "Here in PulseFreq::buildvectors(void)" << std::endl;
-	std::cerr << "Here in PulseFreq::buildvectors(void)\t resizing vectors" << std::endl;
-	std::cerr << "========= HERE IS WHERE IT FAILS ===========" << std::endl;
 	rhovec.resize(samples,0.0);
 	phivec.resize(samples,0.0);
 	modamp.resize(samples,1.0);
@@ -540,7 +525,6 @@ void PulseFreq::buildvectors(void){
 		omega[samples-i] = -domega*i;
 		time[samples-i] = -dtime*i;
 	}
-	std::cerr << "Here leaving PulseFreq::buildvectors(void)" << std::endl;
 	
 }
 void PulseFreq::killvectors(void){

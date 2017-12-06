@@ -17,6 +17,15 @@ namespace Constants {
 	template <typename T>
 	inline T half_pi(void) { return boost::math::constants::half_pi<T>(); }
 	template <typename T>
+	inline T pi_2(void) { return half_pi<T>(); }
+	template <typename T>
+	inline T pi_3(void){return boost::math::constants::pi<T>()/T(3);}
+	template <typename T>
+	inline T pi_4(void){return boost::math::constants::pi<T>()/T(4);}
+	template <typename T>
+	inline T twopi(void){return T(2)*boost::math::constants::pi<T>();}
+
+	template <typename T>
 	inline T Eh(void){return T(27.2113845);} // eV/Hartree
 	template <typename T>
 	inline T a0(void) { return T(0.5291772108); } // Ang/bohr

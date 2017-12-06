@@ -63,10 +63,10 @@ int main(int argc, char* argv[])
 	double lambda_width = (double)( atof( getenv("lambda_width") ) );
 	double lambda_onoff = (double)( atof( getenv("lambda_onoff") ) );
 	double tspan = (double)( atof( getenv("tspan") ) )/fsPau<float>();
-	double omega_low = 2*pi<double>()/(lambda0+lambda_width/2.0)*C_nmPfs<float>()*fsPau<float>();
-	double omega_high = 2*pi<double>()*(lambda0-lambda_width/2.0)*C_nmPfs<float>()*fsPau<float>();
+	double omega_low = twopi<double>()/(lambda0+lambda_width/2.0)*C_nmPfs<double>()*fsPau<double>();
+	double omega_high = twopi<double>()/(lambda0-lambda_width/2.0)*C_nmPfs<double>()*fsPau<double>();
 	double omega_width = omega_high-omega_low;
-	double omega_onoff = 2*pi<double>()/(lambda0+lambda_width/2.0-lambda_onoff)*C_nmPfs<float>()*fsPau<float>() - omega_low;
+	double omega_onoff = twopi<double>()/(lambda0+lambda_width/2.0-lambda_onoff)*C_nmPfs<double>()*fsPau<double>() - omega_low;
 
 	double omega0 = (omega_high+omega_low)/2.0;
 
@@ -77,14 +77,11 @@ int main(int argc, char* argv[])
 	double backstep = backdelay/ngroupsteps;
 	const unsigned netalon = (unsigned)(atoi(getenv("netalon")));
 
-	std::cerr << "\n\n=========== MADE IT HERE before masterpulse ============\n\n" << std::endl;
 	PulseFreq masterpulse(omega0,omega_width,omega_onoff,tspan);
-	std::cerr << "\n\n=========== MADE IT HERE after masterpulse ============\n\n" << std::endl;
 	PulseFreq * masterpulsePtr = &masterpulse;
 
 	if (atoi(getenv("addrandomphase"))>0){
 		masterpulsePtr->addrandomphase();
-		std::cerr << "\n\n=========== MADE IT HERE ============\n\n" << std::endl;
 		std::string filename = filebase + "spectralphaseFTpower.dat";
 		std::ofstream outfile(filename,std::ios::out);
 		masterpulsePtr->print_phase_powerspectrum(outfile);
@@ -114,11 +111,22 @@ int main(int argc, char* argv[])
 	bundle.print_mapping(mapfile);
 	mapfile.close();
 
+	FiberBundle * bundlePtr = new FiberBundle(bundle);
 
-//#pragma omp parallel default(shared) private(masterpulse) num_threads(nthreads)
+
+
+	std::vector<double> chirpvec(4,0.);
+	std::vector<double> chirpnoisevec(4,0.);
+	chirpvec[0] = (double)( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),int(2));// the difference in slopes at omega_low versus omega_high must equal tspan
+	chirpvec[1] = (double)( atof( getenv("TOD") ) ) / std::pow(fsPau<float>(),int(3));
+	chirpvec[2] = (double)( atof( getenv("FOD") ) ) / std::pow(fsPau<float>(),int(4));
+	chirpvec[3] = (double)( atof( getenv("fifthOD") ) ) / std::pow(fsPau<float>(),int(5));
+
+	masterpulse.addchirp(chirpvec);							// chirp that ref pulse
+
+#pragma omp parallel  num_threads(nthreads)
 	{ // begin parallel region
 
-	FiberBundle * bundlePtr = new FiberBundle(bundle);
 
 	// =========== Definately, make the pulses outside of the for loop, but one per thread //
 	std::vector< PulseFreq* > pulsearray(bundlePtr->get_nfibers());
@@ -130,19 +138,9 @@ int main(int argc, char* argv[])
 	}
 
 
-		std::cerr << "I'm here now" << std::endl;
-		std::vector<double> chirpvec(4,0.);
-		std::vector<double> chirpnoisevec(4,0.);
-		chirpvec[0] = (double)( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),int(2));// the difference in slopes at omega_low versus omega_high must equal tspan
-		chirpvec[1] = (double)( atof( getenv("TOD") ) ) / std::pow(fsPau<float>(),int(3));
-		chirpvec[2] = (double)( atof( getenv("FOD") ) ) / std::pow(fsPau<float>(),int(4));
-		chirpvec[3] = (double)( atof( getenv("fifthOD") ) ) / std::pow(fsPau<float>(),int(5));
-
-		masterpulse.addchirp(chirpvec);							// chirp that ref pulse
-
 		size_t tid = omp_get_thread_num();
 
-//#pragma omp for // ordered 
+#pragma omp for // ordered 
 		for (size_t n=0;n<nimages;++n){ // outermost loop for nimages to produce //
 			double t0 = uni_distribution(rng);
 			double startdelay;
@@ -155,7 +153,7 @@ int main(int argc, char* argv[])
 			bundle.center_Ilaser(laser_pos_distribution(rng),laser_pos_distribution(rng));
 
 			for(size_t i = 0; i< bundle.get_nfibers(); i++){ // begin fibers loop
-				DebugOps::pushout(std::string("in treaded for loop, thread" + std::to_string(tid)));
+				DebugOps::pushout(std::string("in threaded for loop, thread" + std::to_string(tid)));
 				std::normal_distribution<double> chirpnoiseDist( 
 						(double)( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),(int)2), 
 						(double)( atof( getenv("chirpnoise") ) ) / std::pow(fsPau<float>(),(int)2) );

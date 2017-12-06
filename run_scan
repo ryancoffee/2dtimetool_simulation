@@ -2,7 +2,7 @@
 
 starttime=$(date +%s);
 
-export nthreads=1;
+export nthreads=2;
 export datadir='./data/raw/';
 mkdir -p $datadir;
 
@@ -17,7 +17,7 @@ export delays_mean=-1800;
 #export delays_std=100;
 export delays_std=2000;
 
-export drifting_alpha=0.1;
+export drifting_alpha=0.01; #0.1;
 
 export xray_pos_distribution_normal_mean=0;
 export xray_pos_distribution_normal_std=0.01; #0.1
@@ -25,16 +25,16 @@ export laser_pos_distribution_normal_mean=0;
 export laser_pos_distribution_normal_std=0.02; #0.2
 
 export laser_distribution_lognormal_mean=0.0;
-export laser_distribution_lognormal_std=0.1;
+export laser_distribution_lognormal_std=0.01; #0.1
 export xray_distribution_lognormal_mean=0.0;
-export xray_distribution_lognormal_std=0.5;
+export xray_distribution_lognormal_std=0.05; #0.5
 
 export lambda0=600;
 export lambda_width=300;
 export lambda_onoff=100;
-export tspan=4096;
+#export tspan=4096;
 #export tspan=8192;
-#export tspan=16384;
+export tspan=16384;
 #export tspan=32768;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;

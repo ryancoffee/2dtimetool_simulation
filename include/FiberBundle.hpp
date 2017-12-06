@@ -11,7 +11,6 @@
 #include <iostream>
 #include <fstream>
 
-#include "Constants.hpp"
 #include "DataOps.hpp"
 
 class FiberBundle {

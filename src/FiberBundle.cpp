@@ -1,5 +1,10 @@
 #include "FiberBundle.hpp"
 
+#include "Constants.hpp"
+using Constants::pi;
+using Constants::pi_3;
+
+
 FiberBundle::FiberBundle(size_t n = 109)
 : ixray(1.0)
 , ilaser(1.0)
@@ -22,8 +27,8 @@ FiberBundle::FiberBundle(size_t n = 109)
 	ids.resize(nfibers);
 	ovals.resize(nfibers);
 	zvals.resize(nfibers,std::complex<float>(0));
-	c=std::cos(float(M_PI)/3);
-	s=std::sin(float(M_PI)/3);
+	c=std::cos(pi_3<double>());
+	s=std::sin(pi_3<double>());
 	fiberdiam = 0.11;
 	laserdiam = 0.7;
 	xraydiam = 0.5;
@@ -81,7 +86,7 @@ bool FiberBundle::set_polarcoords(size_t n)
 	zvals[0] = std::complex<float>(0.f,0.f);
 	float theta;
 	for (size_t i=0;i<6;++i){
-		theta = float(i)*M_PI/3.0f;
+		theta = float(i)*pi_3<double>();
 		for (size_t r = 0;r<nrows;++r){
 			if (nfibers < 2) continue; 
 			zvals[r*6+i+1] = std::polar(1.0f, theta); 
