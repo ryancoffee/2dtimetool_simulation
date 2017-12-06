@@ -12,19 +12,6 @@
 
 using namespace std;
 
-/*
-// gsl includes
-#include <gsl/gsl_const_num.h> 
-#include <gsl/gsl_const_mksa.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_sf_erf.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_fft_complex.h>
-*/
-
 // my headers
 #include "Constants.hpp"
 #include "Pulse.hpp"
@@ -32,8 +19,11 @@ using namespace std;
 // my definitions
 
 using namespace Constants;
+class PulseFreq;
                 
 class MatResponse {
+
+	friend class PulseFreq;
         
 public: 
 	MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in = 0.95,double phase_in = 0.03) :
@@ -58,22 +48,15 @@ public:
 		beta=fsPau<double>()*betain;
 	}
 
-	void setstepvec_full(PulseFreq & pulse);
+	//void setstepvec_full(PulseFreq & pulse);
 	void setstepvec_full(PulseFreq * pulse);
-	/*
-	void setstepvec_amp(gsl_vector * modamp,double dt);
-	void setstepvec_phase(gsl_vector * modphase,double dt);
-	void addstepvec_amp(gsl_vector * modamp,double dt,double delay);
-	void addstepvec_phase(gsl_vector * modphase,double dt,double delay);
-	void setstepvec_marco(gsl_vector * modamp,double dt);
-	*/
-	void setstepvec_amp(PulseFreq & pulse);
+	//void setstepvec_amp(PulseFreq & pulse);
 	void setstepvec_amp(PulseFreq * pulse);
-	void setstepvec_phase(PulseFreq & pulse);
+	//void setstepvec_phase(PulseFreq & pulse);
 	void setstepvec_phase(PulseFreq * pulse);
-	void addstepvec_amp(PulseFreq & pulse,double delay);
+	//void addstepvec_amp(PulseFreq & pulse,double delay);
 	void addstepvec_amp(PulseFreq * pulse,double delay);
-	void addstepvec_phase(PulseFreq & pulse,double delay);
+	//void addstepvec_phase(PulseFreq & pulse,double delay);
 	void addstepvec_phase(PulseFreq * pulse,double delay);
 	
 	/*

@@ -15,21 +15,8 @@
 #include <fftw3.h>
 
 
-/*
-// gsl includes
-#include <gsl/gsl_const_num.h>
-#include <gsl/gsl_const_mksa.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_fft_complex.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
- */
-
 // my headers
+#include <MatResponse.hpp>
 #include <Constants.hpp>
 #include <DataOps.hpp>
 
@@ -43,9 +30,9 @@
 
 using namespace Constants;
 
-
 class PulseTime {
 
+	friend class MatResponse;
 
 	public:
 		PulseTime(double strength_in = 1e-3 * 0.696, double width_in = 50, double t0_in = 0.0) : 
@@ -107,6 +94,8 @@ class PulseTime {
 
 class PulseFreq {
 
+	friend class MatResponse;
+
 	public:
 		PulseFreq & operator=(PulseFreq const & rhs); // assignment
 		PulseFreq & operator+=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
@@ -119,7 +108,8 @@ class PulseFreq {
 		PulseFreq & interfere(const PulseFreq &rhs);
 
 	public:
-		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in); // default constructor
+		PulseFreq(void); // default constructor
+		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in);
 		PulseFreq(PulseFreq &rhs); // copy constructor
 		~PulseFreq(void);
 
@@ -149,7 +139,7 @@ class PulseFreq {
 			intime=false;
 		}
 
-		inline int addchirp(double chirp_in) {
+		int addchirp(double chirp_in) {
 			if (intime){
 				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
 				return 1;
@@ -164,7 +154,7 @@ class PulseFreq {
 			return 0;
 		}
 
-		inline int addchirp(double* chirp_in) {
+		int addchirp(double* chirp_in) {
 			if (intime){
 				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
 				return 1;
@@ -193,7 +183,7 @@ class PulseFreq {
 			}
 			return 0;
 		}
-		inline int addchirp(std::vector<double> & chirp_in) {
+		int addchirp(std::vector<double> & chirp_in) {
 			if (intime){
 				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
 				return 1;
@@ -305,8 +295,6 @@ class PulseFreq {
 		void printwavelength(std::ofstream * outfile,const double *delay);
 		inline double gettime(unsigned ind){return (time[ind]*fsPau<float>());}
 
-		std::vector<double> modamp;
-		std::vector<double> modphase;
 
 	private:
 
@@ -316,7 +304,8 @@ class PulseFreq {
 		unsigned long m_gain;
 		unsigned m_saturate;
 
-		bool parent,child;
+		size_t sampleround;
+
 		bool intime,infreq;
 		unsigned samples;
 		unsigned startind,stopind,onwidth,offwidth;
@@ -332,9 +321,12 @@ class PulseFreq {
 		std::complex<double> * cvec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
 
 		std::vector<double> rhovec;
-		std::vector<double> phivec;
+		std::vector<double> modamp;
 		std::vector<double> omega;
 		std::vector<double> time;
+		std::vector<double> modphase;
+		std::vector<double> phivec;
+
 		double nu0;
 
 		unsigned i_low, i_high;

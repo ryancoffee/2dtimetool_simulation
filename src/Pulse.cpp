@@ -17,29 +17,44 @@
 using namespace Constants;
 using namespace DataOps;
 
-PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<float>()),const double omwidth_in=(0.15*fsPau<float>()),const double omonoff_in=(0.1*fsPau<float>()), double tspan_in=(10000.0/fsPau<float>())): // default constructor
+PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<float>()),const double omwidth_in=(0.15*fsPau<float>()),const double omonoff_in=(0.1*fsPau<float>()), double tspan_in=(10000.0/fsPau<float>())):
 	omega_center(omcenter_in),
 	omega_width(omwidth_in ),
 	omega_high( std::max(4.0*(omcenter_in + omwidth_in),10.0*omcenter_in) ),
 	domega( 2.0*pi<double>()/tspan_in),
-	omega(NULL),
 	intime(false),
 	infreq(true),
-	time(NULL),
-	parent(true),
-	child(false),
 	i_low( (unsigned)(double( atof( getenv("nu_low") ) )* 2.0*pi<double>()*fsPau<double>()/domega) ),
 	i_high( (unsigned)(double( atof( getenv("nu_high") ) )* 2.0*pi<double>()*fsPau<double>()/domega) ),
 	m_noisescale(1e-3),
 	m_sampleinterval(2),
 	m_saturate(4096),
 	m_gain(1000000),
-	m_lamsamples(2048)
+	m_lamsamples(2048),
+	sampleround(1000)
 {
-	samples = (( (unsigned)(2.0 * omega_high / domega))/SAMPLEROUND + 1 ) *SAMPLEROUND;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
+	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
+	std::cerr << "\n\t========== samples = " << samples << " ===========\n" << std::flush;
 	dtime = tspan_in/double(samples);
 	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
+	std::cerr << "trying to resize rhovec first" << std::endl;
+	rhovec.resize(samples,0.0);
+	std::cerr << "rhovec.size() = " << rhovec.size() << std::endl;
+	std::cerr << "trying to resize modamp first" << std::endl;
+	modamp.resize(samples,1.0);
+	std::cerr << "modamp.size() = " << modamp.size() << std::endl;
+	std::cerr << "trying to resize phivec first" << std::endl;
+	phivec.resize(samples,0.0);
+	std::cerr << "trying to resize modphase first" << std::endl;
+	modphase.resize(samples,0.0);
+	std::cerr << "trying to resize omega first" << std::endl;
+	omega.resize(samples);
+	std::cerr << "trying to resize time first" << std::endl;
+	time.resize(samples);
+	std::cerr << "resized vecs OK" << std::endl;
+	std::cerr << "before PulseFreq::buildvectors()" << std::endl;
 	buildvectors();
+	std::cerr << "after PulseFreq::buildvectors()" << std::endl;
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<float>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
 	m_gain = (unsigned long)(atoi( getenv("gain")));
@@ -62,13 +77,12 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
 	m_sampleinterval(rhs.m_sampleinterval),
 	m_saturate(rhs.m_saturate),
 	m_gain(rhs.m_gain),
-	m_lamsamples(rhs.m_lamsamples)
+	m_lamsamples(rhs.m_lamsamples),
+	sampleround(1000)
 {
 	DataOps::clone(omega,rhs.omega);
 	DataOps::clone(time,rhs.time);
 
-	parent=false;
-	child=true;
 	samples = rhs.samples;
 	startind = rhs.startind;stopind=rhs.stopind;onwidth=rhs.onwidth;offwidth=rhs.offwidth;
 	tspan = rhs.tspan;
@@ -99,8 +113,6 @@ PulseFreq & PulseFreq::operator=(PulseFreq const & rhs) // assignment
 	infreq=rhs.infreq;
 	omega=rhs.omega; // these are static vectors... i'm trying not to make copies just yet
 	time=rhs.time; // these are static vectors... i'm trying not to make copies just yet
-	parent=false;
-	child=true;
 	i_low=rhs.i_low; 
 	i_high=rhs.i_high; 
 	m_noisescale=rhs.m_noisescale;
@@ -130,11 +142,7 @@ PulseFreq & PulseFreq::operator=(PulseFreq const & rhs) // assignment
 }
 
 PulseFreq::~PulseFreq(void){
-	if(child){
-		killtheseonly();
-	} else {
-		killvectors();
-	}
+	killvectors();
 }
 void PulseFreq::rhophi2cvec(void)
 {
@@ -254,13 +262,6 @@ bool PulseFreq::addrandomphase(void)
 			FFTW_MEASURE
 			);
 
-
-	/*
-	std::normal_distribution<double> norm_distribution(
-		double(atof(getenv("randphase_mean")))*Constants::pi<double>(),
-		double(atof(getenv("randphase_std")))*Constants::pi<double>()
-		);
-	*/
 	std::uniform_real_distribution<double> distribution(
 		(double(atof(getenv("randphase_mean")))-double(atof(getenv("randphase_std"))))*Constants::pi<double>(),
 		(double(atof(getenv("randphase_mean")))+double(atof(getenv("randphase_std"))))*Constants::pi<double>()
@@ -469,13 +470,18 @@ void PulseFreq::buildvectors(void){
 	for (size_t i=0;i<samples;++i){
 		cvec[i] = std::complex<double>(0);
 	}
+	std::cerr << "Here in PulseFreq::buildvectors(void)" << std::endl;
 
 	FTplan_forward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_FORWARD, FFTW_ESTIMATE);
 	FTplan_backward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_BACKWARD, FFTW_ESTIMATE);
 
+	std::cerr << "Here in PulseFreq::buildvectors(void)" << std::endl;
 	static std::complex<double> z;
 	//factorization();
 
+	std::cerr << "Here in PulseFreq::buildvectors(void)" << std::endl;
+	std::cerr << "Here in PulseFreq::buildvectors(void)\t resizing vectors" << std::endl;
+	std::cerr << "========= HERE IS WHERE IT FAILS ===========" << std::endl;
 	rhovec.resize(samples,0.0);
 	phivec.resize(samples,0.0);
 	modamp.resize(samples,1.0);
@@ -534,15 +540,10 @@ void PulseFreq::buildvectors(void){
 		omega[samples-i] = -domega*i;
 		time[samples-i] = -dtime*i;
 	}
+	std::cerr << "Here leaving PulseFreq::buildvectors(void)" << std::endl;
 	
 }
 void PulseFreq::killvectors(void){
-	fftw_destroy_plan(FTplan_forward);
-	fftw_destroy_plan(FTplan_backward);
-	fftw_free(cvec);
-	cvec = NULL;
-}
-void PulseFreq::killtheseonly(void){
 	fftw_destroy_plan(FTplan_forward);
 	fftw_destroy_plan(FTplan_backward);
 	fftw_free(cvec);

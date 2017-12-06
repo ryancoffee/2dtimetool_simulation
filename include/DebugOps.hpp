@@ -10,4 +10,13 @@ namespace DebugOps
 			<< std::flush;
 		return r;
 	}
+
+	void pushout(std::string str){
+		std::cerr << str << std::endl;
+	}
+
+	template <typename T>
+	void pushout(std::string str, T n){
+		std::cerr << str << std::to_string(n) << std::endl;
+	}
 }
