@@ -135,6 +135,11 @@ public:
 		m_gain(1000000),
 		m_lamsamples(2048)
 	{
+		std::cerr << "\n\t========== SAMPLEROUND = " << SAMPLEROUND << " ===========\n" << std::flush;
+		std::cerr << "\n\t========== omega_high = " << omega_high << " ===========\n" << std::flush;
+		std::cerr << "\n\t========== domega = " << domega << " ===========\n" << std::flush;
+
+
 		samples = (( static_cast<unsigned>(2.0 * omega_high / domega))/SAMPLEROUND + 1 ) *SAMPLEROUND;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
 		allocatetables();
 		dtime = tspan_in/static_cast<double>(samples);

@@ -97,6 +97,16 @@ int main(int argc, char* argv[])
 	double backstep = backdelay/ngroupsteps;
 	const unsigned netalon = (unsigned)(atoi(getenv("netalon")));
 
+	std::cerr << "\n\n=========== MADE IT HERE before masterpulse ============\n\n" << std::endl;
+	std::cerr << "\n\t============= omega_low, omega_high, tspan, omega0, omega_width, omega_onoff = "
+		<< omega_low << ", "
+		<< omega_high << ", "
+		<< tspan << ", "
+		<< omega0 << ", "
+		<< omega_width << ", "
+		<< omega_onoff
+		<< " ===============\n" << std::endl;
+
 	// start with building reference and etalon replicas //
 	PulseFreq masterpulse(omega0,omega_width,omega_onoff,tspan);
 	std::vector<double> chirpvec(4,0.);
