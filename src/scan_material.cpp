@@ -18,8 +18,6 @@ int main(int argc, char* argv[])
 {
 	unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
 
-	//size_t nimages = size_t(atoi(getenv("nimages")));
-
 	ScanParams scanparams;
 	scanparams.nimages(size_t(atoi(getenv("nimages"))));
 	scanparams.filebase(std::string(getenv("filebase")));
@@ -36,31 +34,10 @@ int main(int argc, char* argv[])
 	scanparams.lambda_onoff( atof( getenv("lambda_onoff") ));
 	scanparams.tspan((atof( getenv("tspan") ) )/fsPau<double>());
 
-	//double lambda0 = (double)( atof( getenv("lambda0") ) );
-	//double lambda_width = (double)( atof( getenv("lambda_width") ) );
-	//double lambda_onoff = (double)( atof( getenv("lambda_onoff") ) );
-	//double tspan = (double)( atof( getenv("tspan") ) )/fsPau<float>();
-
-	//double omega_low = twopi<double>()/(lambda0+lambda_width/2.0)*C_nmPfs<double>()*fsPau<double>();
-	//scanparams.omega_low();
-	//double omega_high = twopi<double>()/(lambda0-lambda_width/2.0)*C_nmPfs<double>()*fsPau<double>();
-	//double omega_width = omega_high-omega_low;
-	//double omega_onoff = twopi<double>()/(lambda0+lambda_width/2.0-lambda_onoff)*C_nmPfs<double>()*fsPau<double>() - omega_low;
-
-	//double omega0 = (omega_high+omega_low)/2.0;
-
 	scanparams.ngroupsteps(atoi( getenv("ngroupsteps") ));
 	scanparams.groupdelay(atof(getenv("groupdelay")));
 	scanparams.backdelay(atof(getenv("backdelay")));
 	scanparams.netalon(atoi(getenv("netalon")));
-	/*
-	const unsigned netalon = (unsigned)(atoi(getenv("netalon")));
-	unsigned ngroupsteps = (unsigned)( atoi( getenv("ngroupsteps") ) );
-	double groupdelay = (double)(atof(getenv("groupdelay"))); //this one gets used in fs
-	double backdelay = (double)(atof(getenv("backdelay")));
-	double groupstep = groupdelay/ngroupsteps ;
-	double backstep = backdelay/ngroupsteps;
-	*/
 
 	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
 
@@ -134,34 +111,42 @@ int main(int argc, char* argv[])
 	masterresponse.setreflectance(scanparams.etalonreflectance());
 	masterresponse.setetalondelay(scanparams.etalondelay());
 
-#pragma omp parallel num_threads(nthreads) shared(masterbundle,masterpulse,masterresponse,scanparams)
-	{ // begin parallel region
-		size_t tid = omp_get_thread_num();
-		FiberBundle parabundle(masterbundle);
-		std::vector< PulseFreq* > pulsearray(parabundle.get_nfibers());
-		std::vector< PulseFreq* > crosspulsearray(parabundle.get_nfibers());
-		for (size_t i=0;i<pulsearray.size();++i){
-			pulsearray[i] = new PulseFreq(masterpulse);
-			crosspulsearray[i] = new PulseFreq(masterpulse);
-		}
 
-//#pragma omp for // ordered 
-		for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
-			double t0 = scanparams.delays_uniform();
-			double startdelay(0);
-			std::cout << "Running for t0 = " << t0 << std::endl;
-			DebugOps::pushout(std::string("in threaded for loop, thread" + std::to_string(tid)));
 
-			parabundle.Ixray(scanparams.xray_inten_rand());
-			parabundle.Ilaser(scanparams.laser_inten_rand());
-			parabundle.delay_angle(scanparams.dalpha()*double(n));
-			parabundle.center_Ixray(scanparams.xray_pos_rand(),scanparams.xray_pos_rand());
-			parabundle.center_Ilaser(scanparams.laser_pos_rand(),scanparams.laser_pos_rand());
+	FiberBundle parabundle(masterbundle);
+	std::vector< PulseFreq* > pulsearray(parabundle.get_nfibers());
+	std::vector< PulseFreq* > crosspulsearray(parabundle.get_nfibers());
+	for (size_t i=0;i<pulsearray.size();++i){
+		pulsearray[i] = new PulseFreq(masterpulse);
+		crosspulsearray[i] = new PulseFreq(masterpulse);
+	}
 
-			MatResponse pararesponse(masterresponse);
+	for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
+		double t0 = scanparams.delays_uniform();
+		double startdelay(0);
 
-			for(size_t i = 0; i< parabundle.get_nfibers(); i++){ // begin fibers loop
+		parabundle.Ixray(scanparams.xray_inten_rand());
+		parabundle.Ilaser(scanparams.laser_inten_rand());
+		parabundle.delay_angle(scanparams.dalpha()*double(n));
+		parabundle.center_Ixray(scanparams.xray_pos_rand(),scanparams.xray_pos_rand());
+		parabundle.center_Ilaser(scanparams.laser_pos_rand(),scanparams.laser_pos_rand());
 
+		MatResponse pararesponse(masterresponse);
+
+#pragma omp parallel num_threads(nthreads) shared(pulsearray,crosspulsearray,masterbundle,masterpulse,masterresponse,scanparams)
+		{ // begin parallel region
+
+			size_t tid = omp_get_thread_num();
+			if (tid==0){
+				std::cout << "Running for t0 = " << t0 << std::endl;
+				std::cerr << "\n\n\t\t===== scanparams.delays_uniform() = " << scanparams.delays_uniform() << std::endl;
+				DebugOps::pushout(std::string("in threaded for loop, thread" + std::to_string(tid)));
+			}
+
+
+#pragma omp for schedule(static) // ordered 
+			for(size_t i = 0; i< parabundle.get_nfibers(); i++)
+			{ // begin fibers loop
 
 				if (scanparams.addchirpnoise()){
 					std::vector<double> noise(scanparams.getchirpnoise());
@@ -265,49 +250,46 @@ int main(int argc, char* argv[])
 				crosspulsearray[i]->delay(-scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
 			} // end nfibers loop
+		} // end parallel region
 
+		filename = scanparams.filebase() + "interference.out." + std::to_string(n);
+		ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
 
+		std::cout << "interfere filename out = " << filename << std::endl;
+		std::complex<double> z_laser = parabundle.center_Ilaser();
+		std::complex<double> z_xray = parabundle.center_Ixray();
+		interferestream << "#delay for image = \t" << t0 
+			<< "\n#Ilaser = \t" << parabundle.Ilaser()
+			<< "\n#Ixray = \t" << parabundle.Ixray()
+			<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+			<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+			<< "\n#alpha = \t" << parabundle.delay_angle() 
+			<< std::endl;
+		interferestream << "#";
+		pulsearray[0]->printwavelengthbins(&interferestream);
 
+		for (size_t i=0;i<parabundle.get_nfibers();i++){
+			*pulsearray[i] -= *crosspulsearray[i];
+			*pulsearray[i] *= parabundle.Ilaser(size_t(i)); 
+			pulsearray[i]->appendwavelength(&interferestream);
+		}
+		interferestream.close();
 
-			filename = scanparams.filebase() + "interference.out.thread" + std::to_string(tid) + "." + std::to_string(n);
-			ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
-			std::cout << "interfere filename out = " << filename << std::endl;
-			std::complex<double> z_laser = parabundle.center_Ilaser();
-			std::complex<double> z_xray = parabundle.center_Ixray();
-			interferestream << "#delay for image = \t" << t0 
-				<< "\n#Ilaser = \t" << parabundle.Ilaser()
-				<< "\n#Ixray = \t" << parabundle.Ixray()
-				<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-				<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-				<< "\n#alpha = \t" << parabundle.delay_angle() 
-				<< std::endl;
-			interferestream << "#";
-			pulsearray[0]->printwavelengthbins(&interferestream);
+	} // outermost loop for nimages to produce //
 
-			for (size_t i=0;i<parabundle.get_nfibers();i++){
-				*pulsearray[i] -= *crosspulsearray[i];
-				*pulsearray[i] *= parabundle.Ilaser(size_t(i)); 
-				pulsearray[i]->appendwavelength(&interferestream);
-			}
-			interferestream.close();
-
-			DebugOps::pushout(std::string("At end of images loop in thread" + std::to_string(tid) + "\t"),n);
-
-		} // outermost loop for nimages to produce //
 
 
 	// file for delay bins
-	filename = scanparams.filebase() + "delaybins.out.thread" + std::to_string(tid);
+	filename = scanparams.filebase() + "delaybins.out";
 	ofstream outbins(filename.c_str(),ios::out); 
 	for (size_t i=0;i<parabundle.get_nfibers();++i){
 		outbins << parabundle.delay(i) << "\n";
 	}
 	outbins.close();
-		for (size_t i=0;i<pulsearray.size();++i){
-			delete pulsearray[i];
-			delete crosspulsearray[i];
-		}
-	} // end parallel region
+	for (size_t i=0;i<pulsearray.size();++i){
+		delete pulsearray[i];
+		delete crosspulsearray[i];
+	}
 
 	return 0;
 }
