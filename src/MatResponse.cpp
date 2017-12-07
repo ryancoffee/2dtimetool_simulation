@@ -1,6 +1,31 @@
 #include "MatResponse.hpp"
 #include "Constants.hpp"
 
+MatResponse::MatResponse(MatResponse & rhs) // copy constructor
+{
+	t0=rhs.t0;
+	twidth=rhs.twidth;
+	attenuation=rhs.attenuation;
+	phase=rhs.phase;
+	a=rhs.a;
+	b=rhs.b;
+	alpha=rhs.alpha;
+	beta=rhs.beta;
+	etalondelay=rhs.etalondelay;
+	reflectance=rhs.reflectance;
+}        
+
+MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in = 0.95,double phase_in = 0.03) :
+	t0(t0_in / fsPau<double>()),
+	twidth(width_in * root_pi<double>()/ fsPau<double>() / 2.0),
+	attenuation(atten_in),
+	phase(phase_in)
+{     
+	a=0.75;
+	b=0.25;
+	alpha=5.0e-4*fsPau<double>();
+	beta=0.0;
+}        
 //void MatResponse::setstepvec_full(PulseFreq & pulse){ setstepvec_full( &pulse); }
 void MatResponse::setstepvec_full(PulseFreq * pulse){
         double arg;

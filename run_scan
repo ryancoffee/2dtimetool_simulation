@@ -117,10 +117,12 @@ export TOD=0;
 export FOD=0;
 export fifthOD=0;
 # noise values to simulate unstable continuum, should be positive
+export usechirpnoise=0;
 export chirpnoise=0; 
 export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
+
 export interferedelay=2500; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=8000000;

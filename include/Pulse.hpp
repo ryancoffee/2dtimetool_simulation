@@ -18,6 +18,7 @@
 // my headers
 #include <MatResponse.hpp>
 #include <Constants.hpp>
+#include <ScanParams.hpp>
 #include <DataOps.hpp>
 
 // my definitions
@@ -30,13 +31,15 @@
 
 using namespace Constants;
 
+class ScanParams;
+
 class PulseTime {
 
 	public:
 		PulseTime(double strength_in = 1e-3 * 0.696, double width_in = 50, double t0_in = 0.0) : 
-			strength(strength_in * auenergy<float>()/Eh<float>() * std::pow(aufor10PW<float>(),int(2))), 
-			Ctau(width_in * root_pi<double>() / fsPau<float>() / 2.0),
-			t0(t0_in / fsPau<float>())
+			strength(strength_in * auenergy<double>()/Eh<double>() * std::pow(aufor10PW<double>(),int(2))), 
+			Ctau(width_in * root_pi<double>() / fsPau<double>() / 2.0),
+			t0(t0_in / fsPau<double>())
 	{
 		//    std::clog << "Creating Pulse " << this << std::endl;
 	}
@@ -88,6 +91,8 @@ class PulseTime {
 			}
 		}
 };
+
+
 
 
 class PulseFreq {
@@ -290,12 +295,12 @@ class PulseFreq {
 		void printfrequencydelaychirp(std::ofstream * outfile, const double *delay,const double *chirp);
 		void printtime(std::ofstream * outfile);
 		void printwavelength(std::ofstream * outfile,const double *delay);
-		inline double gettime(unsigned ind){return (time[ind]*fsPau<float>());}
+		inline double gettime(unsigned ind){return (time[ind]*fsPau<double>());}
 
 
 	private:
 
-		float m_noisescale;
+		double m_noisescale;
 		size_t m_sampleinterval;
 		size_t m_lamsamples;
 		unsigned long m_gain;

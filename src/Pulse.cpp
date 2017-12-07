@@ -17,7 +17,7 @@
 using namespace Constants;
 using namespace DataOps;
 
-PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<float>()),const double omwidth_in=(0.15*fsPau<float>()),const double omonoff_in=(0.1*fsPau<float>()), double tspan_in=(10000.0/fsPau<float>())):
+PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const double omwidth_in=(0.15*fsPau<double>()),const double omonoff_in=(0.1*fsPau<double>()), double tspan_in=(10000.0/fsPau<double>())):
 	omega_center(omcenter_in),
 	omega_width(omwidth_in ),
 	omega_high( std::max(4.0*(omcenter_in + omwidth_in),10.0*omcenter_in) ),
@@ -45,7 +45,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<float>()),const double
 	time.resize(samples);
 	*/
 	buildvectors();
-	nu0=omcenter_in/(2.0*pi<double>())*fsPau<float>();
+	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
 	m_gain = (unsigned long)(atoi( getenv("gain")));
 	m_noisescale = (double)( atof( getenv("noisescale") ) );
