@@ -21,8 +21,6 @@ int main(int argc, char* argv[])
 	ScanParams scanparams;
 	scanparams.nimages(size_t(atoi(getenv("nimages"))));
 	scanparams.filebase(std::string(getenv("filebase")));
-	std::string filename;
-
 
 	scanparams.dalpha((atof(getenv("drifting_alpha")))*pi<double>()/scanparams.nimages());
 
@@ -43,16 +41,16 @@ int main(int argc, char* argv[])
 
 	if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0) ){
 		masterpulse.addrandomphase();
-		filename = scanparams.filebase() + "spectralphaseFTpower.dat";
-		std::ofstream outfile(filename,std::ios::out);
+		std::string filename = scanparams.filebase() + "spectralphaseFTpower.dat";
+		std::ofstream outfile(filename.c_str(),std::ios::out);
 		masterpulse.print_phase_powerspectrum(outfile);
 		outfile.close();
 		filename = scanparams.filebase() + "spectralphase.dat";
-		outfile.open(filename);
+		outfile.open(filename.c_str(),std::ios::out);
 		masterpulse.print_phase(outfile);
 		outfile.close();
 		filename = scanparams.filebase() + "spectralamp.dat";
-		outfile.open(filename);
+		outfile.open(filename.c_str(),std::ios::out);
 		masterpulse.print_amp(outfile);
 		outfile.close();
 	}
@@ -90,11 +88,12 @@ int main(int argc, char* argv[])
 	masterbundle.shuffle_output();
 	masterbundle.Ixray(float(1.));
 	masterbundle.Ilaser(float(1.));
-	filename = scanparams.filebase() + "fibermap.out";
+	std::string filename = scanparams.filebase() + "fibermap.out";
 	std::cerr << filename << std::endl;
 	std::ofstream mapfile(filename.c_str(),std::ios::out);
 	masterbundle.print_mapping(mapfile);
 	mapfile.close();
+	std::cerr << "just now setting masterresponse()" << std::endl;
 	MatResponse masterresponse(
 			0,															// stepdelay
 			(double)( atof( getenv("stepwidth") ) ),								// stepwidth
@@ -112,10 +111,8 @@ int main(int argc, char* argv[])
 	masterresponse.setetalondelay(scanparams.etalondelay());
 
 
-
-	FiberBundle parabundle(masterbundle);
-	std::vector< PulseFreq* > pulsearray(parabundle.get_nfibers());
-	std::vector< PulseFreq* > crosspulsearray(parabundle.get_nfibers());
+	std::vector< PulseFreq* > pulsearray(masterbundle.get_nfibers());
+	std::vector< PulseFreq* > crosspulsearray(masterbundle.get_nfibers());
 	for (size_t i=0;i<pulsearray.size();++i){
 		pulsearray[i] = new PulseFreq(masterpulse);
 		crosspulsearray[i] = new PulseFreq(masterpulse);
@@ -125,6 +122,7 @@ int main(int argc, char* argv[])
 		double t0 = scanparams.delays_uniform();
 		double startdelay(0);
 
+		FiberBundle parabundle(masterbundle);
 		parabundle.Ixray(scanparams.xray_inten_rand());
 		parabundle.Ilaser(scanparams.laser_inten_rand());
 		parabundle.delay_angle(scanparams.dalpha()*double(n));
@@ -158,8 +156,7 @@ int main(int argc, char* argv[])
 				pulsearray[i]->fft_totime();
 				crosspulsearray[i]->fft_totime();
 
-				DebugOps::pushout("\nhere before pararesponse setting in tid ",tid);
-				DebugOps::pushout("\nstartdelay = ",startdelay);
+				if (tid ==0){DebugOps::pushout("\nhere before pararesponse setting in tid ",tid);}
 
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
@@ -250,9 +247,9 @@ int main(int argc, char* argv[])
 				crosspulsearray[i]->delay(-scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
 			} // end nfibers loop
-		} // end parallel region
 
-		filename = scanparams.filebase() + "interference.out." + std::to_string(n);
+
+		std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);
 		ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
 
 		std::cout << "interfere filename out = " << filename << std::endl;
@@ -267,23 +264,22 @@ int main(int argc, char* argv[])
 			<< std::endl;
 		interferestream << "#";
 		pulsearray[0]->printwavelengthbins(&interferestream);
-
 		for (size_t i=0;i<parabundle.get_nfibers();i++){
 			*pulsearray[i] -= *crosspulsearray[i];
 			*pulsearray[i] *= parabundle.Ilaser(size_t(i)); 
 			pulsearray[i]->appendwavelength(&interferestream);
 		}
 		interferestream.close();
+		} // end parallel region
 
 	} // outermost loop for nimages to produce //
 
 
 
 	// file for delay bins
-	filename = scanparams.filebase() + "delaybins.out";
-	ofstream outbins(filename.c_str(),ios::out); 
-	for (size_t i=0;i<parabundle.get_nfibers();++i){
-		outbins << parabundle.delay(i) << "\n";
+	ofstream outbins(std::string(scanparams.filebase() + "delaybins.out").c_str(),ios::out); 
+	for (size_t i=0;i<masterbundle.get_nfibers();++i){
+		outbins << masterbundle.delay(i) << "\n";
 	}
 	outbins.close();
 	for (size_t i=0;i<pulsearray.size();++i){

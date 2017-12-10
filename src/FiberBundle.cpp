@@ -11,6 +11,7 @@ FiberBundle::FiberBundle(size_t n = 109)
 , alpha(0.0)
 , nrows(1)
 {
+	std::cerr << "In constructor FiberBundle() " << std::endl;
 
 	if (!set_polarcoords(n)) {
 		std::cerr << "\n\n\t\t=========================" 

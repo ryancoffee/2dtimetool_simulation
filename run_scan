@@ -12,7 +12,7 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-export nimages=10;
+export nimages=4;
 export delays_mean=-1800;
 #export delays_std=100;
 export delays_std=2000;

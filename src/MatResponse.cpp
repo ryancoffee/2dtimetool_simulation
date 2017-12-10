@@ -21,6 +21,7 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
 	attenuation(atten_in),
 	phase(phase_in)
 {     
+	std::cerr << "In constructor MatRespons() " << std::endl;
 	a=0.75;
 	b=0.25;
 	alpha=5.0e-4*fsPau<double>();
