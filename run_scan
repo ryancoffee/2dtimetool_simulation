@@ -8,7 +8,7 @@ export datadir='./data/raw/';
 mkdir -p $datadir;
 
 # for Omar, testing the addition of random phase
-export addrandomphase=1;
+export addrandomphase=0;
 export phaseNoiseLowpass=10000; # this is in units of total number of time samples... and that is enormous.
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
@@ -55,7 +55,7 @@ export noisescale=.00005;
 export noisesampleskip=5;
 export printnoisesamples=0; # use this to control wheter to printout noise samples
 
-export sampleinterval=4;
+export sampleinterval=8;
 
 export nu_low=0.4;
 export nu_high=0.65;

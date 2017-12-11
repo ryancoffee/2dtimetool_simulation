@@ -283,6 +283,83 @@ class PulseFreq
 			}
 			return 0;
 		}
+		void print_amp(std::ofstream & outfile);
+		void print_phase(std::ofstream & outfile);
+		void print_phase_powerspectrum(std::ofstream & outfile);
+		void printwavelengthbins(ofstream * outfile);
+		void appendwavelength(ofstream * outfile);
+		void appendfrequency(ofstream * outfile);
+		void appendnoisy(ofstream * outfile);
+		void appendfrequencybins(ofstream * outfile);
+		void printfrequencybins(ofstream * outfile);
+		void printfrequency(ofstream * outfile);
+		void printfrequencydelay(ofstream * outfile, const double *delay);
+		void printfrequencydelaychirp(ofstream * outfile, const double *delay,const double *chirp);
+		void printtime(ofstream * outfile);
+		void printwavelength(ofstream * outfile,const double *delay);
+		inline double gettime(unsigned ind){return (time[ind]*fsPau<float>());}
+
+		gsl_vector * modamp;
+		gsl_vector * modphase;
+
+	private:
+
+		float m_noisescale;
+		size_t m_sampleinterval;
+		size_t m_lamsamples;
+		unsigned long m_gain;
+		unsigned m_saturate;
+
+		const bool parent,child;
+		bool intime,infreq;
+		unsigned samples;
+		unsigned startind,stopind,onwidth,offwidth;
+		double tspan;
+		double domega,lambda_center,lambda_width,omega_center,omega_width,omega_high;
+		double omega_onwidth,omega_offwidth;
+		double phase_GDD,phase_TOD,phase_4th,phase_5th;
+		double dtime,time_center,time_wdith;
+		gsl_fft_complex_wavetable * cwave;
+		gsl_fft_complex_workspace * cspace;
+		gsl_vector_complex * cvec;
+		gsl_vector * rhovec;
+		gsl_vector * phivec;
+		double * omega, *time;
+		double nu0;
+
+		const unsigned i_low, i_high;
+
+
+		void allocatetables(void);
+		void buildvectors(void);
+		void factorization(void);
+		void killvectors(void);
+		void killtheseonly(void);
+
+		inline void addGDDtoindex(const unsigned indx,const int omega_sign) {
+			static gsl_complex z;
+			phivec->data[indx] += omega_sign*phase_GDD*gsl_pow_2(omega[indx]-(double(omega_sign)*omega_center));
+			z = gsl_complex_polar(rhovec->data[indx],phivec->data[indx]);
+			gsl_vector_complex_set(cvec,indx,z);
+		}	
+		inline void addTODtoindex(const unsigned indx,const int omega_sign) {
+			static gsl_complex z;
+			phivec->data[indx] += omega_sign*phase_TOD*gsl_pow_3(omega[indx]-(double(omega_sign)*omega_center));
+			z = gsl_complex_polar(rhovec->data[indx],phivec->data[indx]);
+			gsl_vector_complex_set(cvec,indx,z);
+		}	
+		inline void add4thtoindex(const unsigned indx,const int omega_sign) {
+			static gsl_complex z;
+			phivec->data[indx] += omega_sign*phase_4th*gsl_pow_4(omega[indx]-(double(omega_sign)*omega_center));
+			z = gsl_complex_polar(rhovec->data[indx],phivec->data[indx]);
+			gsl_vector_complex_set(cvec,indx,z);
+		}	
+		inline void add5thtoindex(const unsigned indx,const int omega_sign) {
+			static gsl_complex z;
+			phivec->data[indx] += omega_sign*phase_5th*gsl_pow_5(omega[indx]-(double(omega_sign)*omega_center));
+			z = gsl_complex_polar(rhovec->data[indx],phivec->data[indx]);
+			gsl_vector_complex_set(cvec,indx,z);
+		}	
 
 		void print_amp(std::ofstream & outfile);
 		void print_phase(std::ofstream & outfile);
