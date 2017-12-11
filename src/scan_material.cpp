@@ -109,6 +109,8 @@ int main(int argc, char* argv[])
 
 	// start with building reference and etalon replicas //
 	PulseFreq masterpulse(omega0,omega_width,omega_onoff,tspan);
+	masterpulse.set_lamsamples(size_t(atoi( getenv("lamsamples"))));
+
 	std::vector<double> chirpvec(4,0.);
 	std::vector<double> chirpnoisevec(4,0.);
 	chirpvec[0] = (double)( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),int(2));// the difference in slopes at omega_low versus omega_high must equal tspan
