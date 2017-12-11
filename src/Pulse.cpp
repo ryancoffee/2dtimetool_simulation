@@ -150,7 +150,6 @@ PulseFreq::~PulseFreq(void){
 	killvectors();
 }
 
-
 void PulseFreq::rhophi2cvec(void)
 {
 	for (size_t i=0;i<samples;i++){
