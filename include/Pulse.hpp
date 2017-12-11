@@ -115,6 +115,10 @@ class PulseFreq {
 		PulseFreq(PulseFreq &rhs); // copy constructor
 		~PulseFreq(void);
 
+		void set_lamsamples(size_t in);
+		void set_gain(int in);
+		void set_saturate(int in);
+
 		bool addrandomphase();
 
 		inline unsigned getsamples(void) {

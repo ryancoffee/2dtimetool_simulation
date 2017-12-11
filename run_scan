@@ -12,6 +12,7 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
+
 export nimages=4;
 export delays_mean=-1800;
 #export delays_std=100;
@@ -32,9 +33,9 @@ export xray_distribution_lognormal_std=0.05; #0.5
 export lambda0=600;
 export lambda_width=300;
 export lambda_onoff=100;
-#export tspan=4096;
+export tspan=4096;
 #export tspan=8192;
-export tspan=16384;
+#export tspan=16384;
 #export tspan=32768;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
@@ -127,6 +128,7 @@ export interferedelay=2500; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=8000000;
 export saturate=4096;
+export lamsamples=128;
 
 export filebase=$datadir"debug_nogsl"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 echo $filebase

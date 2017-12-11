@@ -37,17 +37,10 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
 	dtime = tspan_in/double(samples);
 	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
-	/*
-	rhovec.resize(samples,0.0);
-	modamp.resize(samples,1.0);
-	phivec.resize(samples,0.0);
-	modphase.resize(samples,0.0);
-	omega.resize(samples);
-	time.resize(samples);
-	*/
 	buildvectors();
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
+	m_lamsamples = (size_t)(atoi( getenv("lamsamples")));
 	m_gain = (unsigned long)(atoi( getenv("gain")));
 	m_noisescale = (double)( atof( getenv("noisescale") ) );
 	m_sampleinterval = (unsigned)(atoi(getenv("sampleinterval")));
@@ -135,6 +128,10 @@ PulseFreq & PulseFreq::operator=(PulseFreq const & rhs) // assignment
 PulseFreq::~PulseFreq(void){
 	killvectors();
 }
+void PulseFreq::set_lamsamples(size_t in = 2048){m_lamsamples = in;}
+void PulseFreq::set_gain(int in = 1000000){m_gain = in;}
+void PulseFreq::set_saturate(int in = 4096){m_saturate = in;}
+
 void PulseFreq::rhophi2cvec(void)
 {
 	for (size_t i=0;i<samples;i++){
