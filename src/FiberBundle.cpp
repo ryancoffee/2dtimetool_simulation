@@ -1,4 +1,5 @@
 #include "FiberBundle.hpp"
+#include "DataOps.hpp"
 
 FiberBundle::FiberBundle(size_t n = 109)
 : ixray(1.0)
@@ -42,13 +43,38 @@ bool FiberBundle::shuffle_output(void)
 	std::shuffle(ids.begin(),ids.end(),e);
 }
 
+/*
+bool FiberBundle::load_mapping(std::ifstream & in)
+{
+	if (!in.is_open())
+		return false;
+	std::vector< std::vector < double> > datamat;
+
+	in >> datamat;
+
+	nfibers = datamat.size();
+	std::cout << "nfibers read in is " << nfibers << std::endl;
+	for (size_t i=0; i<nfibers;++i){
+		ids[i] = datamat[i][0];
+		//zvals[ids[i]] = std::complex<double>(datamat[i][3],datamat[i][4]);
+		//ovals[ids[i]] = datamat[i][5];
+		//delay(ids[i],datamat[i][6]);
+		//Ilaser(ids[i],datamat[i][7]) << "\t" 
+		//Ixray(ids[i],datamat[i][8]) << "\n";
+	}
+
+	return true;
+
+}
+*/
 bool FiberBundle::print_mapping(std::ofstream & out)
 {
 	if (!out.is_open() )
 		return false;
 	out << "#r\ttheta\tx\ty\to\tdelay\tIlas\tIxray\n"; 
 	for (size_t i=0;i<zvals.size();++i){
-		out << std::abs(zvals[i]) << "\t" 
+		out << ids[i] << "\t"
+			<< std::abs(zvals[i]) << "\t" 
 			<< std::arg(zvals[ids[i]]) << "\t" 
 			<< zvals[ids[i]].real() << "\t" 
 			<< zvals[ids[i]].imag() << "\t" 

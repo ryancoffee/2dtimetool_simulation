@@ -18,6 +18,7 @@ class FiberBundle {
 	public:
 		FiberBundle(size_t n);
 		bool print_mapping(std::ofstream & out);
+		//bool load_mapping(std::ifstream & in);
 		bool shuffle_output(void);
 		void scalePolarCoords(void);
 		inline void set_fsPmm(const float x = 0.5){fsPmm = x;}
@@ -34,6 +35,8 @@ class FiberBundle {
 		inline float Ixray(void){return ixray;}
 		inline float Ilaser(const size_t i){return ilaser*std::exp(-std::pow(std::abs(zvals[ids[i]]-laser_center)/laserdiam,int(2)));}
 		inline float Ixray(const size_t i){return ixray*std::exp(-std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
+		//inline float Ilaser(const size_t i,const double in){ilaser*std::exp(-std::pow(std::abs(zvals[ids[i]]-laser_center)/laserdiam,int(2)));}
+		//inline float Ixray(const size_t i,const double in){ixray*std::exp(-std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
 		inline void center_Ilaser(const float dx,const float dy){laser_center = std::complex<float>(dx,dy);}
 		inline void center_Ixray(const float dx,const float dy){xray_center = std::complex<float>(dx,dy);}
 		inline std::complex<float> center_Ilaser(void){return laser_center;}
