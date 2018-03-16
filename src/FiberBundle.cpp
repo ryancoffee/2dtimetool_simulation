@@ -1,4 +1,5 @@
 #include "FiberBundle.hpp"
+#include "DataOps.hpp"
 
 #include "Constants.hpp"
 using Constants::pi;
