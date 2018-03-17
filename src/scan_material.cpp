@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
 				pulsearray[i]->fft_totime();
 				crosspulsearray[i]->fft_totime();
 
-				if (tid ==0){DebugOps::pushout("\nhere before pararesponse setting in tid ",tid);}
+				//if (tid ==0){DebugOps::pushout("\nhere before pararesponse setting in tid ",tid);}
 
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop

@@ -49,9 +49,6 @@ public:
 	//void addstepvec_phase(PulseFreq & pulse,double delay);
 	void addstepvec_phase(PulseFreq * pulse,double delay);
 	
-	/*
-	void buffervectors(gsl_vector * modamp,gsl_vector * modphase,double dt);
-	*/
 	void buffervectors(PulseFreq & pulse);
 	void buffervectors(PulseFreq * pulse);
 

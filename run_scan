@@ -3,7 +3,7 @@
 starttime=$(date +%s);
 
 export nthreads=1;
-export datadir='./data/raw/';
+export datadir='/u1/mldrp/data/raw';
 mkdir -p $datadir;
 
 # for Omar, testing the addition of random phase
@@ -12,7 +12,7 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-export nimages=4;
+export nimages=2;
 export delays_mean=-1800;
 #export delays_std=100;
 export delays_std=2000;
@@ -123,12 +123,12 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=2500; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=823; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
-export gain=8000000;
+export gain=2000;
 export saturate=4096;
 
-export filebase=$datadir"debug_nogsl"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+export filebase=$datadir"drp_4096debugging_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 echo $filebase
 ./scan_material
 stoptime=$(date +%s);
