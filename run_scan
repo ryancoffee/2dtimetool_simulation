@@ -13,10 +13,10 @@ export randphase_mean=0;
 export randphase_std=0; #5; # in units of pi
 
 
-export nimages=1000;
+export nimages=10;
 export delays_mean=-1800;
-#export delays_std=100;
-export delays_std=2000;
+export delays_std=100;
+#export delays_std=2000;
 
 export drifting_alpha=0.01; #0.1;
 
@@ -64,7 +64,7 @@ export nu_high=0.65;
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
 #export nfibers=109;
-export nfibers=5;
+export nfibers=7;
 export fiberdiam=0.11;
 export laserdiam=0.7;
 export xraydiam=0.5;
@@ -124,13 +124,13 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=2500; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=8000000;
 export saturate=4096;
 export lamsamples=128;
 
-export filebase=$datadir"debug_nogsl"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+export filebase=$datadir"nogsl_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 echo $filebase
 ./scan_material
 stoptime=$(date +%s);
