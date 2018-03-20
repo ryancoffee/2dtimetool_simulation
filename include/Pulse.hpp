@@ -126,7 +126,6 @@ class PulseFreq {
 		inline void fft_totime(void) {
 
 			fftw_execute(FTplan_backward);
-			//cvec /= std::sqrt(samples);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq = false;
@@ -136,7 +135,6 @@ class PulseFreq {
 			if (infreq)
 				std::cerr << "died here at fft_tofreq()" << std::endl;
 			fftw_execute(FTplan_forward);
-			//cvec /= std::sqrt(samples);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq=true;

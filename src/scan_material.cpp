@@ -110,15 +110,20 @@ int main(int argc, char* argv[])
 	masterresponse.setreflectance(scanparams.etalonreflectance());
 	masterresponse.setetalondelay(scanparams.etalondelay());
 
-
-	std::vector< PulseFreq* > pulsearray(masterbundle.get_nfibers());
-	std::vector< PulseFreq* > crosspulsearray(masterbundle.get_nfibers());
-	for (size_t i=0;i<pulsearray.size();++i){
+	std::vector< PulseFreq * > pulsearray(masterbundle.get_nfibers(),NULL);
+	std::vector< PulseFreq * > crosspulsearray(masterbundle.get_nfibers(),NULL);
+	for (size_t i=0;i<masterbundle.get_nfibers();++i){
 		pulsearray[i] = new PulseFreq(masterpulse);
 		crosspulsearray[i] = new PulseFreq(masterpulse);
 	}
-
 	for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
+
+		for (size_t i=0;i<pulsearray.size();++i){
+			*(pulsearray[i]) = masterpulse;
+			*(crosspulsearray[i]) = masterpulse;
+		}
+
+
 		double t0 = scanparams.delays_uniform();
 		double startdelay(0);
 
@@ -145,6 +150,7 @@ int main(int argc, char* argv[])
 #pragma omp for schedule(static) // ordered 
 			for(size_t i = 0; i< parabundle.get_nfibers(); i++)
 			{ // begin fibers loop
+				startdelay = t0 + parabundle.delay(i);
 
 				if (scanparams.addchirpnoise()){
 					std::vector<double> noise(scanparams.getchirpnoise());
@@ -156,24 +162,22 @@ int main(int argc, char* argv[])
 				pulsearray[i]->fft_totime();
 				crosspulsearray[i]->fft_totime();
 
-				//if (tid ==0){DebugOps::pushout("\nhere before pararesponse setting in tid ",tid);}
-
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 					pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-					pararesponse.setstepvec_amp(pulsearray[i]);
-					pararesponse.setstepvec_phase(pulsearray[i]);
-					pararesponse.setstepvec_amp(crosspulsearray[i]);
-					pararesponse.setstepvec_phase(crosspulsearray[i]);
+					pararesponse.setstepvec_amp(*(pulsearray[i]));
+					pararesponse.setstepvec_phase(*(pulsearray[i]));
+					pararesponse.setstepvec_amp(*(crosspulsearray[i]));
+					pararesponse.setstepvec_phase(*(crosspulsearray[i]));
 					if (scanparams.doublepulse()){
-						pararesponse.addstepvec_amp(pulsearray[i],scanparams.doublepulsedelay());
-						pararesponse.addstepvec_phase(pulsearray[i],scanparams.doublepulsedelay());
-						pararesponse.addstepvec_amp(crosspulsearray[i],scanparams.doublepulsedelay());
-						pararesponse.addstepvec_phase(crosspulsearray[i],scanparams.doublepulsedelay());
+						pararesponse.addstepvec_amp(*(pulsearray[i]),scanparams.doublepulsedelay());
+						pararesponse.addstepvec_phase(*(pulsearray[i]),scanparams.doublepulsedelay());
+						pararesponse.addstepvec_amp(*(crosspulsearray[i]),scanparams.doublepulsedelay());
+						pararesponse.addstepvec_phase(*(crosspulsearray[i]),scanparams.doublepulsedelay());
 					}
 					// this pulls down the tail of the response so vector is periodic on nsamples	
-					pararesponse.buffervectors(pulsearray[i]); 
-					pararesponse.buffervectors(crosspulsearray[i]); 
+					pararesponse.buffervectors(*(pulsearray[i])); 
+					pararesponse.buffervectors(*(crosspulsearray[i])); 
 					pulsearray[i]->modulateamp_time();
 					pulsearray[i]->modulatephase_time();
 					crosspulsearray[i]->modulateamp_time();
@@ -189,18 +193,18 @@ int main(int argc, char* argv[])
 
 					for(size_t g=0;g<scanparams.ngroupsteps();g++){
 						pararesponse.setdelay(etalondelay + g*scanparams.backstep()); // counterpropagating, x-rays work backwards through the optical
-						pararesponse.setstepvec_amp(&etalonpulse);
-						pararesponse.setstepvec_phase(&etalonpulse);
-						pararesponse.setstepvec_amp(&crossetalonpulse);
-						pararesponse.setstepvec_phase(&crossetalonpulse);
+						pararesponse.setstepvec_amp(etalonpulse);
+						pararesponse.setstepvec_phase(etalonpulse);
+						pararesponse.setstepvec_amp(crossetalonpulse);
+						pararesponse.setstepvec_phase(crossetalonpulse);
 						if (scanparams.doublepulse()){
-							pararesponse.addstepvec_amp(&etalonpulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_phase(&etalonpulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_amp(&crossetalonpulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_phase(&crossetalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
 						}
-						pararesponse.buffervectors(&etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-						pararesponse.buffervectors(&crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+						pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+						pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						etalonpulse.modulateamp_time();
 						etalonpulse.modulatephase_time();
 						crossetalonpulse.modulateamp_time();
@@ -209,19 +213,19 @@ int main(int argc, char* argv[])
 					// forward propagation //
 					for(size_t g=0;g<scanparams.ngroupsteps();g++){
 						pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-						pararesponse.setstepvec_amp(&etalonpulse);
-						pararesponse.setstepvec_phase(&etalonpulse);
-						pararesponse.setstepvec_amp(&crossetalonpulse);
-						pararesponse.setstepvec_phase(&crossetalonpulse);
+						pararesponse.setstepvec_amp(etalonpulse);
+						pararesponse.setstepvec_phase(etalonpulse);
+						pararesponse.setstepvec_amp(crossetalonpulse);
+						pararesponse.setstepvec_phase(crossetalonpulse);
 						if (scanparams.doublepulse()){
-							pararesponse.addstepvec_amp(&etalonpulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_phase(&etalonpulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_amp(&crossetalonpulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_phase(&crossetalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
 
 						}
-						pararesponse.buffervectors(&etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-						pararesponse.buffervectors(&crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+						pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+						pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						etalonpulse.modulateamp_time();
 						etalonpulse.modulatephase_time();
 						crossetalonpulse.modulateamp_time();
@@ -244,7 +248,7 @@ int main(int argc, char* argv[])
 				pulsearray[i]->fft_tofreq();
 				crosspulsearray[i]->fft_tofreq();
 
-				crosspulsearray[i]->delay(-scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
+				pulsearray[i]->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
 			} // end nfibers loop
 
@@ -265,8 +269,8 @@ int main(int argc, char* argv[])
 		interferestream << "#";
 		pulsearray[0]->printwavelengthbins(&interferestream);
 		for (size_t i=0;i<parabundle.get_nfibers();i++){
-			*pulsearray[i] -= *crosspulsearray[i];
-			*pulsearray[i] *= parabundle.Ilaser(size_t(i)); 
+			*(pulsearray[i]) -= *(crosspulsearray[i]);
+			*(pulsearray[i]) *= parabundle.Ilaser(size_t(i)); 
 			pulsearray[i]->appendwavelength(&interferestream);
 		}
 		interferestream.close();
@@ -282,9 +286,11 @@ int main(int argc, char* argv[])
 		outbins << masterbundle.delay(i) << "\n";
 	}
 	outbins.close();
-	for (size_t i=0;i<pulsearray.size();++i){
+
+	for (size_t i=0;i<masterbundle.get_nfibers();i++){
 		delete pulsearray[i];
 		delete crosspulsearray[i];
+		pulsearray[i] = crosspulsearray[i] = NULL;
 	}
 
 	return 0;

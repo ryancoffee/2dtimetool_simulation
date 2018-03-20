@@ -30,7 +30,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	m_sampleinterval(2),
 	m_saturate(4096),
 	m_gain(1000000),
-	m_lamsamples(2048),
+	m_lamsamples(1024),
 	sampleround(1000)
 {
 	//std::cerr << "In constructor PulseFreq()" << std::endl;
@@ -48,6 +48,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	buildvectors();
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
+	m_lamsamples = (size_t)atoi(getenv("lamsamples"));
 	m_gain = (unsigned long)(atoi( getenv("gain")));
 	m_noisescale = (double)( atof( getenv("noisescale") ) );
 	m_sampleinterval = (unsigned)(atoi(getenv("sampleinterval")));

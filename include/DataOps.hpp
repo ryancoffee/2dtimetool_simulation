@@ -288,6 +288,7 @@ namespace DataOps
 		std::complex<T>* mul(std::complex<T>*& lhs,const T& scale,const size_t n)
 		{
 			std::transform(lhs, lhs+n, lhs, std::bind2nd(std::multiplies<std::complex<T> >(),scale));
+			//std::cerr << "using this complex vec scaling function in DataOps::" << std::endl << std::flush;
 			return lhs;
 		}
 	template <typename T>
