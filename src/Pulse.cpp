@@ -30,10 +30,10 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	m_sampleinterval(2),
 	m_saturate(4096),
 	m_gain(1000000),
-	m_lamsamples(2048),
+	m_lamsamples(1024),
 	sampleround(1000)
 {
-	std::cerr << "In constructor PulseFreq()" << std::endl;
+	//std::cerr << "In constructor PulseFreq()" << std::endl;
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
 	dtime = tspan_in/double(samples);
 	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum

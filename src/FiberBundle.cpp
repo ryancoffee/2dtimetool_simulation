@@ -28,8 +28,6 @@ FiberBundle::FiberBundle(size_t n = 109)
 	ids.resize(nfibers);
 	ovals.resize(nfibers);
 	zvals.resize(nfibers,std::complex<double>(0));
-	c=std::cos(pi_3<double>());
-	s=std::sin(pi_3<double>());
 	fiberdiam = 0.11;
 	laserdiam = 0.7;
 	xraydiam = 0.5;
@@ -52,9 +50,10 @@ bool FiberBundle::print_mapping(std::ofstream & out)
 {
 	if (!out.is_open() )
 		return false;
-	out << "#r\ttheta\tx\ty\to\tdelay\tIlas\tIxray\n"; 
+	out << "#i\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\n"; 
 	for (size_t i=0;i<zvals.size();++i){
-		out << std::abs(zvals[i]) << "\t" 
+		out << ids[i] << "\t"
+			<< std::abs(zvals[ids[i]]) << "\t" 
 			<< std::arg(zvals[ids[i]]) << "\t" 
 			<< zvals[ids[i]].real() << "\t" 
 			<< zvals[ids[i]].imag() << "\t" 
@@ -78,6 +77,8 @@ bool FiberBundle::set_polarcoords(size_t n)
 		std::cerr << "nfibers must be larger than 1, and follow (6*r + 1) for 6 fold symmetry" << std::endl;
 		return false;
 	}
+	c=std::cos(pi_3<double>());
+	s=std::sin(pi_3<double>());
 
 	setnrows(n);
 	std::cout << "\n========== running " << nfibers << " fibers ============\n" << std::flush;
@@ -85,43 +86,42 @@ bool FiberBundle::set_polarcoords(size_t n)
 
 	std::complex<double> z(0.0,0.0);
 	zvals[0] = std::complex<double>(0.0,0.0);
+	std::fill(zvals.begin(),zvals.end(),std::complex<double>(0.,0.));
 	double theta;
 	for (size_t i=0;i<6;++i){
 		theta = double(i)*pi_3<double>();
-		for (size_t r = 0;r<nrows;++r){
-			if (nfibers < 2) continue; 
-			zvals[r*6+i+1] = std::polar(1.0, theta); 
-			if (nfibers < 8) continue; 
-			zvals[r*6+i+1] = std::polar(2.0, theta); 
-			z = std::complex<double>(1+c,s);
-			zvals[r*6+i+1] = std::polar(std::abs(z),double(2*i+1)*std::arg(z));
-			if (nfibers < 20) continue; 
-			zvals[r*6+i+1] = std::polar(3.0, theta);
+		if (nfibers < 2){continue;}
+			zvals[1+i] = std::polar(1.,theta);
+		if (nfibers < 8){continue;}
+			zvals[6+1+i] = std::polar(2.,theta);
+			z = std::complex<double>(1.+c,s);
+			zvals[2*6+i+1] = std::polar(std::abs(z),double(2*i+1)*std::arg(z));
+		if (nfibers < 20){continue;}
+			zvals[3*6+i+1] = std::polar(3.0, theta);
 			z = std::complex<double>(2+c,s);
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
-			if (nfibers < 38) continue; 
-			zvals[r*6+i+1] = std::polar(4.0, theta);
+			zvals[4*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
+			zvals[5*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
+		if (nfibers < 38){continue;}
+			zvals[6*6+i+1] = std::polar(4.0, theta);
 			z = std::complex<double>(3+c,s);
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
+			zvals[7*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
+			zvals[8*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
 			z = std::complex<double>(2+2*c,2*s);
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
-			if (nfibers < 62) continue; 
-			zvals[r*6+i+1] = std::polar(5.0, theta);
+			zvals[9*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
+		if (nfibers <62){ continue;}
+			zvals[10*6+i+1] = std::polar(5.0, theta);
 			z = std::complex<double>(4+c,s);
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
+			zvals[11*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
+			zvals[12*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
 			z = std::complex<double>(3+c,3*s);
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
+			zvals[13*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
+			zvals[14*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
 			z = std::complex<double>(4+c,3*s);
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
+			zvals[15*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
 			z = std::complex<double>(4+2*c,2*s);
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
-			zvals[r*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
-			if (nfibers < 110) continue; 
-		}
+			zvals[16*6+i+1] = std::polar(std::abs(z), theta + std::arg(z));
+			zvals[17*6+i+1] = std::polar(std::abs(z), theta - std::arg(z));
+		if (nfibers < 110){ continue; }
 	}
 	return true;
 }

@@ -38,22 +38,19 @@ public:
 		beta=fsPau<double>()*betain;
 	}
 
-	//void setstepvec_full(PulseFreq & pulse);
-	void setstepvec_full(PulseFreq * pulse);
-	//void setstepvec_amp(PulseFreq & pulse);
-	void setstepvec_amp(PulseFreq * pulse);
-	//void setstepvec_phase(PulseFreq & pulse);
-	void setstepvec_phase(PulseFreq * pulse);
-	//void addstepvec_amp(PulseFreq & pulse,double delay);
-	void addstepvec_amp(PulseFreq * pulse,double delay);
-	//void addstepvec_phase(PulseFreq & pulse,double delay);
-	void addstepvec_phase(PulseFreq * pulse,double delay);
+	void setstepvec_full(PulseFreq & pulse);
+	//void setstepvec_full(PulseFreq * pulse);
+	void setstepvec_amp(PulseFreq & pulse);
+	//void setstepvec_amp(PulseFreq * pulse);
+	void setstepvec_phase(PulseFreq & pulse);
+	//void setstepvec_phase(PulseFreq * pulse);
+	void addstepvec_amp(PulseFreq & pulse,double delay);
+	//void addstepvec_amp(PulseFreq * pulse,double delay);
+	void addstepvec_phase(PulseFreq & pulse,double delay);
+	//void addstepvec_phase(PulseFreq * pulse,double delay);
 	
-	/*
-	void buffervectors(gsl_vector * modamp,gsl_vector * modphase,double dt);
-	*/
 	void buffervectors(PulseFreq & pulse);
-	void buffervectors(PulseFreq * pulse);
+	//void buffervectors(PulseFreq * pulse);
 
 	
 	inline void set_delay(double in) { setdelay(in); }
