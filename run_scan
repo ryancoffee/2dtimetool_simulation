@@ -3,7 +3,7 @@
 starttime=$(date +%s);
 
 export nthreads=1;
-export datadir='./data/raw/';
+export datadir='/u1/mldrp/data/raw/';
 mkdir -p $datadir;
 
 # for Omar, testing the addition of random phase
@@ -12,15 +12,11 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=0; #5; # in units of pi
 
-export lamsamples=1024;
+export nimages=10;
+export delays_mean=-500; #-2250;off to right side of screen #1250; off to left side
+export delays_std=1750;
 
-#export nimages=10000;
-export nimages=2;
-export delays_mean=-1800;
-#export delays_std=100;
-export delays_std=2000;
-
-export drifting_alpha=0.1;
+export drifting_alpha=0.01; #0.1;
 
 export xray_pos_distribution_normal_mean=0;
 export xray_pos_distribution_normal_std=0.01; #0.1
@@ -28,21 +24,19 @@ export laser_pos_distribution_normal_mean=0;
 export laser_pos_distribution_normal_std=0.02; #0.2
 
 export laser_distribution_lognormal_mean=0.0;
-export laser_distribution_lognormal_std=0.1;
+export laser_distribution_lognormal_std=0.01; #0.1
 export xray_distribution_lognormal_mean=0.0;
-export xray_distribution_lognormal_std=0.5;
+export xray_distribution_lognormal_std=0.05; #0.5
 
 export lambda0=600;
 export lambda_width=300;
 export lambda_onoff=100;
-#export tspan=8192;
 export tspan=16384;
-#export tspan=32768;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
 export backdelay=0.5; 
 export netalon=3; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
-export etalon=.4; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
+export etalon=.16; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
 export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
 # this should be n(omega)*thickness/C = 1.5*10microns/(.3micronsPfs) = 15/.3 in femtoseconds
@@ -50,7 +44,7 @@ export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs 
 # 1.3/.3*10microns*2 double pass for liquid water sheet = 86.6 fs.
 # diamond n=2.4, thickness 50 microns 2.4/C*2 = 800 fs delay 		
 # diamond, 5mu*2.4*1fs/.3mu*2 = 80 fs
-# diamond etalon 1.4/3.4 = 0.41
+# diamond etalon (1.4/3.4)**2 = 0.16
 
 export noisescale=.00005;
 export noisesampleskip=5;
@@ -64,15 +58,14 @@ export nu_high=0.65;
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-#export nfibers=109;
-export nfibers=1;
+export nfibers=109;
 export fiberdiam=0.11;
 export laserdiam=0.7;
 export xraydiam=0.5;
-export bundle_fsPmm=500.;
+export bundle_fsPmm=3333.;
 
 export stepwidth=25.0;
-export attenuation=1.;
+export attenuation=1.0;
 export phase=0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
 # phase should be the optical phase which is a function of optical frequency Dn(omega)*C/thickness/omega
 # Dn(omega)*thickness/C*omega = deltan*10microns/(.3micronsPfs)*2pi(nu) = 1e-3*10microns/.3micronsPfs*2pi*(0.5PHz)
@@ -119,17 +112,19 @@ export TOD=0;
 export FOD=0;
 export fifthOD=0;
 # noise values to simulate unstable continuum, should be positive
+export usechirpnoise=0;
 export chirpnoise=0; 
 export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
-export interferedelay=823; #2500; #823; # nominally 823 for 2mm of alphaBBO;
-export interferephase=1;
-export gain=4000000;
-export saturate=4096;
 
-#export filebase=$datadir"simulation_delay"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_atten"$attenuation"_phase"$phase"_";
-export filebase=$datadir"debug4096_master"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+export interferedelay=823; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferephase=1;
+export gain=20000000;
+export saturate=4096;
+export lamsamples=1024;
+
+export filebase=$datadir"sim_bundle_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 echo $filebase
 ./scan_material
 stoptime=$(date +%s);

@@ -6,7 +6,6 @@
 #endif
 
 #include <cmath>
-#include <gsl/gsl_const_num.h>
 #include <boost/math/constants/constants.hpp>
 #include <boost/units/systems/si/codata/universal_constants.hpp>
 
@@ -17,6 +16,15 @@ namespace Constants {
 	inline T root_pi(void) { return boost::math::constants::root_pi<T>(); }
 	template <typename T>
 	inline T half_pi(void) { return boost::math::constants::half_pi<T>(); }
+	template <typename T>
+	inline T pi_2(void) { return half_pi<T>(); }
+	template <typename T>
+	inline T pi_3(void){return boost::math::constants::pi<T>()/T(3);}
+	template <typename T>
+	inline T pi_4(void){return boost::math::constants::pi<T>()/T(4);}
+	template <typename T>
+	inline T twopi(void){return T(2)*boost::math::constants::pi<T>();}
+
 	template <typename T>
 	inline T Eh(void){return T(27.2113845);} // eV/Hartree
 	template <typename T>

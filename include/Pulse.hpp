@@ -11,22 +11,15 @@
 #include <fstream>
 #include <vector>
 #include <cassert>
+#include <random>
+#include <fftw3.h>
 
-
-// gsl includes
-#include <gsl/gsl_const_num.h>
-#include <gsl/gsl_const_mksa.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_complex.h>
-#include <gsl/gsl_complex_math.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_fft_complex.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
 
 // my headers
-#include "Constants.hpp"
+#include <MatResponse.hpp>
+#include <Constants.hpp>
+#include <ScanParams.hpp>
+#include <DataOps.hpp>
 
 // my definitions
 #define SAMPLEROUND 1000
@@ -36,77 +29,79 @@
 #define LAMBDA_LOW 400
 #define LAMBDA_HIGH 900
 
-using namespace std;
 using namespace Constants;
 
+class ScanParams;
 
 class PulseTime {
 
+	public:
+		PulseTime(double strength_in = 1e-3 * 0.696, double width_in = 50, double t0_in = 0.0) : 
+			strength(strength_in * auenergy<double>()/Eh<double>() * std::pow(aufor10PW<double>(),int(2))), 
+			Ctau(width_in * root_pi<double>() / fsPau<double>() / 2.0),
+			t0(t0_in / fsPau<double>())
+	{
+		//    std::clog << "Creating Pulse " << this << std::endl;
+	}
+		~PulseTime()
+		{
+			//    std::clog << "Destroying Pulse " << this << std::endl;
+		}
 
-public:
-  PulseTime(double strength_in = 1e-3 * 0.696, double width_in = 50, double t0_in = 0.0) : 
-    strength(strength_in * auenergy<float>()/Eh<float>() * gsl_pow_2(aufor10PW<float>())), 
-    Ctau(width_in * M_SQRTPI / fsPau<float>() / 2.0),
-    t0(t0_in / fsPau<float>())
-  {
-    //    clog << "Creating Pulse " << this << endl;
-  }
-  ~PulseTime()
-  {
-    //    clog << "Destroying Pulse " << this << endl;
-  }
-  
-  void setstrength(const double in);
-  void setwidth(const double in);
-  void sett0(const double in);
-  
-  inline double getstrength() { return strength; }
-  inline double getCtau() { return Ctau; }
-  inline double gett0() { return t0; }
-  
-  inline bool getenvelope(const double t,double *FF,double *dFFdt) 
-    {
-      if ( inpulse(t) ){
-	*FF = strength * ( gsl_pow_2( cos(M_PI_2*(t-t0)/Ctau) ) );
-	*dFFdt = -strength/2 * ( M_PI/Ctau * sin(M_PI*(t-t0)/Ctau));
-	return true;
-      } else {
-      *FF = 0.0;
-      *dFFdt = 0.0;
-      return false;
-      }
-    }
-  inline bool getenvelope(const double t,double *FF) 
-    {
-      if ( inpulse(t) ){
-	*FF = strength * ( gsl_pow_2( cos(M_PI_2*(t-t0)/Ctau) ) );
-      return true;
-      } else {
-	*FF = 0.0;
-      return false;
-      }
-    }
-  
- private:
-  double strength, Ctau, t0;
-  
-  inline bool inpulse(const double t) 
-    {
-      if (t >= -Ctau && t <= Ctau){
-	return true;
-      } else {
-	return false;
-      }
-    }
+		void setstrength(const double in);
+		void setwidth(const double in);
+		void sett0(const double in);
+
+		inline double getstrength() { return strength; }
+		inline double getCtau() { return Ctau; }
+		inline double gett0() { return t0; }
+
+		inline bool getenvelope(const double t,double *FF,double *dFFdt) 
+		{
+			if ( inpulse(t) ){
+				*FF = strength * ( std::pow( cos(half_pi<double>()*(t-t0)/Ctau) , int(2)) );
+				*dFFdt = -strength/2 * ( pi<double>()/Ctau * sin(pi<double>()*(t-t0)/Ctau));
+				return true;
+			} else {
+				*FF = 0.0;
+				*dFFdt = 0.0;
+				return false;
+			}
+		}
+		inline bool getenvelope(const double t,double *FF) 
+		{
+			if ( inpulse(t) ){
+				*FF = strength * ( std::pow( cos(half_pi<double>()*(t-t0)/Ctau), int(2) ) );
+				return true;
+			} else {
+				*FF = 0.0;
+				return false;
+			}
+		}
+
+	private:
+		double strength, Ctau, t0;
+
+		inline bool inpulse(const double t) 
+		{
+			if (t >= -Ctau && t <= Ctau){
+				return true;
+			} else {
+				return false;
+			}
+		}
 };
+
+
 
 
 class PulseFreq {
 
+	friend class MatResponse;
+
 	public:
-		PulseFreq & operator=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
+		PulseFreq & operator=(PulseFreq const & rhs); // assignment
 		PulseFreq & operator+=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
-		PulseFreq * operator+=(const PulseFreq *rhs);
 		PulseFreq & operator-=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator*=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator/=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
@@ -116,13 +111,13 @@ class PulseFreq {
 		PulseFreq & interfere(const PulseFreq &rhs);
 
 	public:
-		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in); // default constructor
+		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in);
 		PulseFreq(PulseFreq &rhs); // copy constructor
 		~PulseFreq(void);
 
-		inline void set_saturate(int in = 4096){ m_saturate = 4096;}
-		inline void set_gain(int in=1000000){m_gain = in;}
-		inline void set_lamsamples(size_t in = 2048){m_lamsamples = in;}
+		void set_lamsamples(size_t in);
+		void set_gain(int in);
+		void set_saturate(int in);
 
 		bool addrandomphase();
 
@@ -133,29 +128,26 @@ class PulseFreq {
 			return dtime;
 		}
 		inline void fft_totime(void) {
-			gsl_fft_complex_inverse(cvec->data,cvec->stride,cvec->size,cwave,cspace);
-			for (unsigned i = 0;i<(cvec->size);i++){
-				gsl_vector_set(rhovec,i,gsl_complex_abs(gsl_vector_complex_get(cvec,i)));
-				gsl_vector_set(phivec,i,gsl_complex_arg(gsl_vector_complex_get(cvec,i)));
-			}
+
+			fftw_execute(FTplan_backward);
+			DataOps::mul(cvec,1./std::sqrt(samples),samples);
+			cvec2rhophi();
 			infreq = false;
 			intime = true;
 		}
 		inline void fft_tofreq(void) {
 			if (infreq)
-				cerr << "died here at fft_tofreq()" << endl;
-			gsl_fft_complex_forward(cvec->data,cvec->stride,cvec->size,cwave,cspace);
-			for (unsigned i = 0;i<(cvec->size);i++){
-				gsl_vector_set(rhovec,i,gsl_complex_abs(gsl_vector_complex_get(cvec,i)));
-				gsl_vector_set(phivec,i,gsl_complex_arg(gsl_vector_complex_get(cvec,i)));
-			}
+				std::cerr << "died here at fft_tofreq()" << std::endl;
+			fftw_execute(FTplan_forward);
+			DataOps::mul(cvec,1./std::sqrt(samples),samples);
+			cvec2rhophi();
 			infreq=true;
 			intime=false;
 		}
 
-		inline int addchirp(double chirp_in) {
+		int addchirp(double chirp_in) {
 			if (intime){
-				cerr << "whoops, trying to add phase in the time domain" << endl;
+				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
 				return 1;
 			}
 			phase_GDD = chirp_in;
@@ -168,9 +160,9 @@ class PulseFreq {
 			return 0;
 		}
 
-		inline int addchirp(double* chirp_in) {
+		int addchirp(double* chirp_in) {
 			if (intime){
-				cerr << "whoops, trying to add phase in the time domain" << endl;
+				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
 				return 1;
 			}
 			phase_GDD = chirp_in[0];
@@ -197,9 +189,10 @@ class PulseFreq {
 			}
 			return 0;
 		}
-		inline int addchirp(std::vector<double> & chirp_in) {
+
+		int addchirp(std::vector<double> & chirp_in) {
 			if (intime){
-				cerr << "whoops, trying to add phase in the time domain" << endl;
+				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
 				return 1;
 			}
 			assert(chirp_in.size()==4);
@@ -233,12 +226,12 @@ class PulseFreq {
 		void delay(double delayin); // expects delay in fs
 		void phase(double phasein); // expects delay in units of pi , i.e. 1.0 = pi phase flip 
 
-		inline int modulateamp_time(const gsl_vector *modulation) {
+		inline int modulateamp_time(const std::vector<double> & modulation) {
 			if (infreq){
-				cerr << "whoops, trying time modulation but in frequency domain" << endl;
+				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
 				return 1; }
-			if (modulation->size < cvec->size){
-				cerr << "size mismatch, out of range in modulateamp_time()" << endl;
+			if (modulation.size() < samples){
+				std::cerr << "size mismatch, out of range in modulateamp_time()" << std::endl;
 				return 2;
 			}
 			modampatindx(0,modulation);
@@ -251,7 +244,7 @@ class PulseFreq {
 		}
 		inline int modulateamp_time(void) {
 			if (infreq){
-				cerr << "whoops, trying time modulation but in frequency domain" << endl;
+				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
 				return 1; }
 			modampatindx(0);
 			modampatindx(samples/2);
@@ -262,13 +255,13 @@ class PulseFreq {
 			return 0;
 		}
 
-		inline int modulatephase_time(const gsl_vector *modulation) {
+		inline int modulatephase_time(const std::vector<double> & modulation) {
 			if (infreq){
-				cerr << "whoops, trying time modulation but in frequency domain" << endl;
+				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
 				return 1;
 			}
-			if (modulation->size < cvec->size){
-				cerr << "size mismatch, out of range in modulateamp_time()" << endl;
+			if (modulation.size() < samples){
+				std::cerr << "size mismatch, out of range in modulateamp_time()" << std::endl;
 				return 2;
 			}
 			modphaseatindx(0,modulation);
@@ -281,7 +274,7 @@ class PulseFreq {
 		}
 		inline int modulatephase_time(void) {
 			if (infreq){
-				cerr << "whoops, trying time modulation but in frequency domain" << endl;
+				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
 				return 1;
 			}
 			modphaseatindx(0);
@@ -290,20 +283,6 @@ class PulseFreq {
 				modphaseatindx(i);
 				modphaseatindx(samples-i);
 			}
-			return 0;
-		}
-
-
-		inline int modulateamp_freq(const gsl_vector *modulation){
-			if (intime){
-				cerr << "whoops, trying to freq modulate but in time domain" << endl;
-				return 1;
-			}
-			if (modulation->size < cvec->size){
-				cerr << "size mismatch, out of range in modulateamp_freq()" << endl;
-				return 2;
-			}
-
 			return 0;
 		}
 		void print_amp(std::ofstream & outfile);
@@ -384,17 +363,94 @@ class PulseFreq {
 			gsl_vector_complex_set(cvec,indx,z);
 		}	
 
-		inline void modampatindx(const unsigned indx,const gsl_vector * modvec) {
-			static gsl_complex z;
-			rhovec->data[indx] *= gsl_vector_get(modvec,indx);
-			z = gsl_complex_polar(rhovec->data[indx],phivec->data[indx]);
-			gsl_vector_complex_set(cvec,indx,z);
+		void print_amp(std::ofstream & outfile);
+		void print_phase(std::ofstream & outfile);
+		void print_phase_powerspectrum(std::ofstream & outfile);
+		void printwavelengthbins(std::ofstream * outfile);
+		void appendwavelength(std::ofstream * outfile);
+		void appendfrequency(std::ofstream * outfile);
+		void appendnoisy(std::ofstream * outfile);
+		void appendfrequencybins(std::ofstream * outfile);
+		void printfrequencybins(std::ofstream * outfile);
+		void printfrequency(std::ofstream * outfile);
+		void printfrequencydelay(std::ofstream * outfile, const double *delay);
+		void printfrequencydelaychirp(std::ofstream * outfile, const double *delay,const double *chirp);
+		void printtime(std::ofstream * outfile);
+		void printwavelength(std::ofstream * outfile,const double *delay);
+		inline double gettime(unsigned ind){return (time[ind]*fsPau<double>());}
+
+
+	private:
+
+		double m_noisescale;
+		size_t m_sampleinterval;
+		size_t m_lamsamples;
+		unsigned long m_gain;
+		unsigned m_saturate;
+
+		size_t sampleround;
+
+		bool intime,infreq;
+		unsigned samples;
+		unsigned startind,stopind,onwidth,offwidth;
+		double tspan;
+		double domega,lambda_center,lambda_width,omega_center,omega_width,omega_high;
+		double omega_onwidth,omega_offwidth;
+		double phase_GDD,phase_TOD,phase_4th,phase_5th;
+		double dtime,time_center,time_wdith;
+
+		// FFTW variables //
+		fftw_plan FTplan_forward;
+		fftw_plan FTplan_backward;
+		std::complex<double> * cvec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
+
+		std::vector<double> rhovec;
+		std::vector<double> modamp;
+		std::vector<double> omega;
+		std::vector<double> time;
+		std::vector<double> modphase;
+		std::vector<double> phivec;
+
+		double nu0;
+
+		unsigned i_low, i_high;
+
+		inline void rhophi2cvec(const size_t i){ cvec[i] = std::polar(rhovec[i],phivec[i]);}
+		inline void cvec2rhophi(const size_t i){ rhovec[i] = std::abs(cvec[i]); phivec[i] = std::arg(cvec[i]); }
+		void rhophi2cvec(void);
+		void cvec2rhophi(void);
+
+		std::random_device rng;
+
+		void buildvectors(void);
+		void factorization(void);
+		void killvectors(void);
+		void killtheseonly(void);
+
+		inline void addGDDtoindex(const unsigned indx,const int omega_sign) {
+			phivec[indx] += omega_sign*phase_GDD*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(2));
+			rhophi2cvec(indx);
+		}	
+		inline void addTODtoindex(const unsigned indx,const int omega_sign) {
+			phivec[indx] += omega_sign*phase_TOD*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(3));
+			rhophi2cvec(indx);
+		}	
+		inline void add4thtoindex(const unsigned indx,const int omega_sign) {
+			phivec[indx] += omega_sign*phase_4th*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(4));
+			rhophi2cvec(indx);
+		}	
+		inline void add5thtoindex(const unsigned indx,const int omega_sign) {
+			phivec[indx] += omega_sign*phase_5th*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(5));
+			rhophi2cvec(indx);
+		}	
+
+		inline void modampatindx(const unsigned indx,const std::vector<double> & modvec) {
+			rhovec[indx] *= modvec[indx];
+			rhophi2cvec(indx);
 		}
 		inline void modampatindx(const unsigned indx) {
-			static gsl_complex z;
-			rhovec->data[indx] *= gsl_vector_get(modamp,indx);
-			z = gsl_complex_polar(rhovec->data[indx],phivec->data[indx]);
-			gsl_vector_complex_set(cvec,indx,z);
+			rhovec[indx] *= modamp[indx];
+			rhophi2cvec(indx);
 		}
 		/*
 		   E(t) = E0exp(iwt)=E0 exp(i w(t) (t-t0))
@@ -404,29 +460,23 @@ class PulseFreq {
 		   = E0 exp(i w(t)*t) exp(i -w(t)*t0(t))
 		   = E(t) exp(i -(w0 + 1/GDD*t + 1/TOD*t**2 + 1/FOD*t**3)*t0(t))
 		 */
-		inline void modphaseatindx(const unsigned indx,const gsl_vector * modvec) {
-			gsl_complex z;
-			if (gsl_vector_get(modvec,indx)!=0){
-				phivec->data[indx] += gsl_vector_get(modvec,indx);
-				z = gsl_complex_polar(rhovec->data[indx],phivec->data[indx]);
-				gsl_vector_complex_set(cvec,indx,z);
+		inline void modphaseatindx(const unsigned indx,const std::vector<double> & modvec) {
+			if (modvec[indx]!=0){
+				phivec[indx] += modvec[indx];
+				rhophi2cvec(indx);
 			}
 		}
 		inline void modphaseatindx(const unsigned indx) {
-			gsl_complex z;
-			double val;
-			val = gsl_vector_get(modphase,indx);
-			if (val != 0){
-				phivec->data[indx] += val;
-				z = gsl_complex_polar(rhovec->data[indx],phivec->data[indx]);
-				gsl_vector_complex_set(cvec,indx,z);
+			if (modphase[indx] != 0){
+				phivec[indx] += modphase[indx];
+				rhophi2cvec(indx);
 			}
 		}
 		inline double rising(const unsigned indx) {
-			return gsl_pow_2(sin(double(M_PI_2*(indx-startind)/onwidth)));
+			return std::pow(sin(double(Constants::half_pi<double>()*(indx-startind)/onwidth)),int(2));
 		}
 		inline double falling(const unsigned indx) {
-			return gsl_pow_2(sin(double(M_PI_2*(stopind-indx)/offwidth)));
+			return std::pow(sin(double(Constants::half_pi<double>()*(stopind-indx)/offwidth)),int(2));
 		}
 };
 

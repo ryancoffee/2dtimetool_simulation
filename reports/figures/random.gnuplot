@@ -167,24 +167,26 @@ set fit brief errorvariables nocovariancevariables errorscaling prescale nowrap 
 file(x) = sprintf('../../data/raw/random2500_crossphase1_chirp-1220_pm0_pmTOD0_pmFOD0_interference.out.%d',x)
 x = 0.0
 ## Last datafile plotted: "random2500_crossphase1_chirp-1220_pm0_pmTOD0_pmFOD0_interference.out.1"
-set xrange [0:2048]
+set xrange [1150:1375]
 set yrange [0:60]
 unset tics
 unset colorbox
+#set auto cb
 set term png size 700,800
-set output 'random.png'
+set output 'random.zoom.png'
+
 set multiplot layout 2,2
 set cbrange [:1.5e3]
 set title '-3634.7 fs'
 splot file(7) mat
-set cbrange [:800]
+set cbrange [:700]
 set title '-3593.21 fs'
 splot file(8) mat
 set title '-1187.78 fs'
-set cbrange [:5e3]
+set cbrange [:3.5e3]
 splot file(2) mat
 set title '-1231.15 fs'
-set cbrange [:3e3]
+set cbrange [:1.8e3]
 splot file(5) mat
 unset multiplot
 #    EOF

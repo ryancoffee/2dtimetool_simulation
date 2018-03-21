@@ -8,282 +8,224 @@
 #include <random>
 #include <chrono>
 
-using namespace std;
-using namespace Constants;
+#include <DebugOps.hpp>
+#include <ScanParams.hpp>
 
+using namespace Constants;
 
 /* Here's main */
 int main(int argc, char* argv[])
 {
-	/* start reading in from the command line, make and write fake data */
+	unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
 
-	size_t nimages = size_t(atoi(getenv("nimages")));
+	ScanParams scanparams;
+	scanparams.nimages(size_t(atoi(getenv("nimages"))));
+	scanparams.filebase(std::string(getenv("filebase")));
 
-	//std::default_random_engine rng;
-	std::random_device rng;
-	std::normal_distribution<double> distribution(
-			double(atof(getenv("delays_mean"))),
-			double(atof(getenv("delays_std"))));
-	std::uniform_real_distribution<double> uni_distribution(
-			double(atof(getenv("delays_mean")))-double(atof(getenv("delays_std"))),
-			double(atof(getenv("delays_mean")))+double(atof(getenv("delays_std"))));
-	//std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
-	//std::chrono::system_clock::duration dtm = tp.time_since_epoch();
-	//rng.seed(dtm.count());
+	scanparams.dalpha((atof(getenv("drifting_alpha")))*pi<double>()/scanparams.nimages());
 
-
-	/*
-	HERE HERE HERE HERE
-		Add a method to include slow drift for x-ray center (x,y) and delay center, and also the angle of the delay relative to the input coordinates.
-		Include jitter in x-ray center (x,y) from shot to shot as well
-
-		Also simulate various x-ray diameters.
-	*/
-	FiberBundle bundle(boost::lexical_cast<size_t>(atoi(getenv("nfibers"))));
-	bundle.fiberdiameter(boost::lexical_cast<float>(atof(getenv("fiberdiam"))));
-	bundle.laserdiameter(boost::lexical_cast<float>(atof(getenv("laserdiam"))));
-	bundle.xraydiameter(boost::lexical_cast<float>(atof(getenv("xraydiam"))));
-	bundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
-	bundle.scalePolarCoords();
-	bundle.shuffle_output();
-	bundle.Ixray(float(1.));
-	bundle.Ilaser(float(1.));
-	std::normal_distribution<float> xray_pos_distribution(
-			float(atof(getenv("xray_pos_distribution_normal_mean"))),
-			float(atof(getenv("xray_pos_distribution_normal_std"))));
-	std::normal_distribution<float> laser_pos_distribution(
-			float(atof(getenv("laser_pos_distribution_normal_mean"))),
-			float(atof(getenv("laser_pos_distribution_normal_std"))));
-	std::lognormal_distribution<float> xray_distribution(
-			float(atof(getenv("xray_distribution_lognormal_mean"))),
-			float(atof(getenv("xray_distribution_lognormal_std"))));
-	std::lognormal_distribution<float> laser_distribution(
-			float(atof(getenv("laser_distribution_lognormal_mean"))),
-			float(atof(getenv("laser_distribution_lognormal_std"))));
-
-
-	std::string filename;
-	std::string filebase = std::string(getenv("filebase"));
-
-	filename = filebase + "fibermap.out";
-	std::ofstream mapfile(filename.c_str(),std::ios::out);
-	bundle.print_mapping(mapfile);
-	mapfile.close();
-
-
-	float dalpha(float(atof(getenv("drifting_alpha")))*M_PI/nimages);
-
-
-	bool doublepulse = ((int)atoi(getenv("doublepulse")) > 0 ? true : false);
-	double doublepulsedelay(0.);
-	if (doublepulse){
-		doublepulsedelay = (double)atof( getenv("doublepulsedelay") ) ; // this one gets used directly in atomic units
+	if (scanparams.doublepulse(atoi(getenv("doublepulse")) > 0 )){
+		scanparams.doublepulsedelay(atof( getenv("doublepulsedelay") ) ) ; // this one gets used directly in atomic units
 	}
-	double lambda0 = (double)( atof( getenv("lambda0") ) );
-	double lambda_width = (double)( atof( getenv("lambda_width") ) );
-	double lambda_onoff = (double)( atof( getenv("lambda_onoff") ) );
-	double tspan = (double)( atof( getenv("tspan") ) )/fsPau<float>();
-	double omega_low = 2*M_PI/(lambda0+lambda_width/2.0)*C_nmPfs<float>()*fsPau<float>();
-	double omega_high = 2*M_PI/(lambda0-lambda_width/2.0)*C_nmPfs<float>()*fsPau<float>();
-	double omega_width = omega_high-omega_low;
-	double omega_onoff = 2*M_PI/(lambda0+lambda_width/2.0-lambda_onoff)*C_nmPfs<float>()*fsPau<float>() - omega_low;
+	scanparams.lambda_0(atof( getenv("lambda0") ));
+	scanparams.lambda_width( atof( getenv("lambda_width") ));
+	scanparams.lambda_onoff( atof( getenv("lambda_onoff") ));
+	scanparams.tspan((atof( getenv("tspan") ) )/fsPau<double>());
 
-	double omega0 = (omega_high+omega_low)/2.0;
+	scanparams.ngroupsteps(atoi( getenv("ngroupsteps") ));
+	scanparams.groupdelay(atof(getenv("groupdelay")));
+	scanparams.backdelay(atof(getenv("backdelay")));
+	scanparams.netalon(atoi(getenv("netalon")));
 
-	unsigned ngroupsteps = (unsigned)( atoi( getenv("ngroupsteps") ) );
-	double groupdelay = (double)(atof(getenv("groupdelay"))); //this one gets used in fs
-	double backdelay = (double)(atof(getenv("backdelay")));
-	double groupstep = groupdelay/ngroupsteps ;
-	double backstep = backdelay/ngroupsteps;
-	const unsigned netalon = (unsigned)(atoi(getenv("netalon")));
+	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
 
-	std::cerr << "\n\n=========== MADE IT HERE before masterpulse ============\n\n" << std::endl;
-	std::cerr << "\n\t============= omega_low, omega_high, tspan, omega0, omega_width, omega_onoff = "
-		<< omega_low << ", "
-		<< omega_high << ", "
-		<< tspan << ", "
-		<< omega0 << ", "
-		<< omega_width << ", "
-		<< omega_onoff
-		<< " ===============\n" << std::endl;
-
-	// start with building reference and etalon replicas //
-	PulseFreq masterpulse(omega0,omega_width,omega_onoff,tspan);
-	masterpulse.set_lamsamples(size_t(atoi( getenv("lamsamples"))));
-
-	std::vector<double> chirpvec(4,0.);
-	std::vector<double> chirpnoisevec(4,0.);
-	chirpvec[0] = (double)( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),int(2));// the difference in slopes at omega_low versus omega_high must equal tspan
-	chirpvec[1] = (double)( atof( getenv("TOD") ) ) / std::pow(fsPau<float>(),int(3));
-	chirpvec[2] = (double)( atof( getenv("FOD") ) ) / std::pow(fsPau<float>(),int(4));
-	chirpvec[3] = (double)( atof( getenv("fifthOD") ) ) / std::pow(fsPau<float>(),int(5));
-
-	if (atof(getenv("addrandomphase"))>0){
+	if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0) ){
 		masterpulse.addrandomphase();
-		std::string filename = filebase + "_spectralphaseFTpower.dat";
-		std::ofstream outfile(filename,std::ios::out);
+		std::string filename = scanparams.filebase() + "spectralphaseFTpower.dat";
+		std::ofstream outfile(filename.c_str(),std::ios::out);
 		masterpulse.print_phase_powerspectrum(outfile);
 		outfile.close();
-		filename = filebase + "_spectralphase.dat";
-		outfile.open(filename);
+		filename = scanparams.filebase() + "spectralphase.dat";
+		outfile.open(filename.c_str(),std::ios::out);
 		masterpulse.print_phase(outfile);
 		outfile.close();
-		filename = filebase + "_spectralamp.dat";
-		outfile.open(filename);
+		filename = scanparams.filebase() + "spectralamp.dat";
+		outfile.open(filename.c_str(),std::ios::out);
 		masterpulse.print_amp(outfile);
 		outfile.close();
 	}
-	masterpulse.addchirp(chirpvec);							// chirp that ref pulse
 
-	PulseFreq * pulsearray[bundle.get_nfibers()];					// An array of pointers to PulseFreq objects
-	PulseFreq * crosspulsearray[bundle.get_nfibers()];				// An array of pointers to PulseFreq objects
+	scanparams.etalonreflectance(atof(getenv("etalon")));
+	scanparams.etalondelay(atof(getenv("etalondelay")));
+	scanparams.interferedelay((double)atof(getenv("interferedelay")));
 
+	scanparams.chirp(
+			( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),int(2)), // the difference in slopes at omega_low versus omega_high must equal tspan
+			( atof( getenv("TOD") ) ) / std::pow(fsPau<float>(),int(3)),
+			( atof( getenv("FOD") ) ) / std::pow(fsPau<float>(),int(4)),
+			( atof( getenv("fifthOD") ) ) / std::pow(fsPau<float>(),int(5))
+			);
+
+	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
+
+	if (scanparams.addchirpnoise(atoi(getenv("usechirpnoise"))>0)){
+		scanparams.initchirpnoise( 
+				( atof( getenv("chirpnoise") ) ) / std::pow(fsPau<float>(),int(2)), 
+				( atof( getenv("TODnoise") ) ) / std::pow(fsPau<float>(),int(3)),
+				( atof( getenv("FODnoise") ) ) / std::pow(fsPau<float>(),int(4)),
+				( atof( getenv("fifthODnoise") ) ) / std::pow(fsPau<float>(),int(5))
+				);
+	}
+
+
+
+	FiberBundle masterbundle(boost::lexical_cast<size_t>(atoi(getenv("nfibers"))));
+	masterbundle.fiberdiameter(boost::lexical_cast<float>(atof(getenv("fiberdiam"))));
+	masterbundle.laserdiameter(boost::lexical_cast<float>(atof(getenv("laserdiam"))));
+	masterbundle.xraydiameter(boost::lexical_cast<float>(atof(getenv("xraydiam"))));
+	masterbundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
+	masterbundle.scalePolarCoords();
+	masterbundle.shuffle_output();
+	masterbundle.Ixray(float(1.));
+	masterbundle.Ilaser(float(1.));
+	std::string filename = scanparams.filebase() + "fibermap.out";
+	std::cerr << filename << std::endl;
+	std::ofstream mapfile(filename.c_str(),std::ios::out);
+	masterbundle.print_mapping(mapfile);
+	mapfile.close();
+	std::cerr << "just now setting masterresponse()" << std::endl;
 	MatResponse masterresponse(
-			0.0,    // step delay doesn't matter in the reference, only the etalon relative to itself         // stepdelay
-			(double)( atof( getenv("stepwidth") ) ),                                        // stepwidth
-			((double)( atof( getenv("attenuation") ) ) - 1.0) / ngroupsteps + 1.0,          // attenuation
-			(double)( atof( getenv("phase") ) ) / ngroupsteps                               // phase
+			0,															// stepdelay
+			(double)( atof( getenv("stepwidth") ) ),								// stepwidth
+			((double)( atof( getenv("attenuation") ) ) - 1.0) * masterbundle.Ixray() / scanparams.ngroupsteps() + 1.0,	// attenuation
+			(double)( atof( getenv("phase") ) ) * masterbundle.Ixray() / scanparams.ngroupsteps()				// phase
 			);
 	masterresponse.aalphabbeta(
-			(double)( atof( getenv("a") ) ),                // a
-			(double)( atof( getenv("alpha" ) ) ),           // alpha
-			(double)( atof( getenv("b") ) ),                //b
-			(double)( atof( getenv("beta") ) )              // beta
+			(double)( atof( getenv("a") ) ),		// a
+			(double)( atof( getenv("alpha" ) ) ),		// alpha
+			(double)( atof( getenv("b") ) ),		// b
+			(double)( atof( getenv("beta") ) )		// beta
 			);
-	masterresponse.setreflectance((double)(atof(getenv("etalon"))));
-	masterresponse.setetalondelay((double)(atof(getenv("etalondelay"))));
+
+	masterresponse.setreflectance(scanparams.etalonreflectance());
+	masterresponse.setetalondelay(scanparams.etalondelay());
+
+	std::vector< PulseFreq * > pulsearray(masterbundle.get_nfibers(),NULL);
+	std::vector< PulseFreq * > crosspulsearray(masterbundle.get_nfibers(),NULL);
+	for (size_t i=0;i<masterbundle.get_nfibers();++i){
+		pulsearray[i] = new PulseFreq(masterpulse);
+		crosspulsearray[i] = new PulseFreq(masterpulse);
+	}
+	for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
+
+		for (size_t i=0;i<pulsearray.size();++i){
+			*(pulsearray[i]) = masterpulse;
+			*(crosspulsearray[i]) = masterpulse;
+		}
 
 
-	for (unsigned n=0;n<nimages;++n){ // outermost loop for nimages to produce //
-		double t0 = uni_distribution(rng);
-		std::cout << "Running for t0 = " << t0 << std::endl;
+		double t0 = scanparams.delays_uniform();
+		double startdelay(0);
 
-		bundle.Ixray(float(xray_distribution(rng)));
-		bundle.Ilaser(float(laser_distribution(rng)));
-		bundle.delay_angle(dalpha*float(n));
-		bundle.center_Ixray(xray_pos_distribution(rng),xray_pos_distribution(rng));
-		bundle.center_Ilaser(laser_pos_distribution(rng),laser_pos_distribution(rng));
+		FiberBundle parabundle(masterbundle);
+		parabundle.Ixray(scanparams.xray_inten_rand());
+		parabundle.Ilaser(scanparams.laser_inten_rand());
+		parabundle.delay_angle(scanparams.dalpha()*double(n));
+		parabundle.center_Ixray(scanparams.xray_pos_rand(),scanparams.xray_pos_rand());
+		parabundle.center_Ilaser(scanparams.laser_pos_rand(),scanparams.laser_pos_rand());
 
-		unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
-		unsigned i,tid,e,g;
+		MatResponse pararesponse(masterresponse);
 
-		/*** Spawn a parallel region explicitly scoping all variables ***/
-		double startdelay;
-		bool refbuilt;
-		refbuilt = false;
-		MatResponse * oneresponsePtr = NULL;
-
-//#pragma omp parallel default(shared) private(tid,i,e,g,startdelay,oneresponsePtr) num_threads(nthreads)
+#pragma omp parallel num_threads(nthreads) shared(pulsearray,crosspulsearray,masterbundle,masterpulse,masterresponse,scanparams)
 		{ // begin parallel region
-			tid = omp_get_thread_num();
 
-//#pragma omp for // ordered 
-			for(i = 0; i< bundle.get_nfibers(); i++){ // begin fibers loop
-				std::normal_distribution<double> chirpnoiseDist( 
-						(double)( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),(int)2), 
-						(double)( atof( getenv("chirpnoise") ) ) / std::pow(fsPau<float>(),(int)2) );
-				std::normal_distribution<double> TODnoiseDist( 
-						(double)( atof( getenv("TOD") ) ) / std::pow(fsPau<float>(),(int)3),
-						(double)( atof( getenv("TODnoise") ) ) / std::pow(fsPau<float>(),(int)3) );
-				std::normal_distribution<double> FODnoiseDist(
-						(double)( atof( getenv("FOD") ) ) / std::pow(fsPau<float>(),(int)4),
-						(double)( atof( getenv("FODnoise") ) ) / std::pow(fsPau<float>(),(int)4) );
-				std::normal_distribution<double> fifthODnoiseDist(
-						(double)( atof( getenv("fifthOD") ) ) / std::pow(fsPau<float>(),(int)5),
-						(double)( atof( getenv("fifthODnoise") ) ) / std::pow(fsPau<float>(),(int)5) );
-				double interferedelay = (double)atof(getenv("interferedelay"));
+			size_t tid = omp_get_thread_num();
+			if (tid==0){
+				std::cout << "Running for t0 = " << t0 << std::endl;
+				std::cerr << "\n\n\t\t===== scanparams.delays_uniform() = " << scanparams.delays_uniform() << std::endl;
+				DebugOps::pushout(std::string("in threaded for loop, thread" + std::to_string(tid)));
+			}
 
-				startdelay = bundle.delay(i) + t0;
 
-				pulsearray[i] = new PulseFreq(masterpulse);
-				crosspulsearray[i] = new PulseFreq(masterpulse);
-				std::vector<double> chirpvec(4,0.);
-				chirpvec[0] = chirpnoiseDist(rng);
-				chirpvec[1] = TODnoiseDist(rng);
-				chirpvec[2] = FODnoiseDist(rng);
-				chirpvec[3] = fifthODnoiseDist(rng);
-				pulsearray[i]->addchirp(chirpvec); 
-				crosspulsearray[i]->addchirp(chirpvec); 
-				crosspulsearray[i]->delay(interferedelay); // delay in the frequency domain
+#pragma omp for schedule(static) // ordered 
+			for(size_t i = 0; i< parabundle.get_nfibers(); i++)
+			{ // begin fibers loop
+				startdelay = t0 + parabundle.delay(i);
+
+				if (scanparams.addchirpnoise()){
+					std::vector<double> noise(scanparams.getchirpnoise());
+					pulsearray[i]->addchirp(noise); 
+					crosspulsearray[i]->addchirp(noise); 
+				}
+
+				crosspulsearray[i]->delay(scanparams.interferedelay()); // delay in the frequency domain
 				pulsearray[i]->fft_totime();
 				crosspulsearray[i]->fft_totime();
-				oneresponsePtr = new MatResponse(
-						startdelay,											// stepdelay
-						boost::lexical_cast<double>( atof( getenv("stepwidth") ) ),					// stepwidth
-						(boost::lexical_cast<double>( atof( getenv("attenuation") ) ) - 1.0) * bundle.Ixray(size_t(i)) / ngroupsteps + 1.0,// attenuation
-						boost::lexical_cast<double>( atof( getenv("phase") ) ) * bundle.Ixray(size_t(i)) / ngroupsteps				// phase
-						);
-				oneresponsePtr->aalphabbeta(
-						(double)( atof( getenv("a") ) ),		// a
-						(double)( atof( getenv("alpha" ) ) ),		// alpha
-						(double)( atof( getenv("b") ) ),		// b
-						(double)( atof( getenv("beta") ) )		// beta
-						);
-				oneresponsePtr->setreflectance((double)(atof(getenv("etalon"))));
-				oneresponsePtr->setetalondelay((double)(atof(getenv("etalondelay"))));
 
-				for(g=0;g<ngroupsteps;g++){ // begin groupsteps loop
-					oneresponsePtr->setdelay(startdelay - g*groupstep); // forward propagating, x-rays advance on the optical
-					oneresponsePtr->setstepvec_amp(pulsearray[i]);
-					oneresponsePtr->setstepvec_phase(pulsearray[i]);
-					oneresponsePtr->setstepvec_amp(crosspulsearray[i]);
-					oneresponsePtr->setstepvec_phase(crosspulsearray[i]);
-					if (doublepulse){
-						oneresponsePtr->addstepvec_amp(pulsearray[i],doublepulsedelay);
-						oneresponsePtr->addstepvec_phase(pulsearray[i],doublepulsedelay);
-						oneresponsePtr->addstepvec_amp(crosspulsearray[i],doublepulsedelay);
-						oneresponsePtr->addstepvec_phase(crosspulsearray[i],doublepulsedelay);
+
+				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
+					pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
+					pararesponse.setstepvec_amp(*(pulsearray[i]));
+					pararesponse.setstepvec_phase(*(pulsearray[i]));
+					pararesponse.setstepvec_amp(*(crosspulsearray[i]));
+					pararesponse.setstepvec_phase(*(crosspulsearray[i]));
+					if (scanparams.doublepulse()){
+						pararesponse.addstepvec_amp(*(pulsearray[i]),scanparams.doublepulsedelay());
+						pararesponse.addstepvec_phase(*(pulsearray[i]),scanparams.doublepulsedelay());
+						pararesponse.addstepvec_amp(*(crosspulsearray[i]),scanparams.doublepulsedelay());
+						pararesponse.addstepvec_phase(*(crosspulsearray[i]),scanparams.doublepulsedelay());
 					}
 					// this pulls down the tail of the response so vector is periodic on nsamples	
-					oneresponsePtr->buffervectors(pulsearray[i]); 
-					oneresponsePtr->buffervectors(crosspulsearray[i]); 
+					pararesponse.buffervectors(*(pulsearray[i])); 
+					pararesponse.buffervectors(*(crosspulsearray[i])); 
 					pulsearray[i]->modulateamp_time();
 					pulsearray[i]->modulatephase_time();
 					crosspulsearray[i]->modulateamp_time();
 					crosspulsearray[i]->modulatephase_time();
 				}// end groupsteps loop
 
-				for (e=0;e<netalon;e++){ // begin etalon loop
+
+				for (size_t e=0;e<scanparams.netalon();e++){ // begin etalon loop
 					// back propagation step //
-					double etalondelay = startdelay - double(e+1) * (oneresponsePtr->getetalondelay()); // at front surface, x-rays see counter-propagating light from one full etalon delay
+					double etalondelay = startdelay - double(e+1) * (pararesponse.getetalondelay()); // at front surface, x-rays see counter-propagating light from one full etalon delay
 					PulseFreq etalonpulse(*(pulsearray[i]));
 					PulseFreq crossetalonpulse(*(crosspulsearray[i]));
 
-					for(g=0;g<ngroupsteps;g++){
-						oneresponsePtr->setdelay(etalondelay + g*backstep); // counterpropagating, x-rays work backwards through the optical
-						oneresponsePtr->setstepvec_amp(etalonpulse);
-						oneresponsePtr->setstepvec_phase(etalonpulse);
-						oneresponsePtr->setstepvec_amp(crossetalonpulse);
-						oneresponsePtr->setstepvec_phase(crossetalonpulse);
-						if (doublepulse){
-							oneresponsePtr->addstepvec_amp(etalonpulse,doublepulsedelay);
-							oneresponsePtr->addstepvec_phase(etalonpulse,doublepulsedelay);
-							oneresponsePtr->addstepvec_amp(crossetalonpulse,doublepulsedelay);
-							oneresponsePtr->addstepvec_phase(crossetalonpulse,doublepulsedelay);
+					for(size_t g=0;g<scanparams.ngroupsteps();g++){
+						pararesponse.setdelay(etalondelay + g*scanparams.backstep()); // counterpropagating, x-rays work backwards through the optical
+						pararesponse.setstepvec_amp(etalonpulse);
+						pararesponse.setstepvec_phase(etalonpulse);
+						pararesponse.setstepvec_amp(crossetalonpulse);
+						pararesponse.setstepvec_phase(crossetalonpulse);
+						if (scanparams.doublepulse()){
+							pararesponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
 						}
-						oneresponsePtr->buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-						oneresponsePtr->buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+						pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+						pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						etalonpulse.modulateamp_time();
 						etalonpulse.modulatephase_time();
 						crossetalonpulse.modulateamp_time();
 						crossetalonpulse.modulatephase_time();
 					}
 					// forward propagation //
-					for(g=0;g<ngroupsteps;g++){
-						oneresponsePtr->setdelay(startdelay - g*groupstep); // forward propagating, x-rays advance on the optical
-						oneresponsePtr->setstepvec_amp(etalonpulse);
-						oneresponsePtr->setstepvec_phase(etalonpulse);
-						oneresponsePtr->setstepvec_amp(crossetalonpulse);
-						oneresponsePtr->setstepvec_phase(crossetalonpulse);
-						if (doublepulse){
-							oneresponsePtr->addstepvec_amp(etalonpulse,doublepulsedelay);
-							oneresponsePtr->addstepvec_phase(etalonpulse,doublepulsedelay);
-							oneresponsePtr->addstepvec_amp(crossetalonpulse,doublepulsedelay);
-							oneresponsePtr->addstepvec_phase(crossetalonpulse,doublepulsedelay);
+					for(size_t g=0;g<scanparams.ngroupsteps();g++){
+						pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
+						pararesponse.setstepvec_amp(etalonpulse);
+						pararesponse.setstepvec_phase(etalonpulse);
+						pararesponse.setstepvec_amp(crossetalonpulse);
+						pararesponse.setstepvec_phase(crossetalonpulse);
+						if (scanparams.doublepulse()){
+							pararesponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
 
 						}
-						oneresponsePtr->buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-						oneresponsePtr->buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+						pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+						pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						etalonpulse.modulateamp_time();
 						etalonpulse.modulatephase_time();
 						crossetalonpulse.modulateamp_time();
@@ -291,10 +233,10 @@ int main(int argc, char* argv[])
 					}
 					etalonpulse.fft_tofreq();
 					crossetalonpulse.fft_tofreq();
-					etalonpulse.delay(oneresponsePtr->getetalondelay()); // delay and attenuate in frequency domain
-					etalonpulse.attenuate(pow(oneresponsePtr->getreflectance(),(int)2));
-					crossetalonpulse.delay(oneresponsePtr->getetalondelay()); // delay and attenuate in frequency domain
-					crossetalonpulse.attenuate(pow(oneresponsePtr->getreflectance(),(int)2));
+					etalonpulse.delay(pararesponse.getetalondelay()); // delay and attenuate in frequency domain
+					etalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
+					crossetalonpulse.delay(pararesponse.getetalondelay()); // delay and attenuate in frequency domain
+					crossetalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
 					etalonpulse.fft_totime();
 					crossetalonpulse.fft_totime();
 					*(pulsearray[i]) += etalonpulse;
@@ -302,54 +244,54 @@ int main(int argc, char* argv[])
 
 				} // end etalon loop
 
+
 				pulsearray[i]->fft_tofreq();
 				crosspulsearray[i]->fft_tofreq();
 
-				crosspulsearray[i]->delay(-interferedelay); // expects this in fs // time this back up to the crosspulse
+				pulsearray[i]->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
-				delete oneresponsePtr;
-				oneresponsePtr = NULL;
 			} // end nfibers loop
 
 
-		} // end parallel region
-
-
-		filename = filebase + "interference.out." + std::to_string(n);
+		std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);
 		ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
+
 		std::cout << "interfere filename out = " << filename << std::endl;
-		std::complex<float> z_laser = bundle.center_Ilaser();
-		std::complex<float> z_xray = bundle.center_Ixray();
+		std::complex<double> z_laser = parabundle.center_Ilaser();
+		std::complex<double> z_xray = parabundle.center_Ixray();
 		interferestream << "#delay for image = \t" << t0 
-			<< "\n#Ilaser = \t" << bundle.Ilaser()
-			<< "\n#Ixray = \t" << bundle.Ixray()
+			<< "\n#Ilaser = \t" << parabundle.Ilaser()
+			<< "\n#Ixray = \t" << parabundle.Ixray()
 			<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
 			<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-			<< "\n#alpha = \t" << bundle.delay_angle() 
+			<< "\n#alpha = \t" << parabundle.delay_angle() 
 			<< std::endl;
 		interferestream << "#";
 		pulsearray[0]->printwavelengthbins(&interferestream);
-
-		// file for delay bins
-		filename = filebase + "delaybins.out";
-		ofstream outbins(filename.c_str(),ios::out); 
-		for (i=0;i<bundle.get_nfibers();i++){
-			outbins << bundle.delay(i) << "\n";
+		for (size_t i=0;i<parabundle.get_nfibers();i++){
 			*(pulsearray[i]) -= *(crosspulsearray[i]);
-			*(pulsearray[i]) *= bundle.Ilaser(size_t(i)); 
+			*(pulsearray[i]) *= parabundle.Ilaser(size_t(i)); 
 			pulsearray[i]->appendwavelength(&interferestream);
 		}
 		interferestream.close();
-		outbins.close();
-
-		for (unsigned i=0;i<bundle.get_nfibers();i++){
-			delete pulsearray[i];
-			delete crosspulsearray[i];
-		}
-
-
+		} // end parallel region
 
 	} // outermost loop for nimages to produce //
+
+
+
+	// file for delay bins
+	ofstream outbins(std::string(scanparams.filebase() + "delaybins.out").c_str(),ios::out); 
+	for (size_t i=0;i<masterbundle.get_nfibers();++i){
+		outbins << masterbundle.delay(i) << "\n";
+	}
+	outbins.close();
+
+	for (size_t i=0;i<masterbundle.get_nfibers();i++){
+		delete pulsearray[i];
+		delete crosspulsearray[i];
+		pulsearray[i] = crosspulsearray[i] = NULL;
+	}
 
 	return 0;
 }
