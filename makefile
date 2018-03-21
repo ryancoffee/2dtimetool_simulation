@@ -1,9 +1,11 @@
 CC=g++
-BOOSTROOT=/opt/boost/include
+BOOSTROOT=$(HOME)/computing/boost
+OPENCVROOT=$(HOME)/computing/opencv/
+CPPINCLUDE=$(HOME)/cpp/include
 SDIR=./src
 ODIR=./objects
 IDIR=./include
-CFLAGS=-Wall -I/usr/local/include -I$(BOOSTROOT) -I$(IDIR) -std=gnu++14 -c -D_USE_MATH_DEFINES -O3 -fopenmp
+CFLAGS=-Wall -I/usr/local/include -I$(CPPINCLUDE) -I$(BOOSTROOT) -I$(IDIR) -std=gnu++14 -c -D_USE_MATH_DEFINES -O3 -fopenmp
 LDFLAGS=-L/usr/local/lib -lfftw3 -lm -fopenmp
 _SRCS=ScanParams.cpp Pulse.cpp MatResponse.cpp FiberBundle.cpp CalibMat.cpp scan_material.cpp
 _HEADS=DataOps.hpp ScanParams.hpp Pulse.hpp MatResponse.hpp Refraction.hpp FiberBundle.hpp CalibMat.hpp scan_material.hpp 
