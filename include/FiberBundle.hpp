@@ -19,7 +19,7 @@ class FiberBundle {
 		bool print_mapping(std::ofstream & out);
 		bool shuffle_output(void);
 		void scalePolarCoords(void);
-		inline void set_fsPmm(const double x = 0.5){fsPmm = x;}
+		inline void set_fsPmm(const double x = 3333){fsPmm = x;}
 
 		inline void fiberdiameter(const double x){ fiberdiam = x; for (size_t i=0;i<ovals.size();++i){ovals[i] = fiberdiam * double(i);}}
 		inline void laserdiameter(const double x){ laserdiam = x; }

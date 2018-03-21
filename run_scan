@@ -63,7 +63,7 @@ export nu_high=0.65;
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
 export nfibers=109;
-#export nfibers=5;
+#export nfibers=61;
 export fiberdiam=0.11;
 export laserdiam=0.7;
 export xraydiam=0.5;
