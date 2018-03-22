@@ -94,7 +94,7 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
 	DataOps::clone(modphase,rhs.modphase);
 }
 
-PulseFreq & PulseFreq::operator=(PulseFreq const & rhs) // assignment
+PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // assignment
 {
 	omega_center=rhs.omega_center;
 	omega_width=rhs.omega_width;

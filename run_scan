@@ -2,7 +2,7 @@
 
 starttime=$(date +%s);
 
-export nthreads=1;
+export nthreads=4;
 export datadir='/u1/mldrp/coffee/sharedata/raw/';
 mkdir -p $datadir;
 
@@ -62,8 +62,8 @@ export nu_high=0.65;
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-export nfibers=109;
-#export nfibers=61;
+#export nfibers=109;
+export nfibers=7;
 export fiberdiam=0.11;
 export laserdiam=0.7;
 export xraydiam=0.5;
@@ -123,13 +123,13 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=823; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=20000000;
 export saturate=4096;
 export lamsamples=1024;
 
-export filebase=$datadir"testing_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 echo $filebase
 ./scan_material
 stoptime=$(date +%s);

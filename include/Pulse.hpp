@@ -100,7 +100,7 @@ class PulseFreq {
 	friend class MatResponse;
 
 	public:
-		PulseFreq & operator=(PulseFreq const & rhs); // assignment
+		PulseFreq & operator=(const PulseFreq & rhs); // assignment
 		PulseFreq & operator+=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator-=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator*=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition

@@ -111,3 +111,5 @@ bin/
 # exclude the executable
 scan_material
 
+
+core.*
