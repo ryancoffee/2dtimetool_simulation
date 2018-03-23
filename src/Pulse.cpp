@@ -24,8 +24,6 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	domega( 2.0*pi<double>()/tspan_in),
 	intime(false),
 	infreq(true),
-	i_low( (unsigned)(double( atof( getenv("nu_low") ) )* twopi<double>()*fsPau<double>()/domega) ),
-	i_high( (unsigned)(double( atof( getenv("nu_high") ) )* twopi<double>()*fsPau<double>()/domega) ),
 	m_noisescale(1e-3),
 	m_sampleinterval(2),
 	m_saturate(4096),
@@ -33,18 +31,14 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	m_lamsamples(1024),
 	sampleround(1000)
 {
-	//std::cerr << "In constructor PulseFreq()" << std::endl;
+	std::cerr << "In constructor PulseFreq()" << std::endl;
+	i_low =  (unsigned)(double( atof( getenv("nu_low") ) )* twopi<double>()*fsPau<double>()/domega);
+	i_high =  (unsigned)(double( atof( getenv("nu_high") ) )* twopi<double>()*fsPau<double>()/domega);
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
 	dtime = tspan_in/double(samples);
 	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
-	/*
-	rhovec.resize(samples,0.0);
-	modamp.resize(samples,1.0);
-	phivec.resize(samples,0.0);
-	modphase.resize(samples,0.0);
-	omega.resize(samples);
-	time.resize(samples);
-	*/
+	std::cerr << "Made it here in constructor PulseFreq()" << std::endl;
+	std::cerr << "buildvectors() method may be causing the seg fault" << std::endl;
 	buildvectors();
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
@@ -458,13 +452,17 @@ void PulseFreq::printtime(std::ofstream * outfile){
 
 
 void PulseFreq::buildvectors(void){
+	std::cerr << "going to fftw_malloc()" << std::endl;
 	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * samples);
 	for (size_t i=0;i<samples;++i){
 		cvec[i] = std::complex<double>(0);
 	}
+	std::cerr << "fftw_malloc()-ed and set to std::complex<double>(0)" << std::endl;
+	std::cerr << "Now going to build FTplan_s" << std::endl;
 
 	FTplan_forward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_FORWARD, FFTW_ESTIMATE);
 	FTplan_backward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_BACKWARD, FFTW_ESTIMATE);
+	std::cerr << "FTplan_s are build" << std::endl;
 
 	static std::complex<double> z;
 	//factorization();

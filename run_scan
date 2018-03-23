@@ -2,7 +2,7 @@
 
 starttime=$(date +%s);
 
-export nthreads=4;
+export nthreads=2;
 export datadir='/u1/mldrp/coffee/sharedata/raw/';
 mkdir -p $datadir;
 

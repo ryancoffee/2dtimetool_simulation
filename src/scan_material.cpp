@@ -37,23 +37,6 @@ int main(int argc, char* argv[])
 	scanparams.backdelay(atof(getenv("backdelay")));
 	scanparams.netalon(atoi(getenv("netalon")));
 
-	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
-
-	if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0) ){
-		masterpulse.addrandomphase();
-		std::string filename = scanparams.filebase() + "spectralphaseFTpower.dat";
-		std::ofstream outfile(filename.c_str(),std::ios::out);
-		masterpulse.print_phase_powerspectrum(outfile);
-		outfile.close();
-		filename = scanparams.filebase() + "spectralphase.dat";
-		outfile.open(filename.c_str(),std::ios::out);
-		masterpulse.print_phase(outfile);
-		outfile.close();
-		filename = scanparams.filebase() + "spectralamp.dat";
-		outfile.open(filename.c_str(),std::ios::out);
-		masterpulse.print_amp(outfile);
-		outfile.close();
-	}
 
 	scanparams.etalonreflectance(atof(getenv("etalon")));
 	scanparams.etalondelay(atof(getenv("etalondelay")));
@@ -66,7 +49,6 @@ int main(int argc, char* argv[])
 			( atof( getenv("fifthOD") ) ) / std::pow(fsPau<float>(),int(5))
 			);
 
-	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
 	if (scanparams.addchirpnoise(atoi(getenv("usechirpnoise"))>0)){
 		scanparams.initchirpnoise( 
@@ -93,6 +75,10 @@ int main(int argc, char* argv[])
 	std::ofstream mapfile(filename.c_str(),std::ios::out);
 	masterbundle.print_mapping(mapfile);
 	mapfile.close();
+
+
+
+
 	std::cerr << "just now setting masterresponse()" << std::endl;
 	
 	// file for delay bins
@@ -121,11 +107,35 @@ int main(int argc, char* argv[])
 
 	std::cerr << "Just finished modifying chirp for original masterresponse" << std::endl;
 
-#pragma omp parallel num_threads(nthreads) shared(masterbundle,masterpulse,masterresponse,scanparams)
+#pragma omp parallel num_threads(nthreads) shared(masterbundle,masterresponse,scanparams)
 //#pragma omp parallel num_threads(nthreads) 
 	{ // begin parallel region
 	size_t tid = omp_get_thread_num();
 	if (tid==0) std::cerr << "inside parallel region for tid = " << tid << std::endl;
+
+	std::cerr << "made it here" << std::endl;
+	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
+	std::cerr << tid << " = " << atoi(getenv("addrandomphase")) << std::endl;
+	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
+
+	if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0) ){
+		masterpulse.addrandomphase();
+		if (tid ==0){
+			std::string filename = scanparams.filebase() + "spectralphaseFTpower.dat";
+			std::ofstream outfile(filename.c_str(),std::ios::out);
+			masterpulse.print_phase_powerspectrum(outfile);
+			outfile.close();
+			filename = scanparams.filebase() + "spectralphase.dat";
+			outfile.open(filename.c_str(),std::ios::out);
+			masterpulse.print_phase(outfile);
+			outfile.close();
+			filename = scanparams.filebase() + "spectralamp.dat";
+			outfile.open(filename.c_str(),std::ios::out);
+			masterpulse.print_amp(outfile);
+			outfile.close();
+		}
+	}
+
 #pragma omp for //schedule(static) // ordered 
 	for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
 		if (tid==0) std::cerr << "threading on image " << n << " for tid = " << tid << std::endl;
