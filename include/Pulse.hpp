@@ -125,17 +125,20 @@ class PulseFreq {
 			return dtime;
 		}
 		void fft_totime(void) {
-
-			fftw_execute(FTplan_backward);
+			fftw_plan p = fftw_plan_dft_1d(samples, (fftw_complex*)cvec, (fftw_complex*)cvec, FFTW_BACKWARD, FFTW_ESTIMATE);
+			//fftw_execute(plan_backward);
+			fftw_execute(p);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq = false;
 			intime = true;
 		}
 		void fft_tofreq(void) {
+			fftw_plan p = fftw_plan_dft_1d(samples, (fftw_complex*)cvec, (fftw_complex*)cvec, FFTW_FORWARD, FFTW_ESTIMATE);
 			if (infreq)
 				std::cerr << "died here at fft_tofreq()" << std::endl;
-			fftw_execute(FTplan_forward);
+			//fftw_execute(FTplan_forward);
+			fftw_execute(p);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq=true;
@@ -319,8 +322,8 @@ class PulseFreq {
 		double dtime,time_center,time_wdith;
 
 		// FFTW variables //
-		static fftw_plan FTplan_forward;
-		static fftw_plan FTplan_backward;
+		fftw_plan FTplan_forward;
+		fftw_plan FTplan_backward;
 		std::complex<double> * cvec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
 
 		std::vector<double> rhovec;

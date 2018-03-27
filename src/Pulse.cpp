@@ -40,6 +40,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	std::cerr << "Made it here in constructor PulseFreq()" << std::endl;
 	std::cerr << "buildvectors() method may be causing the seg fault" << std::endl;
 	buildvectors();
+	std::cerr << "made it past buildvectors" << std::endl;
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
 	m_lamsamples = (size_t)atoi(getenv("lamsamples"));
@@ -452,20 +453,16 @@ void PulseFreq::printtime(std::ofstream * outfile){
 
 
 void PulseFreq::buildvectors(void){
-	std::cerr << "going to fftw_malloc()" << std::endl;
 	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * samples);
-	for (size_t i=0;i<samples;++i){
-		cvec[i] = std::complex<double>(0);
-	}
-	std::cerr << "fftw_malloc()-ed and set to std::complex<double>(0)" << std::endl;
+        std::fill(cvec,cvec + samples,std::complex<double>(0));
+	/*
 	std::cerr << "Now going to build FTplan_s" << std::endl;
-
-	FTplan_forward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_FORWARD, FFTW_ESTIMATE);
-	FTplan_backward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_BACKWARD, FFTW_ESTIMATE);
-	std::cerr << "FTplan_s are build" << std::endl;
+	//FTplan_forward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_FORWARD, FFTW_ESTIMATE);
+	//FTplan_backward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_BACKWARD, FFTW_ESTIMATE);
+	std::cerr << "FTplan_s are built" << std::endl;
+	*/
 
 	static std::complex<double> z;
-	//factorization();
 
 	rhovec.resize(samples,0.0);
 	phivec.resize(samples,0.0);

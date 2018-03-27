@@ -39,10 +39,7 @@ class FiberBundle {
 		inline std::complex<double> center_Ixray(void){return xray_center;}
 		inline void delay_angle(const double a){alpha = a;}
 		inline double delay_angle(void){return alpha;}
-		inline double delay(const size_t i)
-		{
-			return fsPmm * std::abs(zvals[ids[i]])*std::cos(std::arg(zvals[ids[i]]) + alpha);
-		}
+		inline double delay(const size_t i){ return fsPmm * (std::cos(alpha)*x(i) + std::sin(alpha)*y(i)); }
 		inline double x(const size_t i){return zvals[ids[i]].real();}
 		inline double y(const size_t i){return zvals[ids[i]].imag();}
 		inline double o(const size_t i){return ovals[ids[i]];}
@@ -53,7 +50,6 @@ class FiberBundle {
 
 	private:
 		size_t nfibers;
-		size_t nrows;
 		double fsPmm,fiberdiam,laserdiam,xraydiam;
 		double ilaser,ixray,alpha;
 		std::complex<double> laser_center;
@@ -62,7 +58,7 @@ class FiberBundle {
 		std::vector<double> ovals;
 		std::vector<std::complex<double> > zvals;
 
-		void setnrows(size_t n);
+		void setnfibers(size_t n);
 		bool set_polarcoords(size_t n);
 
 	protected:

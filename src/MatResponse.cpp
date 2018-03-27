@@ -27,7 +27,7 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
 	alpha=5.0e-4*fsPau<double>();
 	beta=0.0;
 }        
-//void MatResponse::setstepvec_full(PulseFreq & pulse){ setstepvec_full( &pulse); }
+void MatResponse::setstepvec_full(PulseFreq * pulse){ setstepvec_full( *pulse); }
 void MatResponse::setstepvec_full(PulseFreq & pulse){
         double arg;
         for (unsigned i = 0 ; i < pulse.getsamples(); i++){
@@ -50,7 +50,7 @@ void MatResponse::setstepvec_full(PulseFreq & pulse){
         }
 }
 
-//void MatResponse::setstepvec_amp(PulseFreq & pulse){ setstepvec_amp(&pulse); }
+void MatResponse::setstepvec_amp(PulseFreq * pulse){ setstepvec_amp(*pulse); }
 void MatResponse::setstepvec_amp(PulseFreq & pulse){
         double arg;
         for (unsigned i = 0 ; i < pulse.getsamples(); i++){
@@ -75,7 +75,7 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse){
         }
 }
 
-//void MatResponse::setstepvec_phase(PulseFreq & pulse){ setstepvec_phase(&pulse); }
+void MatResponse::setstepvec_phase(PulseFreq * pulse){ setstepvec_phase(*pulse); }
 void MatResponse::setstepvec_phase(PulseFreq & pulse){
         double arg;
         for (unsigned i = 0 ; i < pulse.getsamples(); i++){
@@ -98,7 +98,7 @@ void MatResponse::setstepvec_phase(PulseFreq & pulse){
         }
 }
 
-//void MatResponse::buffervectors(PulseFreq & pulse){ buffervectors(&pulse); }
+void MatResponse::buffervectors(PulseFreq * pulse){ buffervectors(*pulse); }
 void MatResponse::buffervectors(PulseFreq & pulse){
         // nominally setting this to 10 times the fastest twidth to minimize its effect on spectral broadening
         unsigned bufferwidth = static_cast<unsigned>(10.0*twidth/pulse.getdt());
@@ -118,7 +118,7 @@ void MatResponse::buffervectors(PulseFreq & pulse){
 }
 
 
-//void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay){ addstepvec_amp(&pulse,delay); }
+void MatResponse::addstepvec_amp(PulseFreq * pulse,double delay){ addstepvec_amp(*pulse,delay); }
 void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay){
         double arg;
         double thisamp;
@@ -147,7 +147,7 @@ void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay){
 }
 
 
-//void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay){ addstepvec_phase(&pulse,delay); }
+void MatResponse::addstepvec_phase(PulseFreq * pulse,double delay){ addstepvec_phase(*pulse,delay); }
 void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay){
         double arg;
         double thisphase;
