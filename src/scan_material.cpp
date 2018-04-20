@@ -104,8 +104,8 @@ int main(int argc, char* argv[])
 
 	masterresponse.setreflectance(scanparams.etalonreflectance());
 	masterresponse.setetalondelay(scanparams.etalondelay());
-
 	std::cerr << "Just finished modifying chirp for original masterresponse" << std::endl;
+
 
 #pragma omp parallel num_threads(nthreads) shared(masterbundle,masterresponse,scanparams)
 	{ // begin parallel region
@@ -138,6 +138,8 @@ int main(int argc, char* argv[])
 		std::vector< PulseFreq *> crosspulsearray(masterbundle.get_nfibers(),NULL);
 		bool arrays_initialized = false;
 
+		std::cerr << "\t\t Entering the ordered omp for\n\n" << std::endl;
+
 #pragma omp for //schedule(static) // ordered 
 		for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
 			if (tid==0) {
@@ -146,6 +148,7 @@ int main(int argc, char* argv[])
 			}
 
 			for (size_t i=0;i<masterbundle.get_nfibers();++i){
+				std::cerr << "\t arrays_initialized and so we delete before redefining as masterpulse\n" << std::endl;
 				if (arrays_initialized){ 
 					delete pulsearray[i];
 					delete crosspulsearray[i];
@@ -177,21 +180,22 @@ int main(int argc, char* argv[])
 
 			for(size_t i = 0; i< parabundle.get_nfibers(); i++)
 			{ // begin fibers loop
-				std::cerr << "in fiber loop for fiber " << i << std::endl;
+				std::cerr << "in fiber loop for fiber " << i << " of " << parabundle.get_nfibers() << " fibers" << std::endl;
 				startdelay = t0 + parabundle.delay(i);
 				if (scanparams.addchirpnoise()){
-					std::vector<double> noise(scanparams.getchirpnoise());
-					pulsearray[i]->addchirp(noise); 
-					crosspulsearray[i]->addchirp(noise); 
+					//std::vector<double> noise(scanparams.getchirpnoise());
+					//pulsearray[i]->addchirp(noise); 
+					//crosspulsearray[i]->addchirp(noise); 
+					pulsearray[i]->addchirp(scanparams.getchirpnoise()); 
+					crosspulsearray[i]->addchirp(scanparams.getchirpnoise()); 
 				}
 
 				crosspulsearray[i]->delay(scanparams.interferedelay()); // delay in the frequency domain
 			std::cerr << "\n\t\t ---- made it HERE HERE HERE HERE ----" << std::endl;
 			std::cerr << "\n\t\t ---- it is in the FTplan ----" << std::endl;
 				pulsearray[i]->fft_totime();
-			std::cerr << "\n\t\t ---- made it HERE HERE HERE HERE ---- \n\t\t ---- and HERE ----" << std::endl;
 				crosspulsearray[i]->fft_totime();
-
+			std::cerr << "\n\t\t ---- after the crosspulsearray[i]->fft_totime(); call ----" << std::endl;
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 					pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
@@ -273,15 +277,17 @@ int main(int argc, char* argv[])
 					*(crosspulsearray[i]) += crossetalonpulse;
 
 				} // end etalon loop
+	std::cerr << "\n\t\t ---- after the etalon loop ----" << std::endl;
 
 
 				pulsearray[i]->fft_tofreq();
 				crosspulsearray[i]->fft_tofreq();
-
 				pulsearray[i]->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
-
+	std::cerr << "\n\t\t ---- after the pulsearray[i]->delay(scanparams.interferedelay()); call ----" << std::endl;
+	std::cerr << "\n\t\t ---- coming back around for the next fiber ---- " << std::endl;
 			} // end nfibers loop
 
+	std::cerr << "\n\t\t ---- after end nfibers loop ----" << std::endl;
 
 			std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".tid" + std::to_string(tid);
 			ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.

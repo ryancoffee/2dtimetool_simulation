@@ -2,8 +2,9 @@
 
 starttime=$(date +%s);
 
-export nthreads=3;
-export datadir='/u1/mldrp/coffee/sharedata/raw/';
+export nthreads=1;
+#export datadir='/u1/mldrp/coffee/sharedata/raw/';
+export datadir='./data/raw/';
 mkdir -p $datadir;
 
 # for Omar, testing the addition of random phase
@@ -129,9 +130,10 @@ export gain=20000000;
 export saturate=4096;
 export lamsamples=1024;
 
-export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+#export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
+export filebase=$datadir"multithread_"$interferedelay"_";
 echo $filebase
-./scan_material
+#./scan_material
 stoptime=$(date +%s);
 echo "$(expr $stoptime - $starttime)s runtime"
 
