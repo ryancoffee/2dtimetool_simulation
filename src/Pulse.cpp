@@ -525,8 +525,8 @@ void PulseFreq::buildvectors(void){
 	
 }
 void PulseFreq::killvectors(void){
-	fftw_destroy_plan(FTplan_forward);
-	fftw_destroy_plan(FTplan_backward);
+	//fftw_destroy_plan(FTplan_forward);
+	//fftw_destroy_plan(FTplan_backward);
 	fftw_free(cvec);
 	cvec = NULL;
 }

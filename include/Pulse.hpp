@@ -13,6 +13,7 @@
 #include <cassert>
 #include <random>
 #include <fftw3.h>
+#include <memory>
 
 
 // my headers
@@ -322,8 +323,8 @@ class PulseFreq {
 		double dtime,time_center,time_wdith;
 
 		// FFTW variables //
-		fftw_plan FTplan_forward;
-		fftw_plan FTplan_backward;
+		//fftw_plan FTplan_forward;
+		//fftw_plan FTplan_backward;
 		std::complex<double> * cvec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
 
 		std::vector<double> rhovec;
