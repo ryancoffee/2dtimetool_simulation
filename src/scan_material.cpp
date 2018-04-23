@@ -116,18 +116,15 @@ int main(int argc, char* argv[])
 		PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
 		masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
-		std::cerr << "\n\n\t\t\t\t ---- HEY chnge to std::shared_ptr ---- "
+  		std::cerr << "\n\t\t\t\t ---- changed to std::shared_ptr ---- "
 			<< "\n\t\t\t\t http://en.cppreference.com/w/cpp/memory/shared_ptr"
-			<< "\n\t\t\t\t and accommodating mutex and locks "
+			<< "\n\t\t\t\t Still need to use mutex and locks "
 			<< "\n\t\t\t\t lock masterpulse for sure, but not so clear on this" << std::endl;
 		//std::vector< PulseFreq *> pulsearray(masterbundle.get_nfibers(),NULL);
 		//std::vector< PulseFreq *> crosspulsearray(masterbundle.get_nfibers(),NULL);
 		std::vector< std::shared_ptr<PulseFreq> > pulsearray(masterbundle.get_nfibers());
 		std::vector< std::shared_ptr<PulseFreq> > crosspulsearray(masterbundle.get_nfibers());
 		bool arrays_initialized = false;
-		std::cerr << "\n\n\t\t\t\t*******************"
-			<< "\n\t\t\t\t pulsearray[0].use_count() = " << pulsearray[0].use_count() 
-			<< "\n\t\t\t\t*******************\n" << std::endl;
 
 		PulseFreq etalonpulse(masterpulse);
 		PulseFreq crossetalonpulse(masterpulse);
@@ -135,12 +132,12 @@ int main(int argc, char* argv[])
 		PulseFreq sharedcrosspulse(masterpulse);
 		if (!arrays_initialized){
 			for (size_t f=0;f<masterbundle.get_nfibers();++f){
-				std::cerr << "\t\t-- trying to use shared_ptr<PulseFreq>(sharedpulse)" << std::endl;
+				//std::cerr << "\t\t-- trying to use shared_ptr<PulseFreq>(sharedpulse)" << std::endl;
 				//pulsearray[f] = new PulseFreq(masterpulse);
 				//crosspulsearray[f] = new PulseFreq(masterpulse);
 				pulsearray[f] = std::make_shared<PulseFreq>(sharedpulse);
 				crosspulsearray[f] = std::make_shared<PulseFreq>(sharedcrosspulse);
-				std::cerr << "\t\t-- used shared_ptr<PulseFreq>(sharedpulse)" << std::endl;
+				//std::cerr << "\t\t-- used shared_ptr<PulseFreq>(sharedpulse)" << std::endl;
 			}
 			arrays_initialized = true;
 		}
@@ -163,18 +160,18 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		std::cerr << "\t\t Entering the ordered omp for\n\n" << std::endl;
+		std::cerr << "\t\t Entering the omp for in tid = " << tid << "\n\n" << std::endl;
 
-#pragma omp for //schedule(static) // ordered 
+#pragma omp for schedule(static) ordered 
 		for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
-			std::cerr << "\n\t\t\t\t pulsearray[0].use_count() = " << pulsearray[0].use_count() << std::endl;
+			//std::cerr << "\n\t\t\t\t pulsearray[0].use_count() = " << pulsearray[0].use_count() << std::endl;
 			if (tid==0) {
 				std::cerr << "http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html \n"
 					<< " \t use this for defining multiple fibers as contiguous blocks for row-wise FFT as 2D" << std::endl;
 			}
 
 			for (size_t f=0;f<masterbundle.get_nfibers();++f){
-				std::cerr << "\t now we try to set them as masterpulse" << std::endl;
+				//std::cerr << "\t now we try to set them as masterpulse" << std::endl;
 				//*(pulsearray[f]) = masterpulse;
 				//*(crosspulsearray[f]) = masterpulse;
 				*(pulsearray[f].get()) = masterpulse;
@@ -195,15 +192,15 @@ int main(int argc, char* argv[])
 
 
 			if (tid==0){
-				std::cout << "Running for t0 = " << t0 << std::endl;
-				std::cerr << "\n\n\t\t===== scanparams.delays_uniform() = " << scanparams.delays_uniform() << std::endl;
-				DebugOps::pushout(std::string("in threaded for loop, thread" + std::to_string(tid)));
+				//std::cout << "Running for t0 = " << t0 << std::endl;
+				//std::cerr << "\n\n\t\t===== scanparams.delays_uniform() = " << scanparams.delays_uniform() << std::endl;
+				DebugOps::pushout(std::string("Running for t0 = " + std::to_string(t0) + "in threaded for loop, thread " + std::to_string(tid)));
 			}
 
 
 			for(size_t f = 0; f < parabundle.get_nfibers(); f++)
 			{ // begin fibers loop
-				std::cerr << "in fiber loop for fiber " << f << " of " << parabundle.get_nfibers() << " fibers" << std::endl;
+				//std::cerr << "in fiber loop for fiber " << f << " of " << parabundle.get_nfibers() << " fibers" << std::endl;
 				startdelay = t0 + parabundle.delay(f);
 				if (scanparams.addchirpnoise()){
 					//std::vector<double> noise(scanparams.getchirpnoise());
@@ -214,10 +211,10 @@ int main(int argc, char* argv[])
 				}
 
 				crosspulsearray[f].get()->delay(scanparams.interferedelay()); // delay in the frequency domain
-				std::cerr << "\n\t\t ---- it is in the FTplan ----" << std::endl;
+				//std::cerr << "\n\t\t ---- it is in the FTplan ----" << std::endl;
 				pulsearray[f].get()->fft_totime();
 				crosspulsearray[f].get()->fft_totime();
-				std::cerr << "\n\t\t ---- after the crosspulsearray[f]->fft_totime(); call ----" << std::endl;
+				//std::cerr << "\n\t\t ---- after the crosspulsearray[f]->fft_totime(); call ----" << std::endl;
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 					pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
@@ -242,7 +239,7 @@ int main(int argc, char* argv[])
 
 
 				for (size_t e=0;e<scanparams.netalon();e++){ // begin etalon loop
-					std::cerr << "\n\t\t ---- starting etalon at " << e << " ----" << std::endl;
+					//std::cerr << "\n\t\t ---- starting etalon at " << e << " ----" << std::endl;
 					// back propagation step //
 					double etalondelay = startdelay - double(e+1) * (pararesponse.getetalondelay()); // at front surface, x-rays see counter-propagating light from one full etalon delay
 
@@ -299,19 +296,19 @@ int main(int argc, char* argv[])
 					crossetalonpulse.fft_totime();
 					*(pulsearray[f]) += etalonpulse;
 					*(crosspulsearray[f]) += crossetalonpulse;
-					std::cerr << "\n\t\t ---- in etalon at " << e << " ----" << std::endl;
+					//std::cerr << "\n\t\t ---- in etalon at " << e << " ----" << std::endl;
 				} // end etalon loop
-				std::cerr << "\n\t\t ---- after the etalon loop ----" << std::endl;
+				//std::cerr << "\n\t\t ---- after the etalon loop ----" << std::endl;
 
 
 				pulsearray[f]->fft_tofreq();
 				crosspulsearray[f]->fft_tofreq();
 				pulsearray[f]->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
-				std::cerr << "\n\t\t ---- after the pulsearray[f]->delay(scanparams.interferedelay()); call ----" << std::endl;
-				std::cerr << "\n\t\t ---- coming back around for the next fiber after f " << f << " ---- " << std::endl;
+				//std::cerr << "\n\t\t ---- after the pulsearray[f]->delay(scanparams.interferedelay()); call ----" << std::endl;
+				//std::cerr << "\n\t\t ---- coming back around for the next fiber after f " << f << " ---- " << std::endl;
 			} // end nfibers loop
 
-			std::cerr << "\n\t\t ---- after end nfibers loop ----" << std::endl;
+			//std::cerr << "\n\t\t ---- after end nfibers loop ----" << std::endl;
 
 			std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".tid" + std::to_string(tid);
 			ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
@@ -339,10 +336,10 @@ int main(int argc, char* argv[])
 		} // outermost loop for nimages to produce //
 		std::cerr << "\n ---- just left nimages loop in tid " << tid << " ---- \n\t... now delete pulsearray[f] and such" << std::endl;
 
+/*
 		for (size_t f = 0 ; f< pulsearray.size(); ++f){
 			std::cerr << "pulsearray[" << f << "].get() = " << pulsearray[f].get() << "\tpulsearray["<< f << "].use_count() = " << pulsearray[f].use_count() << std::endl;
 		}
-/*
 		for (size_t f = 0 ; f< pulsearray.size(); ++f){
 			while (pulsearray[f].use_count()>0){
 				std::cerr << "pulsearray["<< f << "].use_count() = " << pulsearray[f].use_count() << std::endl;
