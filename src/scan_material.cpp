@@ -199,7 +199,6 @@ int main(int argc, char* argv[])
 				}
 
 				crosspulsearray[f]->delay(scanparams.interferedelay()); // delay in the frequency domain
-			std::cerr << "\n\t\t ---- made it HERE HERE HERE HERE ----" << std::endl;
 			std::cerr << "\n\t\t ---- it is in the FTplan ----" << std::endl;
 				pulsearray[f]->fft_totime();
 				crosspulsearray[f]->fft_totime();
