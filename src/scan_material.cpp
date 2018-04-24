@@ -119,20 +119,20 @@ int main(int argc, char* argv[])
 	{ // begin parallel region
 		size_t tid = omp_get_thread_num();
 		std::cerr << "inside parallel region for tid = " << tid << std::endl;
-		std::vector< std::shared_ptr<PulseFreq> > pulsearray(masterbundle.get_nfibers());
-		std::vector< std::shared_ptr<PulseFreq> > crosspulsearray(masterbundle.get_nfibers());
+		std::vector< PulseFreq* > pulsearray(masterbundle.get_nfibers(),NULL);
+		std::vector< PulseFreq* > crosspulsearray(masterbundle.get_nfibers(),NULL);
 		bool arrays_initialized = false;
 
-		PulseFreq etalonpulse(masterpulse);
-		PulseFreq crossetalonpulse(masterpulse);
-		PulseFreq sharedpulse(masterpulse);
-		PulseFreq sharedcrosspulse(masterpulse);
+		PulseFreq etalonpulse=masterpulse;
+		PulseFreq crossetalonpulse=masterpulse;
+		//PulseFreq sharedpulse=masterpulse;
+		//PulseFreq sharedcrosspulse=masterpulse;
 		if (!arrays_initialized){
 			for (size_t f=0;f<masterbundle.get_nfibers();++f){
-				//pulsearray[f] = new PulseFreq(masterpulse);
-				//crosspulsearray[f] = new PulseFreq(masterpulse);
-				pulsearray[f] = std::make_shared<PulseFreq>(sharedpulse);
-				crosspulsearray[f] = std::make_shared<PulseFreq>(sharedcrosspulse);
+				pulsearray[f] = new PulseFreq(masterpulse);
+				crosspulsearray[f] = new PulseFreq(masterpulse);
+				//pulsearray[f] = std::make_shared<PulseFreq>(sharedpulse);
+				//crosspulsearray[f] = std::make_shared<PulseFreq>(sharedcrosspulse);
 				//std::cerr << "\t\t-- used shared_ptr<PulseFreq>(sharedpulse)" << std::endl;
 			}
 			arrays_initialized = true;
@@ -168,10 +168,8 @@ int main(int argc, char* argv[])
 
 			for (size_t f=0;f<masterbundle.get_nfibers();++f){
 				//std::cerr << "\t now we try to set them as masterpulse" << std::endl;
-				//*(pulsearray[f]) = masterpulse;
-				//*(crosspulsearray[f]) = masterpulse;
-				*(pulsearray[f].get()) = masterpulse;
-				*(crosspulsearray[f].get()) = masterpulse;
+				*(pulsearray[f]) = masterpulse;
+				*(crosspulsearray[f]) = masterpulse;
 			}
 
 			double t0 = scanparams.delays_uniform();
@@ -199,37 +197,35 @@ int main(int argc, char* argv[])
 				//std::cerr << "in fiber loop for fiber " << f << " of " << parabundle.get_nfibers() << " fibers" << std::endl;
 				startdelay = t0 + parabundle.delay(f);
 				if (scanparams.addchirpnoise()){
-					//std::vector<double> noise(scanparams.getchirpnoise());
-					//pulsearray[f]->addchirp(noise); 
-					//crosspulsearray[f]->addchirp(noise); 
-					pulsearray[f].get()->addchirp(scanparams.getchirpnoise()); 
-					crosspulsearray[f].get()->addchirp(scanparams.getchirpnoise()); 
+					std::vector<double> noise(scanparams.getchirpnoise());
+					pulsearray[f]->addchirp(noise); 
+					crosspulsearray[f]->addchirp(noise); 
 				}
 
-				crosspulsearray[f].get()->delay(scanparams.interferedelay()); // delay in the frequency domain
+				crosspulsearray[f]->delay(scanparams.interferedelay()); // delay in the frequency domain
 				//std::cerr << "\n\t\t ---- it is in the FTplan ----" << std::endl;
-				pulsearray[f].get()->fft_totime();
-				crosspulsearray[f].get()->fft_totime();
+				pulsearray[f]->fft_totime();
+				crosspulsearray[f]->fft_totime();
 				//std::cerr << "\n\t\t ---- after the crosspulsearray[f]->fft_totime(); call ----" << std::endl;
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 					pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-					pararesponse.setstepvec_amp(pulsearray[f].get());
-					pararesponse.setstepvec_phase(pulsearray[f].get());
-					pararesponse.setstepvec_amp(crosspulsearray[f].get());
-					pararesponse.setstepvec_phase(crosspulsearray[f].get());
+					pararesponse.setstepvec_amp(pulsearray[f]);
+					pararesponse.setstepvec_phase(pulsearray[f]);
+					pararesponse.setstepvec_amp(crosspulsearray[f]);
+					pararesponse.setstepvec_phase(crosspulsearray[f]);
 					if (scanparams.doublepulse()){
-						pararesponse.addstepvec_amp(pulsearray[f].get(),scanparams.doublepulsedelay());
-						pararesponse.addstepvec_phase(pulsearray[f].get(),scanparams.doublepulsedelay());
-						pararesponse.addstepvec_amp(crosspulsearray[f].get(),scanparams.doublepulsedelay());
-						pararesponse.addstepvec_phase(crosspulsearray[f].get(),scanparams.doublepulsedelay());
+						pararesponse.addstepvec_amp(pulsearray[f],scanparams.doublepulsedelay());
+						pararesponse.addstepvec_phase(pulsearray[f],scanparams.doublepulsedelay());
+						pararesponse.addstepvec_amp(crosspulsearray[f],scanparams.doublepulsedelay());
+						pararesponse.addstepvec_phase(crosspulsearray[f],scanparams.doublepulsedelay());
 					}
 					// this pulls down the tail of the response so vector is periodic on nsamples	
-					pararesponse.buffervectors(pulsearray[f].get()); 
-					pararesponse.buffervectors(crosspulsearray[f].get()); 
-					pulsearray[f].get()->modulateamp_time();
-					pulsearray[f].get()->modulatephase_time();
-					crosspulsearray[f].get()->modulateamp_time();
+					pararesponse.buffervectors(pulsearray[f]); 
+					pararesponse.buffervectors(crosspulsearray[f]); 
+					pulsearray[f]->modulateamp_time();
+					pulsearray[f]->modulatephase_time();
+					crosspulsearray[f]->modulateamp_time();
 					crosspulsearray[f]->modulatephase_time();
 				}// end groupsteps loop
 
