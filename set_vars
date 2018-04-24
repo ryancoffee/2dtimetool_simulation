@@ -2,7 +2,7 @@
 
 starttime=$(date +%s);
 
-export nthreads=1;
+export nthreads=4;
 #export datadir='/u1/mldrp/coffee/sharedata/raw/';
 export datadir='./data/raw/';
 mkdir -p $datadir;
@@ -13,7 +13,7 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-export nimages=6;
+export nimages=4;
 export delays_mean=-500 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1750;
@@ -124,7 +124,7 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=823; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=20000000;
 export saturate=4096;
