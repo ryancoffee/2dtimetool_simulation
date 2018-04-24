@@ -95,8 +95,9 @@ class PulseTime {
 
 
 
-
-class PulseFreq {
+class PulseFreq 
+{
+	//std::enable_shared_from_this<fftw_plan>{};
 
 	friend class MatResponse;
 
@@ -111,8 +112,25 @@ class PulseFreq {
 		PulseFreq & normamps(const PulseFreq &rhs);
 		PulseFreq & interfere(const PulseFreq &rhs);
 
+		void setplans(const PulseFreq & rhs){
+			FTplan_forwardPtr = rhs.FTplan_forwardPtr;
+			FTplan_backwardPtr = rhs.FTplan_backwardPtr;
+		}
+		void setmasterplans(fftw_plan * const forward,fftw_plan * const backward){
+			*forward = fftw_plan_dft_1d(samples, 
+					reinterpret_cast<fftw_complex*>(cvec),
+					reinterpret_cast<fftw_complex*>(cvec), 
+					FFTW_FORWARD, FFTW_ESTIMATE);
+			*backward = fftw_plan_dft_1d(samples, 
+					reinterpret_cast<fftw_complex*>(cvec), 
+					reinterpret_cast<fftw_complex*>(cvec), 
+					FFTW_BACKWARD, FFTW_ESTIMATE);
+			FTplan_forwardPtr = std::make_shared<fftw_plan> (*forward);
+			FTplan_backwardPtr = std::make_shared<fftw_plan> (*backward);
+		}
+
 	public:
-		
+
 		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in);
 		PulseFreq(PulseFreq &rhs); // copy constructor
 		~PulseFreq(void);
@@ -126,20 +144,20 @@ class PulseFreq {
 			return dtime;
 		}
 		void fft_totime(void) {
-			fftw_plan p = fftw_plan_dft_1d(samples, (fftw_complex*)cvec, (fftw_complex*)cvec, FFTW_BACKWARD, FFTW_ESTIMATE);
-			//fftw_execute(plan_backward);
-			fftw_execute(p);
+			assert (infreq); //std::cerr << "died here at fft_tofreq()" << std::endl;
+			//fftw_plan p = fftw_plan_dft_1d(samples, (fftw_complex*)cvec, (fftw_complex*)cvec, FFTW_BACKWARD, FFTW_ESTIMATE);
+			fftw_execute_dft(*FTplan_backwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);
+			//fftw_execute(p);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq = false;
 			intime = true;
 		}
 		void fft_tofreq(void) {
-			fftw_plan p = fftw_plan_dft_1d(samples, (fftw_complex*)cvec, (fftw_complex*)cvec, FFTW_FORWARD, FFTW_ESTIMATE);
-			if (infreq)
-				std::cerr << "died here at fft_tofreq()" << std::endl;
-			//fftw_execute(FTplan_forward);
-			fftw_execute(p);
+			//fftw_plan p = fftw_plan_dft_1d(samples, (fftw_complex*)cvec, (fftw_complex*)cvec, FFTW_FORWARD, FFTW_ESTIMATE);
+			assert (intime); //std::cerr << "died here at fft_tofreq()" << std::endl;
+			fftw_execute_dft(*FTplan_forwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);
+			//fftw_execute(p);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq=true;
@@ -147,10 +165,7 @@ class PulseFreq {
 		}
 
 		int addchirp(double chirp_in) {
-			if (intime){
-				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
-				return 1;
-			}
+			assert (infreq);
 			phase_GDD = chirp_in;
 			addGDDtoindex(0,1);
 			addGDDtoindex(samples/2,-1);
@@ -162,10 +177,7 @@ class PulseFreq {
 		}
 
 		int addchirp(double* chirp_in) {
-			if (intime){
-				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
-				return 1;
-			}
+			assert (infreq);
 			phase_GDD = chirp_in[0];
 			phase_TOD = chirp_in[1];
 			phase_4th = chirp_in[2];
@@ -323,8 +335,13 @@ class PulseFreq {
 		double dtime,time_center,time_wdith;
 
 		// FFTW variables //
-		//fftw_plan FTplan_forward;
-		//fftw_plan FTplan_backward;
+		// fftw defining the plans before first instantiation, this allows only one forward and backward plan to be created 
+		// within each thread though, or set it to private(FTplan_forward,FTplan_backward) in the OMP call
+		// THis might be making empty plans, but use the buildvectors() method to only create if Ptr.use_count()==0
+		static fftw_plan FTplan_forward;
+		static fftw_plan FTplan_backward;
+		std::shared_ptr<fftw_plan> FTplan_forwardPtr;
+		std::shared_ptr<fftw_plan> FTplan_backwardPtr;
 		std::complex<double> * cvec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
 
 		std::vector<double> rhovec;

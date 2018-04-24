@@ -13,6 +13,7 @@
 #include <boost/lexical_cast.hpp>
 #include <DataOps.hpp>
 #include <random>
+#include <cassert>
 
 using namespace Constants;
 using namespace DataOps;
@@ -37,10 +38,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
 	dtime = tspan_in/double(samples);
 	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
-	std::cerr << "Made it here in constructor PulseFreq()" << std::endl;
-	std::cerr << "buildvectors() method may be causing the seg fault" << std::endl;
 	buildvectors();
-	std::cerr << "made it past buildvectors" << std::endl;
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
 	m_lamsamples = (size_t)atoi(getenv("lamsamples"));
@@ -49,6 +47,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	m_sampleinterval = (unsigned)(atoi(getenv("sampleinterval")));
 	m_saturate = uint16_t( atoi( getenv("saturate")));
 }
+
 
 PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
 	omega_center(rhs.omega_center),
@@ -80,6 +79,8 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
 
 
 	nu0=rhs.nu0;
+	FTplan_forwardPtr = rhs.FTplan_forwardPtr; //->shared_from_this(); //std::make_shared<fftw_plan>(FTplan_forward);
+	FTplan_backwardPtr = rhs.FTplan_backwardPtr; //->shared_from_this(); //std::make_shared<fftw_plan>(FTplan_backward);
 	buildvectors();
 
 	DataOps::clone(rhovec,rhs.rhovec);
@@ -118,6 +119,8 @@ PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // assignment
 
 
 	nu0=rhs.nu0;
+	FTplan_forwardPtr = rhs.FTplan_forwardPtr; //->shared_from_this(); //std::make_shared<fftw_plan>(FTplan_forward);
+	FTplan_backwardPtr = rhs.FTplan_backwardPtr; // ->shared_from_this(); //std::make_shared<fftw_plan>(FTplan_backward);
 	buildvectors();
 
 	DataOps::clone(rhovec,rhs.rhovec);
@@ -129,8 +132,11 @@ PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // assignment
 }
 
 PulseFreq::~PulseFreq(void){
+	//std::cerr << "FTplan_forward.use_count() = " << FTplan_forwardPtr.use_count()  << std::endl;
 	killvectors();
 }
+
+
 void PulseFreq::rhophi2cvec(void)
 {
 	for (size_t i=0;i<samples;i++){
@@ -455,12 +461,6 @@ void PulseFreq::printtime(std::ofstream * outfile){
 void PulseFreq::buildvectors(void){
 	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * samples);
         std::fill(cvec,cvec + samples,std::complex<double>(0));
-	/*
-	std::cerr << "Now going to build FTplan_s" << std::endl;
-	//FTplan_forward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_FORWARD, FFTW_ESTIMATE);
-	//FTplan_backward = fftw_plan_dft_1d(samples, reinterpret_cast<fftw_complex*>(cvec), reinterpret_cast<fftw_complex*>(cvec), FFTW_BACKWARD, FFTW_ESTIMATE);
-	std::cerr << "FTplan_s are built" << std::endl;
-	*/
 
 	static std::complex<double> z;
 
@@ -525,8 +525,6 @@ void PulseFreq::buildvectors(void){
 	
 }
 void PulseFreq::killvectors(void){
-	//fftw_destroy_plan(FTplan_forward);
-	//fftw_destroy_plan(FTplan_backward);
 	fftw_free(cvec);
 	cvec = NULL;
 }

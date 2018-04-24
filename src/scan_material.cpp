@@ -4,6 +4,7 @@
 #include <boost/lexical_cast.hpp>
 #include <complex>
 #include <memory>
+#include <fftw3.h>
 
 #include <vector>
 #include <random>
@@ -107,21 +108,17 @@ int main(int argc, char* argv[])
 	masterresponse.setetalondelay(scanparams.etalondelay());
 	std::cerr << "Just finished modifying chirp for original masterresponse" << std::endl;
 
+	std::cerr << "initializing masterpulse and masterplans" << std::endl;
+	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
+	fftw_plan forward;
+	fftw_plan backward;
+	masterpulse.setmasterplans(&forward,&backward);
+	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
-#pragma omp parallel num_threads(nthreads) shared(masterbundle,masterresponse,scanparams) 
+#pragma omp parallel num_threads(nthreads) shared(masterbundle,masterresponse,masterpulse,scanparams) 
 	{ // begin parallel region
 		size_t tid = omp_get_thread_num();
-		if (tid==0) std::cerr << "inside parallel region for tid = " << tid << std::endl;
-
-		PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
-		masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
-
-  		std::cerr << "\n\t\t\t\t ---- changed to std::shared_ptr ---- "
-			<< "\n\t\t\t\t http://en.cppreference.com/w/cpp/memory/shared_ptr"
-			<< "\n\t\t\t\t Still need to use mutex and locks "
-			<< "\n\t\t\t\t lock masterpulse for sure, but not so clear on this" << std::endl;
-		//std::vector< PulseFreq *> pulsearray(masterbundle.get_nfibers(),NULL);
-		//std::vector< PulseFreq *> crosspulsearray(masterbundle.get_nfibers(),NULL);
+		std::cerr << "inside parallel region for tid = " << tid << std::endl;
 		std::vector< std::shared_ptr<PulseFreq> > pulsearray(masterbundle.get_nfibers());
 		std::vector< std::shared_ptr<PulseFreq> > crosspulsearray(masterbundle.get_nfibers());
 		bool arrays_initialized = false;
@@ -132,7 +129,6 @@ int main(int argc, char* argv[])
 		PulseFreq sharedcrosspulse(masterpulse);
 		if (!arrays_initialized){
 			for (size_t f=0;f<masterbundle.get_nfibers();++f){
-				//std::cerr << "\t\t-- trying to use shared_ptr<PulseFreq>(sharedpulse)" << std::endl;
 				//pulsearray[f] = new PulseFreq(masterpulse);
 				//crosspulsearray[f] = new PulseFreq(masterpulse);
 				pulsearray[f] = std::make_shared<PulseFreq>(sharedpulse);
@@ -165,7 +161,7 @@ int main(int argc, char* argv[])
 #pragma omp for schedule(static) ordered 
 		for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
 			//std::cerr << "\n\t\t\t\t pulsearray[0].use_count() = " << pulsearray[0].use_count() << std::endl;
-			if (tid==0) {
+			if (tid==0 && n<nthreads) {
 				std::cerr << "http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html \n"
 					<< " \t use this for defining multiple fibers as contiguous blocks for row-wise FFT as 2D" << std::endl;
 			}
@@ -309,11 +305,12 @@ int main(int argc, char* argv[])
 			} // end nfibers loop
 
 			//std::cerr << "\n\t\t ---- after end nfibers loop ----" << std::endl;
+			//
 
-			std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".tid" + std::to_string(tid);
+			std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);// + ".tid" + std::to_string(tid);
 			ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
 
-			std::cout << "interfere filename out = " << filename << std::endl;
+			std::cout << "tid = " << tid << ": interfere filename out = " << filename << std::endl;
 			std::complex<double> z_laser = parabundle.center_Ilaser();
 			std::complex<double> z_xray = parabundle.center_Ixray();
 			interferestream << "#delay for image = \t" << t0 
@@ -332,33 +329,16 @@ int main(int argc, char* argv[])
 			}
 			interferestream.close();
 
-			std::cerr << "\n\t ---- moving to next image in nimages loop ----" << std::endl;
+			// std::cerr << "\n\t ---- moving to next image in nimages loop ----" << std::endl;
 		} // outermost loop for nimages to produce //
-		std::cerr << "\n ---- just left nimages loop in tid " << tid << " ---- \n\t... now delete pulsearray[f] and such" << std::endl;
-
-/*
-		for (size_t f = 0 ; f< pulsearray.size(); ++f){
-			std::cerr << "pulsearray[" << f << "].get() = " << pulsearray[f].get() << "\tpulsearray["<< f << "].use_count() = " << pulsearray[f].use_count() << std::endl;
-		}
-		for (size_t f = 0 ; f< pulsearray.size(); ++f){
-			while (pulsearray[f].use_count()>0){
-				std::cerr << "pulsearray["<< f << "].use_count() = " << pulsearray[f].use_count() << std::endl;
-				delete pulsearray[f].get();
-			}
-*/
-/*
-			while (crosspulsearray[f].use_count()>0){
-				delete crosspulsearray[f].get();
-			}
-		}
-*/
-
 		std::cerr << "\n\t... trying to leave parallel region" << std::endl;
+	} // end parallel region
+	std::cerr << "\n ---- just left parallel region ----" << std::endl;
 	std::cerr << "Checking masterresponse via reflectance: " << masterresponse.getreflectance() << std::endl;
 	std::cerr << "Checking masterbundle via fiberdiameter: " << masterbundle.fiberdiameter() << std::endl;
 	std::cerr << "Checking scanparams via lambda_0: " << scanparams.lambda_0() << std::endl;
-	} // end parallel region
-	std::cerr << "\n ---- just left parallel region ----" << std::endl;
+	fftw_destroy_plan(forward);
+	fftw_destroy_plan(backward);
 
 	return 0;
 }
