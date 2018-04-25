@@ -49,7 +49,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 }
 
 
-PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
+PulseFreq::PulseFreq(PulseFreq &rhs): // deep-ish copy constructor
 	omega_center(rhs.omega_center),
 	omega_width(rhs.omega_width),
 	omega_high(rhs.omega_high),
@@ -79,18 +79,23 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // copy constructor
 
 
 	nu0=rhs.nu0;
-	FTplan_forwardPtr = rhs.FTplan_forwardPtr; //->shared_from_this(); //std::make_shared<fftw_plan>(FTplan_forward);
-	FTplan_backwardPtr = rhs.FTplan_backwardPtr; //->shared_from_this(); //std::make_shared<fftw_plan>(FTplan_backward);
+	FTplan_forwardPtr = rhs.FTplan_forwardPtr; 
+	FTplan_backwardPtr = rhs.FTplan_backwardPtr; 
 	buildvectors();
 
 	DataOps::clone(rhovec,rhs.rhovec);
 	DataOps::clone(phivec,rhs.phivec);
 	DataOps::clone(cvec,rhs.cvec,samples);
+	DataOps::clone(r_vec,rhs.r_vec,samples);
+	DataOps::clone(hc_vecFT,rhs.hc_vecFT,samples);
+	DataOps::clone(r_vec_2x,rhs.r_vec_2x,2*samples);
+	DataOps::clone(hc_vec_2xFT,rhs.hc_vec_2xFT,2*samples);
+
 	DataOps::clone(modamp,rhs.modamp);
 	DataOps::clone(modphase,rhs.modphase);
 }
 
-PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // assignment
+PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // shallow-ish assignment
 {
 	omega_center=rhs.omega_center;
 	omega_width=rhs.omega_width;
@@ -117,15 +122,18 @@ PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // assignment
 
 	dtime = rhs.dtime;time_center=rhs.time_center;time_wdith=rhs.time_wdith;
 
-
 	nu0=rhs.nu0;
-	FTplan_forwardPtr = rhs.FTplan_forwardPtr; //->shared_from_this(); //std::make_shared<fftw_plan>(FTplan_forward);
-	FTplan_backwardPtr = rhs.FTplan_backwardPtr; // ->shared_from_this(); //std::make_shared<fftw_plan>(FTplan_backward);
-	buildvectors();
+	FTplan_forwardPtr = rhs.FTplan_forwardPtr; 
+	FTplan_backwardPtr = rhs.FTplan_backwardPtr; 
 
 	DataOps::clone(rhovec,rhs.rhovec);
 	DataOps::clone(phivec,rhs.phivec);
 	DataOps::clone(cvec,rhs.cvec,samples);
+	DataOps::clone(r_vec,rhs.r_vec,samples);
+	DataOps::clone(hc_vecFT,rhs.hc_vecFT,samples);
+	DataOps::clone(r_vec_2x,rhs.r_vec_2x,2*samples);
+	DataOps::clone(hc_vec_2xFT,rhs.hc_vec_2xFT,2*samples);
+
 	DataOps::clone(modamp,rhs.modamp);
 	DataOps::clone(modphase,rhs.modphase);
 	return *this;
@@ -212,6 +220,7 @@ void PulseFreq::print_phase(std::ofstream & outfile)
 }
 void PulseFreq::print_phase_powerspectrum(std::ofstream & outfile)
 {
+/*
 	double * phase = (double *) fftw_malloc(sizeof(double) * samples);
 	double * phaseFT = (double *) fftw_malloc(sizeof(double) * samples);
 	fftw_plan plan_r2hc = fftw_plan_r2r_1d(samples,
@@ -220,14 +229,17 @@ void PulseFreq::print_phase_powerspectrum(std::ofstream & outfile)
 			FFTW_R2HC,
 			FFTW_MEASURE
 			);
-	fftw_execute_r2r(plan_r2hc,phase,phaseFT);
+*/
+	std::copy(phivec.begin(),phivec.end(),r_vec);
+	fftw_execute_r2r(*FTplan_r2hcPtr.get(),r_vec,hc_vecFT);
+	
 
-	outfile << "# power spectrum of the phaseFT\n";
-	outfile << std::pow(phaseFT[0],int(2)) << "\n";
+	outfile << "# power spectrum of the Fourier phase\n";
+	outfile << std::pow(hc_vecFT[0],int(2)) << "\n";
 	for (size_t i = 1; i<samples/2;++i){
-		outfile << std::pow(phaseFT[i],int(2)) + std::pow(phaseFT[samples-i],int(2)) << "\n";
+		outfile << std::pow(hc_vecFT[i],int(2)) + std::pow(hc_vecFT[samples-i],int(2)) << "\n";
 	}
-	outfile << std::pow(phaseFT[samples/2],int(2)) << std::endl;
+	outfile << std::pow(hc_vecFT[samples/2],int(2)) << std::endl;
 	outfile << std::endl;
 }
 
@@ -241,6 +253,7 @@ bool PulseFreq::addrandomphase(void)
 
 	double * randphase = (double *) fftw_malloc(sizeof(double) * sz);
 	double * randphaseFT = (double *) fftw_malloc(sizeof(double) * sz);
+/*
 
 	fftw_plan plan_r2hc = fftw_plan_r2r_1d(sz,
 			randphase,
@@ -254,6 +267,9 @@ bool PulseFreq::addrandomphase(void)
 			FFTW_HC2R,
 			FFTW_MEASURE
 			);
+
+*/
+
 
 	std::uniform_real_distribution<double> distribution(
 		(double(atof(getenv("randphase_mean")))-double(atof(getenv("randphase_std"))))*Constants::pi<double>(),
@@ -275,7 +291,7 @@ bool PulseFreq::addrandomphase(void)
 	size_t lowpass = boost::lexical_cast<size_t>(atoi(getenv("phaseNoiseLowpass")));
 	std::cerr << "\n======== lowpass is " << lowpass << " =======\n" << std::flush;
 
-	fftw_execute_r2r(plan_r2hc,randphase,randphaseFT);
+	fftw_execute_r2r(*FTplan_r2hc_2xPtr.get(),randphase,randphaseFT);
 	std::fill(randphaseFT+lowpass,randphaseFT+sz-lowpass,0.);
 	for (size_t i=1;i<lowpass;++i){
 		double filter = std::pow(std::cos(double(i)/(double(lowpass)) * Constants::half_pi<double>() ),int(2));
@@ -283,7 +299,7 @@ bool PulseFreq::addrandomphase(void)
 		randphaseFT[sz-i] *= filter;
 	}
 	randphaseFT[sz/2] = 0.;
-	fftw_execute_r2r(plan_hc2r,randphaseFT,randphase);
+	fftw_execute_r2r(*FTplan_hc2r_2xPtr.get(),randphaseFT,randphase);
 
 	for (size_t i=0;i<samples;++i){
 		phivec[i] += randphase[i]/samples;
@@ -461,8 +477,14 @@ void PulseFreq::printtime(std::ofstream * outfile){
 void PulseFreq::buildvectors(void){
 	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * samples);
         std::fill(cvec,cvec + samples,std::complex<double>(0));
-
-	static std::complex<double> z;
+	r_vec = (double *) fftw_malloc(sizeof(double) * samples);
+        std::fill(r_vec,r_vec + samples,double(0));
+	hc_vecFT = (double *) fftw_malloc(sizeof(double) * samples);
+        std::fill(hc_vecFT,r_vec + samples,double(0));
+	r_vec_2x = (double *) fftw_malloc(sizeof(double) * samples * 2);
+        std::fill(r_vec_2x,r_vec_2x + 2*samples,double(0));
+	hc_vec_2xFT = (double *) fftw_malloc(sizeof(double) * samples * 2);
+        std::fill(hc_vec_2xFT,hc_vec_2xFT + 2*samples,double(0));
 
 	rhovec.resize(samples,0.0);
 	phivec.resize(samples,0.0);
@@ -526,6 +548,67 @@ void PulseFreq::buildvectors(void){
 }
 void PulseFreq::killvectors(void){
 	fftw_free(cvec);
+	fftw_free(r_vec);
+	fftw_free(hc_vecFT);
+	fftw_free(r_vec_2x);
+	fftw_free(hc_vec_2xFT);
 	cvec = NULL;
+	r_vec = hc_vecFT = r_vec_2x = hc_vec_2xFT = NULL;
 }
 
+void PulseFreq::setplans(const PulseFreq & rhs)
+{
+	FTplan_forwardPtr = rhs.FTplan_forwardPtr;
+	FTplan_backwardPtr = rhs.FTplan_backwardPtr;
+}
+void PulseFreq::setmasterplans(fftw_plan * const forward,fftw_plan * const backward)
+{
+	assert(FTplan_forwardPtr.use_count()==0 && FTplan_backwardPtr.use_count()==0);
+	*forward = fftw_plan_dft_1d(samples, 
+			reinterpret_cast<fftw_complex*>(cvec),
+			reinterpret_cast<fftw_complex*>(cvec), 
+			FFTW_FORWARD, FFTW_ESTIMATE);
+	*backward = fftw_plan_dft_1d(samples, 
+			reinterpret_cast<fftw_complex*>(cvec), 
+			reinterpret_cast<fftw_complex*>(cvec), 
+			FFTW_BACKWARD, FFTW_ESTIMATE);
+	FTplan_forwardPtr = std::make_shared<fftw_plan> (*forward);
+	FTplan_backwardPtr = std::make_shared<fftw_plan> (*backward);
+}
+void PulseFreq::setancillaryplans(fftw_plan * const r2hc,fftw_plan * const hc2r,fftw_plan * const r2hc_2x,fftw_plan * const hc2r_2x)
+{
+
+	assert(FTplan_r2hcPtr.use_count()==0
+			&& FTplan_hc2rPtr.use_count()==0
+			&& FTplan_r2hc_2xPtr.use_count()==0
+			&& FTplan_hc2r_2xPtr.use_count()==0);
+	*r2hc = fftw_plan_r2r_1d(samples,
+			r_vec,
+			hc_vecFT,
+			FFTW_R2HC,
+			FFTW_MEASURE
+			);
+	*hc2r = fftw_plan_r2r_1d(samples,
+			hc_vecFT,
+			r_vec,
+			FFTW_HC2R,
+			FFTW_MEASURE
+			);
+	*r2hc_2x = fftw_plan_r2r_1d(2*samples,
+			r_vec_2x,
+			hc_vec_2xFT,
+			FFTW_R2HC,
+			FFTW_MEASURE
+			);
+	*hc2r_2x = fftw_plan_r2r_1d(2*samples,
+			hc_vec_2xFT,
+			r_vec_2x,
+			FFTW_HC2R,
+			FFTW_MEASURE
+			);
+	FTplan_r2hcPtr = std::make_shared<fftw_plan> (*r2hc);
+	FTplan_hc2rPtr = std::make_shared<fftw_plan> (*hc2r);
+	FTplan_r2hc_2xPtr = std::make_shared<fftw_plan> (*r2hc_2x);
+	FTplan_hc2r_2xPtr = std::make_shared<fftw_plan> (*hc2r_2x);
+
+}

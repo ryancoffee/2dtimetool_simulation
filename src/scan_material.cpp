@@ -112,7 +112,12 @@ int main(int argc, char* argv[])
 	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
 	fftw_plan forward;
 	fftw_plan backward;
+	fftw_plan plan_r2hc;
+	fftw_plan plan_hc2r;
+	fftw_plan plan_r2hc_2x;
+	fftw_plan plan_hc2r_2x;
 	masterpulse.setmasterplans(&forward,&backward);
+	masterpulse.setancillaryplans(& plan_r2hc,& plan_hc2r,& plan_r2hc_2x,& plan_hc2r_2x);
 	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
 #pragma omp parallel num_threads(nthreads) shared(masterbundle,masterresponse,masterpulse,scanparams) 

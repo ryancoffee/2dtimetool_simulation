@@ -112,22 +112,9 @@ class PulseFreq
 		PulseFreq & normamps(const PulseFreq &rhs);
 		PulseFreq & interfere(const PulseFreq &rhs);
 
-		void setplans(const PulseFreq & rhs){
-			FTplan_forwardPtr = rhs.FTplan_forwardPtr;
-			FTplan_backwardPtr = rhs.FTplan_backwardPtr;
-		}
-		void setmasterplans(fftw_plan * const forward,fftw_plan * const backward){
-			*forward = fftw_plan_dft_1d(samples, 
-					reinterpret_cast<fftw_complex*>(cvec),
-					reinterpret_cast<fftw_complex*>(cvec), 
-					FFTW_FORWARD, FFTW_ESTIMATE);
-			*backward = fftw_plan_dft_1d(samples, 
-					reinterpret_cast<fftw_complex*>(cvec), 
-					reinterpret_cast<fftw_complex*>(cvec), 
-					FFTW_BACKWARD, FFTW_ESTIMATE);
-			FTplan_forwardPtr = std::make_shared<fftw_plan> (*forward);
-			FTplan_backwardPtr = std::make_shared<fftw_plan> (*backward);
-		}
+		void setplans(const PulseFreq & rhs);
+		void setmasterplans(fftw_plan * const forward,fftw_plan * const backward);
+		void setancillaryplans(fftw_plan * const r2hc,fftw_plan * const hc2r,fftw_plan * const r2hc_2x,fftw_plan * const hc2r_2x);
 
 	public:
 
@@ -145,19 +132,15 @@ class PulseFreq
 		}
 		void fft_totime(void) {
 			assert (infreq); //std::cerr << "died here at fft_tofreq()" << std::endl;
-			//fftw_plan p = fftw_plan_dft_1d(samples, (fftw_complex*)cvec, (fftw_complex*)cvec, FFTW_BACKWARD, FFTW_ESTIMATE);
 			fftw_execute_dft(*FTplan_backwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);
-			//fftw_execute(p);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq = false;
 			intime = true;
 		}
 		void fft_tofreq(void) {
-			//fftw_plan p = fftw_plan_dft_1d(samples, (fftw_complex*)cvec, (fftw_complex*)cvec, FFTW_FORWARD, FFTW_ESTIMATE);
 			assert (intime); //std::cerr << "died here at fft_tofreq()" << std::endl;
 			fftw_execute_dft(*FTplan_forwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);
-			//fftw_execute(p);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq=true;
@@ -336,13 +319,18 @@ class PulseFreq
 
 		// FFTW variables //
 		// fftw defining the plans before first instantiation, this allows only one forward and backward plan to be created 
-		// within each thread though, or set it to private(FTplan_forward,FTplan_backward) in the OMP call
-		// THis might be making empty plans, but use the buildvectors() method to only create if Ptr.use_count()==0
-		static fftw_plan FTplan_forward;
-		static fftw_plan FTplan_backward;
 		std::shared_ptr<fftw_plan> FTplan_forwardPtr;
 		std::shared_ptr<fftw_plan> FTplan_backwardPtr;
+		std::shared_ptr<fftw_plan> FTplan_r2hcPtr;
+		std::shared_ptr<fftw_plan> FTplan_hc2rPtr;
+		std::shared_ptr<fftw_plan> FTplan_r2hc_2xPtr;
+		std::shared_ptr<fftw_plan> FTplan_hc2r_2xPtr;
+
 		std::complex<double> * cvec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
+		double * r_vec; // this will get fftw_malloc() for sake of fftw memory alignment 
+		double * hc_vecFT; // this will get fftw_malloc() for sake of fftw memory alignment 
+		double * r_vec_2x; // this will get fftw_malloc() for sake of fftw memory alignment 
+		double * hc_vec_2xFT; // this will get fftw_malloc() for sake of fftw memory alignment 
 
 		std::vector<double> rhovec;
 		std::vector<double> modamp;
