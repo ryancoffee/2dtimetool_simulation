@@ -353,7 +353,6 @@ class PulseFreq
 		void buildvectors(void);
 		void factorization(void);
 		void killvectors(void);
-		void killtheseonly(void);
 
 		void addGDDtoindex(const unsigned indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_GDD*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(2));

@@ -30,7 +30,12 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	m_saturate(4096),
 	m_gain(1000000),
 	m_lamsamples(1024),
-	sampleround(1000)
+	sampleround(1000),
+	cvec(NULL),
+	r_vec(NULL),
+	hc_vecFT(NULL),
+	r_vec_2x(NULL),
+	hc_vec_2xFT(NULL)
 {
 	std::cerr << "In constructor PulseFreq()" << std::endl;
 	i_low =  (unsigned)(double( atof( getenv("nu_low") ) )* twopi<double>()*fsPau<double>()/domega);
@@ -140,7 +145,6 @@ PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // shallow-ish assignmen
 }
 
 PulseFreq::~PulseFreq(void){
-	//std::cerr << "FTplan_forward.use_count() = " << FTplan_forwardPtr.use_count()  << std::endl;
 	killvectors();
 }
 
@@ -475,16 +479,20 @@ void PulseFreq::printtime(std::ofstream * outfile){
 
 
 void PulseFreq::buildvectors(void){
+	//std::cerr << "allocating with fftw_malloc with samples = " << samples << std::endl;
 	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * samples);
         std::fill(cvec,cvec + samples,std::complex<double>(0));
 	r_vec = (double *) fftw_malloc(sizeof(double) * samples);
         std::fill(r_vec,r_vec + samples,double(0));
+	//std::cerr << "\t\t...allocated with fftw_malloc with samples = " << samples << std::endl;
 	hc_vecFT = (double *) fftw_malloc(sizeof(double) * samples);
-        std::fill(hc_vecFT,r_vec + samples,double(0));
+        std::fill(hc_vecFT,hc_vecFT + samples,double(0));
+	//std::cerr << "allocating with fftw_malloc with samples = " << (2*samples) << std::endl;
 	r_vec_2x = (double *) fftw_malloc(sizeof(double) * samples * 2);
-        std::fill(r_vec_2x,r_vec_2x + 2*samples,double(0));
+        //std::fill(r_vec_2x,r_vec_2x + 2*samples,double(0));
 	hc_vec_2xFT = (double *) fftw_malloc(sizeof(double) * samples * 2);
         std::fill(hc_vec_2xFT,hc_vec_2xFT + 2*samples,double(0));
+	//std::cerr << "\t\t...allocated with fftw_malloc with 2*samples = " << (2*samples) << std::endl;
 
 	rhovec.resize(samples,0.0);
 	phivec.resize(samples,0.0);
