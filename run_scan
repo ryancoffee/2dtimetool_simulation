@@ -2,9 +2,9 @@
 
 starttime=$(date +%s);
 
-export nthreads=1;
+export nthreads=24;
 #export datadir='/u1/mldrp/coffee/sharedata/raw/';
-export datadir='./data/raw/';
+export datadir='/data/raw/';
 mkdir -p $datadir;
 
 # for Omar, testing the addition of random phase
@@ -13,22 +13,22 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-export nimages=6;
+export nimages=100000;
 export delays_mean=-500 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1750;
 
-export drifting_alpha=0.01; #0.1;
+export drifting_alpha=0.001; #0.1;
 
 export xray_pos_distribution_normal_mean=0;
-export xray_pos_distribution_normal_std=0.01; #0.1
+export xray_pos_distribution_normal_std=0.001; #0.1
 export laser_pos_distribution_normal_mean=0;
-export laser_pos_distribution_normal_std=0.02; #0.2
+export laser_pos_distribution_normal_std=0.001; #0.2
 
 export laser_distribution_lognormal_mean=0.0;
-export laser_distribution_lognormal_std=0.01; #0.1
+export laser_distribution_lognormal_std=0.001; #0.1
 export xray_distribution_lognormal_mean=0.0;
-export xray_distribution_lognormal_std=0.05; #0.5
+export xray_distribution_lognormal_std=1.5; #0.5
 
 export lambda0=600;
 export lambda_width=300;
@@ -40,7 +40,7 @@ export tspan=16384;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
 export backdelay=0.5; 
-export netalon=3; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
+export netalon=1; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
 export etalon=.16; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
 export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
@@ -63,14 +63,14 @@ export nu_high=0.65;
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-#export nfibers=109;
-export nfibers=7;
+export nfibers=109;
+#export nfibers=7;
 export fiberdiam=0.11;
-export laserdiam=0.7;
-export xraydiam=0.5;
+export laserdiam=2.;
+export xraydiam=2.5;
 export bundle_fsPmm=3333.;
 
-export stepwidth=25.0;
+export stepwidth=50.0;
 export attenuation=1.0;
 export phase=0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
 # phase should be the optical phase which is a function of optical frequency Dn(omega)*C/thickness/omega
@@ -124,14 +124,14 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=20000000;
 export saturate=4096;
 export lamsamples=1024;
 
 #export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
-export filebase=$datadir"multithread_"$interferedelay"_";
+export filebase=$datadir"uint12_"$interferedelay"_";
 echo $filebase
 #./scan_material
 stoptime=$(date +%s);
