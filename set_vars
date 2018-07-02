@@ -6,6 +6,10 @@ export nthreads=12;
 export datadir='./data/raw/';
 mkdir -p $datadir;
 
+# for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
+export ncalibdelays=128;
+export fsWindow=2500;
+
 # for Omar, testing the addition of random phase
 export addrandomphase=0;
 export phaseNoiseLowpass=10000; # this is in units of total number of time samples... and that is enormous.

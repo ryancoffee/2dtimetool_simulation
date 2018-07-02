@@ -5,8 +5,8 @@ ODIR=./objects
 IDIR=./include
 CFLAGS=-Wall -I/usr/local/include -I$(BOOSTROOT) -I$(IDIR) -std=gnu++14 -c -D_USE_MATH_DEFINES -O3 -fopenmp
 LDFLAGS=-L/usr/local/lib -lfftw3 -lm -fopenmp
-_SRCS=ScanParams.cpp Pulse.cpp MatResponse.cpp FiberBundle.cpp scan_material.cpp
-_HEADS=ScanParams.hpp Pulse.hpp MatResponse.hpp Refraction.hpp FiberBundle.hpp scan_material.hpp 
+_SRCS=ScanParams.cpp Pulse.cpp MatResponse.cpp FiberBundle.cpp CalibMat.cpp scan_material.cpp
+_HEADS=ScanParams.hpp Pulse.hpp MatResponse.hpp Refraction.hpp FiberBundle.hpp CalibMat.hpp scan_material.hpp 
 
 OBJECTS=$(patsubst %,$(ODIR)/%,$(_SRCS:.cpp=.o))
 HEADERS=$(patsubst %,$(IDIR)/%,$(_HEADS))
