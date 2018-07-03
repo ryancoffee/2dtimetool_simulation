@@ -15,8 +15,8 @@
 
 class CalibMat {
 	public:
-		CalibMat(size_t n);
-		bool print_mapping(std::ofstream & out);
+		CalibMat(size_t n,double window);
+		bool print_delaysofstream & out);
 		inline void set_fsWindow(const double x = 3333){fsWindow = x;}
 
 		inline double delay(const size_t i){ return fsWindow * double(i - ndelays/2); }
