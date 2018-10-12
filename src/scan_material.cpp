@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
 	masterpulse.setancillaryplans(& plan_r2hc,& plan_hc2r,& plan_r2hc_2x,& plan_hc2r_2x);
 	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
-	HERE HERE HERE HERE
+	//HERE HERE HERE HERE
 
 	CalibMat calibration(boost::lexical_cast<size_t>(atoi(getenv("ncalibdelays"))),boost::lexical_cast<double>(atof(getenv("fsWindow"))));
 
@@ -131,8 +131,8 @@ int main(int argc, char* argv[])
 #pragma omp for schedule(static) ordered 
 		for (size_t n=0;n<calibration.get_ndelays();++n){ // outermost loop for calibration.get_ndelays() to produce //
 			//initialize with masterpulse
-			calpulse = new PulseFreq(masterpulse);
-			calcrosspulse = new PulseFreq(masterpulse);
+			PulseFreq* calpulse = new PulseFreq(masterpulse);
+			PulseFreq* calcrosspulse = new PulseFreq(masterpulse);
 
 			double startdelay(calibration.get_delay(n));
 
@@ -235,15 +235,15 @@ int main(int argc, char* argv[])
 			calcrosspulse->fft_tofreq();
 			calpulse->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
-			calpulse -= calcrosspulse;
-			calpulsearray[n] = new PulseFreq(calpulse);
+			*(calpulse) -= *(calcrosspulse);
+			calpulsearray[n] = new PulseFreq(*calpulse);
 		} // end of loop calibration.get_ndelays() to produce //
 
 	} // end parallel region calibration
 
 	// print out the calibration as ascii for now //
 	// print rows in order, eventually in tf_record or matrix or so. //
-	std::string filename = scanparams.filebase() + "interference.calibration.";
+	filename = scanparams.filebase() + "interference.calibration.";
 	ofstream calibrationstream(filename.c_str(),ios::out); 
 	std::cout << "\tcalibration filename out = " << filename << std::endl;
 	calibrationstream << "#";
@@ -255,7 +255,7 @@ int main(int argc, char* argv[])
 
 	std::cout << "Finished with the calibraiton image/matrix" << std::endl;
 
-	end HERE HERE HERE HERE
+	//end HERE HERE HERE HERE
 
 #pragma omp parallel num_threads(nthreads) shared(masterbundle,masterresponse,masterpulse,scanparams) 
 	{ // begin parallel region images
