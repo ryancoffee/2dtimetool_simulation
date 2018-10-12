@@ -2,9 +2,9 @@
 
 starttime=$(date +%s);
 
-export nthreads=24;
+export nthreads=2;
 #export datadir='/u1/mldrp/coffee/sharedata/raw/';
-export datadir='/data/raw/';
+export datadir='./data/raw/';
 mkdir -p $datadir;
 
 # for Omar, testing the addition of random phase
