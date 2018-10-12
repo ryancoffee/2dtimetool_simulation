@@ -119,17 +119,23 @@ int main(int argc, char* argv[])
 	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
 	//HERE HERE HERE HERE
+	//segfault is likely happening here
+	//calibration is defined outside the parallel region
 
 	CalibMat calibration(boost::lexical_cast<size_t>(atoi(getenv("ncalibdelays"))),boost::lexical_cast<double>(atof(getenv("fsWindow"))));
-
 	std::vector< PulseFreq* > calpulsearray(calibration.get_ndelays(),NULL);
+	std::cerr << "calibration.get_ndelays() = " << calibration.get_ndelays() << std::endl;
 #pragma omp parallel num_threads(nthreads) shared(calibration,masterresponse,masterpulse,scanparams) 
 	{ // begin parallel region calibration
 		size_t tid = omp_get_thread_num();
 		std::cerr << "inside parallel region for calibration\ttid = " << tid << std::endl;
 
+		// mabe here we need to copy the calibration to the parallel individuals for ensured thread safety.
+
 #pragma omp for schedule(static) ordered 
-		for (size_t n=0;n<calibration.get_ndelays();++n){ // outermost loop for calibration.get_ndelays() to produce //
+		for (size_t n=0;n<calibration.get_ndelays();++n)
+		{ // outermost loop for calibration.get_ndelays() to produce //
+			std::cerr << "\tinside parallel region for actual loop\tn = " << n << "\ttid = " << tid << std::endl;
 			//initialize with masterpulse
 			PulseFreq* calpulse = new PulseFreq(masterpulse);
 			PulseFreq* calcrosspulse = new PulseFreq(masterpulse);
@@ -236,6 +242,7 @@ int main(int argc, char* argv[])
 			calpulse->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
 			*(calpulse) -= *(calcrosspulse);
+			std::cerr << "setting the calpulsearray[ " << n << " ]" << std::endl;
 			calpulsearray[n] = new PulseFreq(*calpulse);
 		} // end of loop calibration.get_ndelays() to produce //
 
