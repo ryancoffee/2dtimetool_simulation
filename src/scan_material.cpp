@@ -121,6 +121,8 @@ int main(int argc, char* argv[])
 	CalibMat calibration(boost::lexical_cast<size_t>(atoi(getenv("ncalibdelays"))),boost::lexical_cast<double>(atof(getenv("fsWindow"))));
 	std::vector< PulseFreq* > calpulsearray(calibration.get_ndelays(),NULL);
 	std::cerr << "calibration.get_ndelays() = " << calibration.get_ndelays() << std::endl;
+	std::cerr << "\n\n\t\t============ SOMEHOW THERE IS A BUNCH OF CONFUSION ABOUT NFIBERS AND NCALIBDELAYS ===========" << std::flush;
+
 #pragma omp parallel num_threads(nthreads) shared(calibration,calpulsearray,masterresponse,masterpulse,scanparams) 
 	{ // begin parallel region
 		size_t tid = omp_get_thread_num();
@@ -142,8 +144,8 @@ int main(int argc, char* argv[])
 
 			MatResponse pararesponse(masterresponse);
 
-			PulseFreq etalonpulse=masterpulse;
-			PulseFreq crossetalonpulse=masterpulse;
+			etalonpulse=masterpulse;
+			crossetalonpulse=masterpulse;
 
 			for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 				pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
@@ -239,31 +241,34 @@ int main(int argc, char* argv[])
 			std::cerr << "setting the calpulsearray[ " << n << " ]" << std::endl;
 			calpulsearray[n] = new PulseFreq(*calpulse);
 		} // end of loop calibration.get_ndelays() to produce //
+		std::cerr << "// end of loop calibration.get_ndelays() to produce //" << std::endl;
 
-		if (tid==0)
-		{
 
-			// print out the calibration as ascii for now //
-			// print rows in order, eventually in tf_record or matrix or so. //
-			filename = scanparams.filebase() + "interference.calibration";
-			ofstream calibrationstream(filename.c_str(),ios::out); 
-			std::cout << "\tcalibration filename out = " << filename << std::endl;
-			calibrationstream << "#";
-			calpulsearray[0]->printwavelengthbins(&calibrationstream);
-			for (size_t n=0;n<calibration.get_ndelays();n++){
-				calpulsearray[n]->appendwavelength(&calibrationstream);
-			}
-			calibrationstream.close();
-
-			std::cout << "Finished with the calibration image/matrix" << std::endl;
+		// print out the calibration as ascii for now //
+		// print rows in order, eventually in tf_record or matrix or so. //
+		std::string calfilename = scanparams.filebase() + "interference.calibration.tid" + std::to_string(tid);
+		ofstream calibrationstream(calfilename.c_str(),ios::out); 
+		std::cout << "\tcalibration filename out = " << calfilename << std::endl;
+		calibrationstream << "#";
+		calpulsearray[0]->printwavelengthbins(&calibrationstream);
+		for (size_t n=0;n<calibration.get_ndelays();n++){
+			calpulsearray[n]->appendwavelength(&calibrationstream);
 		}
+		calibrationstream.close();
+
+		std::cout << "Finished with the calibration image/matrix" << std::endl;
 
 
-#pragma omp barrier
 
+		std::cerr << std::flush;
 		std::cerr << "inside parallel region for images\ttid = " << tid << std::endl;
 		std::vector< PulseFreq* > pulsearray(masterbundle.get_nfibers(),NULL);
+		std::cerr << "pulsearray = " << &pulsearray 
+			<< std::endl;
+		std::cerr << std::flush;
 		std::vector< PulseFreq* > crosspulsearray(masterbundle.get_nfibers(),NULL);
+		PulseFreq etalonpulse=masterpulse;
+		PulseFreq crossetalonpulse=masterpulse;
 
 		if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0) && tid ==0)
 		{
@@ -280,42 +285,63 @@ int main(int argc, char* argv[])
 			outfile.open(filename.c_str(),std::ios::out);
 			masterpulse.print_amp(outfile);
 			outfile.close();
+
 		}
 
-		bool arrays_initialized = false;
-		PulseFreq etalonpulse=masterpulse;
-		PulseFreq crossetalonpulse=masterpulse;
-		if (!arrays_initialized)
-		{
-			for (size_t f=0;f<masterbundle.get_nfibers();++f)
-			{
-				std::cerr << "tid, fiber number, pulsearray.size() = " 
-					<< tid << " , " << f << ", " << pulsearray.size() << std::endl;
-				pulsearray[f] = new PulseFreq(masterpulse);
-				crosspulsearray[f] = new PulseFreq(masterpulse);
-				std::cerr << "MADE IT HERE\n\twith masterbundle.get_nfibers() = " 
-					<< masterbundle.get_nfibers() << "\tand f = "
-					<< f << std::endl;
-			}
-			arrays_initialized = true;
-			std::cerr << "arrays_initialized = " << arrays_initialized << std::endl;
+		std::vector<bool> arrays_initialized(nthreads,false);
+			std::cerr << "arrays_initialized = " ;
+		for (size_t i=0; i<arrays_initialized.size();++i){
+			std::cerr << arrays_initialized[i] << " ";
 		}
-
-#pragma omp barrier
-
-
-		std::cerr << "\t\t Entering the omp for in tid = " << tid << "\n\n" << std::endl;
+		std::cerr << std::endl << std::flush;
 #pragma omp for schedule(static) ordered 
 		for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
 			if (tid==0 && n<nthreads) {
 				std::cerr << "http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html \n"
 					<< " \t use this for defining multiple fibers as contiguous blocks for row-wise FFT as 2D" << std::endl;
+				std::cerr << std::flush;
 			}
 
-			for (size_t f=0;f<masterbundle.get_nfibers();++f){
-				//std::cerr << "\t now we try to set them as masterpulse" << std::endl;
-				*(pulsearray[f]) = masterpulse;
-				*(crosspulsearray[f]) = masterpulse;
+			if (!arrays_initialized[tid])
+			{
+				std::cerr << "pulsearray.size() = " << pulsearray.size() << std::flush;
+				std::cerr << "pulsearray[0].size() = " << pulsearray.size() << std::flush;
+				std::cerr << "#### initializing (cross)pulsearray[0]\n" << std::flush;
+				pulsearray[0] = new PulseFreq(masterpulse);
+				//crosspulsearray[0] = new PulseFreq(masterpulse);
+				std::cerr << "#### initializing (cross)pulsearray[1]\n" << std::flush;
+				pulsearray[1] = new PulseFreq(masterpulse);
+				//crosspulsearray[1] = new PulseFreq(masterpulse);
+				std::cerr << "#### initializing (cross)pulsearray[2]\n" << std::flush;
+				pulsearray[2] = new PulseFreq(masterpulse);
+				//crosspulsearray[2] = new PulseFreq(masterpulse);
+				std::cerr << "#### initializing (cross)pulsearray[3]\n" << std::flush;
+				pulsearray[3] = new PulseFreq(masterpulse);
+				//crosspulsearray[3] = new PulseFreq(masterpulse);
+				std::cerr << "#### initializing (cross)pulsearray[4]\n" << std::flush;
+				pulsearray[4] = new PulseFreq(masterpulse);
+				//crosspulsearray[4] = new PulseFreq(masterpulse);
+				std::cerr << "#### initializing (cross)pulsearray[5]\n" << std::flush;
+				pulsearray[5] = new PulseFreq(masterpulse);
+				//crosspulsearray[5] = new PulseFreq(masterpulse);
+				for (size_t f=5;f<masterbundle.get_nfibers();++f)
+				{
+					std::cerr << "\nXXXX\t\tinitializing (cross)pulsearray[ " << f << " ]" << std::flush;
+					pulsearray[f] = new PulseFreq(masterpulse);
+					crosspulsearray[f] = new PulseFreq(masterpulse);
+					std::cerr << "\n**********\t\tpulsearray[ " << f << " ] = " << pulsearray[f]
+						<< std::endl;
+					std::cerr << std::flush;
+				}
+				arrays_initialized[tid] = true;
+				std::cerr << "arrays_initialized[ " << tid << " ] = " << arrays_initialized[tid] << std::endl;
+			} else {
+
+				for (size_t f=0;f<masterbundle.get_nfibers();++f){
+					//std::cerr << "\t now we try to set them as masterpulse" << std::endl;
+					*(pulsearray[f]) = masterpulse;
+					*(crosspulsearray[f]) = masterpulse;
+				}
 			}
 
 			double t0 = scanparams.delays_uniform();

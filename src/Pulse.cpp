@@ -71,6 +71,7 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // deep-ish copy constructor
 	m_lamsamples(rhs.m_lamsamples),
 	sampleround(1000)
 {
+	std::cerr << "\t\t\t+++++  Copy constructor of PulseFreq::PulseFreq(PulseFreq &rhs)\n" << std::flush;
 	DataOps::clone(omega,rhs.omega);
 	DataOps::clone(time,rhs.time);
 
@@ -102,6 +103,7 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // deep-ish copy constructor
 
 PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // shallow-ish assignment
 {
+	std::cerr << "\t\t\t+++++  Shallow copy of PulseFreq::operator=\n" << std::flush;
 	omega_center=rhs.omega_center;
 	omega_width=rhs.omega_width;
 	omega_high=rhs.omega_high;

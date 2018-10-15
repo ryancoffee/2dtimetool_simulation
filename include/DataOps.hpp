@@ -17,6 +17,7 @@
 #include <complex>
 #include <boost/multi_array.hpp>
 #include <boost/math/tools/polynomial.hpp>
+#include <typeinfo>
 
 namespace DataOps 
 {
