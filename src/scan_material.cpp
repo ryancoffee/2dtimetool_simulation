@@ -127,6 +127,7 @@ int main(int argc, char* argv[])
 	{ // begin parallel region
 		size_t tid = omp_get_thread_num();
 		std::cerr << "inside parallel region for calibration\ttid = " << tid << std::endl;
+		/*
 
 #pragma omp for schedule(static) ordered 
 		for (size_t n=0;n<calibration.get_ndelays();++n)
@@ -255,6 +256,7 @@ int main(int argc, char* argv[])
 			calpulsearray[n]->appendwavelength(&calibrationstream);
 		}
 		calibrationstream.close();
+		*/
 
 		std::cout << "Finished with the calibration image/matrix" << std::endl;
 
@@ -308,22 +310,26 @@ int main(int argc, char* argv[])
 				std::cerr << "pulsearray[0].size() = " << pulsearray.size() << std::flush;
 				std::cerr << "#### initializing (cross)pulsearray[0]\n" << std::flush;
 				pulsearray[0] = new PulseFreq(masterpulse);
-				//crosspulsearray[0] = new PulseFreq(masterpulse);
+				crosspulsearray[0] = new PulseFreq(masterpulse);
 				std::cerr << "#### initializing (cross)pulsearray[1]\n" << std::flush;
 				pulsearray[1] = new PulseFreq(masterpulse);
-				//crosspulsearray[1] = new PulseFreq(masterpulse);
+				crosspulsearray[1] = new PulseFreq(masterpulse);
 				std::cerr << "#### initializing (cross)pulsearray[2]\n" << std::flush;
 				pulsearray[2] = new PulseFreq(masterpulse);
-				//crosspulsearray[2] = new PulseFreq(masterpulse);
+				crosspulsearray[2] = new PulseFreq(masterpulse);
 				std::cerr << "#### initializing (cross)pulsearray[3]\n" << std::flush;
 				pulsearray[3] = new PulseFreq(masterpulse);
-				//crosspulsearray[3] = new PulseFreq(masterpulse);
+				crosspulsearray[3] = new PulseFreq(masterpulse);
 				std::cerr << "#### initializing (cross)pulsearray[4]\n" << std::flush;
 				pulsearray[4] = new PulseFreq(masterpulse);
-				//crosspulsearray[4] = new PulseFreq(masterpulse);
+				crosspulsearray[4] = new PulseFreq(masterpulse);
 				std::cerr << "#### initializing (cross)pulsearray[5]\n" << std::flush;
 				pulsearray[5] = new PulseFreq(masterpulse);
-				//crosspulsearray[5] = new PulseFreq(masterpulse);
+				crosspulsearray[5] = new PulseFreq(masterpulse);
+				std::cerr << "#### initializing (cross)pulsearray[6]\n" << std::flush;
+				pulsearray[6] = new PulseFreq(masterpulse);
+				crosspulsearray[6] = new PulseFreq(masterpulse);
+				/*
 				for (size_t f=5;f<masterbundle.get_nfibers();++f)
 				{
 					std::cerr << "\nXXXX\t\tinitializing (cross)pulsearray[ " << f << " ]" << std::flush;
@@ -333,6 +339,7 @@ int main(int argc, char* argv[])
 						<< std::endl;
 					std::cerr << std::flush;
 				}
+				*/
 				arrays_initialized[tid] = true;
 				std::cerr << "arrays_initialized[ " << tid << " ] = " << arrays_initialized[tid] << std::endl;
 			} else {

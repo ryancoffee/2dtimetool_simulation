@@ -103,8 +103,9 @@ bin/*
 # BUT keep filestructure
 /data/external/*.dat
 /data/interim/*.dat
-/data/processed/*.dat
+/data/processed/*.dat*
 /data/raw/*.dat
+/data/raw/*.out*
 
 # exclude external models from source control
 /src/external/*
