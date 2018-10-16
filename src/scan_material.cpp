@@ -18,6 +18,12 @@ using namespace Constants;
 /* Here's main */
 int main(int argc, char* argv[])
 {
+	std::time_t tstart = std::time(nullptr);
+	std::cout << "\t\t======================================\n"
+		  << "\t\t======= scan_material started ========\n"
+		  << "\t\t===== " << std::asctime(std::localtime(&tstart)) 
+		  << "\t\t======================================\n" << std::flush;
+
 	unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
 
 	ScanParams scanparams;
@@ -74,12 +80,10 @@ int main(int argc, char* argv[])
 	masterbundle.Ixray(float(1.));
 	masterbundle.Ilaser(float(1.));
 	std::string filename = scanparams.filebase() + "fibermap.out";
-	std::cerr << filename << std::endl;
+	std::cout << "fibermap file = " << filename << std::endl << std::flush;
 	std::ofstream mapfile(filename.c_str(),std::ios::out);
 	masterbundle.print_mapping(mapfile);
 	mapfile.close();
-
-	std::cerr << "just now setting masterresponse()" << std::endl;
 
 	// file for delay bins
 	ofstream outbins(std::string(scanparams.filebase() + "delaybins.out").c_str(),ios::out); 
@@ -88,7 +92,6 @@ int main(int argc, char* argv[])
 	}
 	outbins.close();
 
-	std::cerr << "Setting original masterresponse" << std::endl;
 	MatResponse masterresponse(
 			0,															// stepdelay
 			(double)( atof( getenv("stepwidth") ) ),								// stepwidth
@@ -104,9 +107,8 @@ int main(int argc, char* argv[])
 
 	masterresponse.setreflectance(scanparams.etalonreflectance());
 	masterresponse.setetalondelay(scanparams.etalondelay());
-	std::cerr << "Just finished modifying chirp for original masterresponse" << std::endl;
 
-	std::cerr << "initializing masterpulse and masterplans" << std::endl;
+	std::cout << "initializing masterpulse and masterplans" << std::endl << std::flush;
 	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
 	fftw_plan forward;
 	fftw_plan backward;
@@ -118,28 +120,24 @@ int main(int argc, char* argv[])
 	masterpulse.setancillaryplans(& plan_r2hc,& plan_hc2r,& plan_r2hc_2x,& plan_hc2r_2x);
 	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
-
-
+	
 	// Setup the shared pulse arrays
 
 	CalibMat calibration(boost::lexical_cast<size_t>(atoi(getenv("ncalibdelays")))
 			, boost::lexical_cast<double>(atof(getenv("fsWindow"))));
-	std::cerr << "\n\n\t\t ====== Testing delays =======\n";
-	for (size_t i = 0 ; i< 10; ++i){
-		std::cerr << calibration.get_delay(i) << " ";
+	std::cout << "\n\n\t\t ====== delays =======\n";
+	for (size_t i = 0 ; i< calibration.get_ndelays(); ++i){
+		std::cout << calibration.get_delay(i) << " ";
 	}
-	std::cerr << std::endl << std::flush;
+	std::cout << std::endl << std::flush;
 
 	std::vector< PulseFreq* > calpulsearray(calibration.get_ndelays(),NULL);
 
 #pragma omp parallel num_threads(nthreads) shared(calpulsearray,masterresponse,masterpulse,scanparams) 
 	{ // begin parallel region
 		size_t tid = omp_get_thread_num();
-		std::cerr << "inside parallel region for calibration\ttid = " << tid << std::endl << std::flush;
 
 		MatResponse pararesponse(masterresponse);
-		// pulsearray and crosspulsearray should be private
-		// but outside of the loop
 		std::vector< PulseFreq* > pulsearray(masterbundle.get_nfibers(),NULL);
 		std::vector< PulseFreq* > crosspulsearray(masterbundle.get_nfibers(),NULL);
 		for (size_t f=0;f<pulsearray.size();++f){
@@ -255,7 +253,6 @@ int main(int argc, char* argv[])
 
 			*(calpulsePtr) -= *(calcrosspulsePtr);
 		} // end of loop calibration.get_ndelays() to produce //
-		std::cerr << "// end of loop calibration.get_ndelays() in tid = " << tid << "\n" << std::flush;
 
 #pragma omp flush 
 
@@ -278,7 +275,7 @@ int main(int argc, char* argv[])
 		std::cout << "Finished with the calibration image/matrix" << std::endl << std::flush;
 		}
 
-		std::cerr << "inside parallel region for images\ttid = " << tid << std::endl << std::flush;
+		//std::cerr << "inside parallel region for images\ttid = " << tid << std::endl << std::flush;
 
 		if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0) && tid ==0)
 		{
@@ -301,7 +298,7 @@ int main(int argc, char* argv[])
 #pragma omp for schedule(static) ordered 
 		for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
 			if (tid==0 && n<nthreads) {
-				std::cerr << "\n\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
+				std::cout << "\n\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
 					<< "\n\t ==== use this for defining multiple fibers as ===="
 					<< "\n\t ==== contiguous blocks for row-wise FFT as 2D ====\n" << std::flush;
 			}
@@ -438,7 +435,7 @@ int main(int argc, char* argv[])
 			std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);// + ".tid" + std::to_string(tid);
 			ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
 
-			std::cout << "tid = " << tid << ": interfere filename out = " << filename << std::endl;
+			//std::cout << "tid = " << tid << ": interfere filename out = " << filename << std::endl;
 			std::complex<double> z_laser = parabundle.center_Ilaser();
 			std::complex<double> z_xray = parabundle.center_Ixray();
 			interferestream << "#delay for image = \t" << t0 
@@ -459,21 +456,28 @@ int main(int argc, char* argv[])
 
 			// std::cerr << "\n\t ---- moving to next image in nimages loop ----" << std::endl;
 		} // outermost loop for nimages to produce //
-		std::cerr << "\n\t\t-- deleting (cross)pulsearrays\n" << std::flush;
+		std::cout << "\n\t\t-- deleting (cross)pulsearrays -- in tid = " << tid << "\n" << std::flush;
 		for (size_t f=0;f<pulsearray.size();++f){
 			delete pulsearray[f];
 			pulsearray[f] = NULL;
 			delete crosspulsearray[f];
 			crosspulsearray[f] = NULL;
 		}
-		std::cerr << "\n\t... trying to leave parallel region" << std::endl;
+		std::cout << "\n\t... trying to leave parallel region" << std::endl;
 	} // end parallel region
-	std::cerr << "\n ---- just left parallel region ----" << std::endl;
-	std::cerr << "Checking masterresponse via reflectance: " << masterresponse.getreflectance() << std::endl;
-	std::cerr << "Checking masterbundle via fiberdiameter: " << masterbundle.fiberdiameter() << std::endl;
-	std::cerr << "Checking scanparams via lambda_0: " << scanparams.lambda_0() << std::endl;
+	std::cout << "\n ---- just left parallel region ----" << std::endl;
+	std::cout << "masterresponse reflectance: " << masterresponse.getreflectance() << std::endl;
+	std::cout << "masterbundle fiberdiameter: " << masterbundle.fiberdiameter() << std::endl;
+	std::cout << "scanparams lambda_0: " << scanparams.lambda_0() << std::endl;
 	fftw_destroy_plan(forward);
 	fftw_destroy_plan(backward);
+
+	std::time_t tstop = std::time(nullptr);
+	std::cout << "\t\t======================================\n"
+		  << "\t\t======== scan_material stopped =======\n"
+		  << "\t\t===== " << std::asctime(std::localtime(&tstop)) 
+		  << "\t\t===== in " << int(tstop-tstart) << " s \n"
+		  << "\t\t======================================\n" << std::flush;
 
 	return 0;
 }
