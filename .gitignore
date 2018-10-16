@@ -106,6 +106,7 @@ bin/*
 /data/processed/*.dat*
 /data/raw/*.dat
 /data/raw/*.out*
+/data/raw/tfrecord*
 
 # exclude external models from source control
 /src/external/*
