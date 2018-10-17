@@ -104,6 +104,7 @@ bin/*
 /data/external/*.dat
 /data/interim/*.dat
 /data/processed/*.dat*
+/data/processed/*.out*
 /data/raw/*.dat
 /data/raw/*.out*
 /data/raw/tfrecord*
