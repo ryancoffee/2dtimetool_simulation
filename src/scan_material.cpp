@@ -125,6 +125,7 @@ int main(int argc, char* argv[])
 
 	CalibMat calibration(boost::lexical_cast<size_t>(atoi(getenv("ncalibdelays")))
 			, boost::lexical_cast<double>(atof(getenv("fsWindow"))));
+	calibration.set_center(boost::lexical_cast<double>(atof(getenv("delays_mean"))));
 	std::cout << "\n\n\t\t ====== delays =======\n";
 	for (size_t i = 0 ; i< calibration.get_ndelays(); ++i){
 		std::cout << calibration.get_delay(i) << " ";
@@ -133,7 +134,9 @@ int main(int argc, char* argv[])
 
 	std::vector< PulseFreq* > calpulsearray(calibration.get_ndelays(),NULL);
 
-#pragma omp parallel num_threads(nthreads) shared(calpulsearray,masterresponse,masterpulse,scanparams) 
+#pragma omp parallel num_threads(nthreads) shared(calpulsearray) 
+//#pragma omp parallel num_threads(nthreads) shared(calpulsearray,masterresponse,masterpulse,scanparams) 
+//#pragma omp parallel num_threads(nthreads) 
 	{ // begin parallel region
 		size_t tid = omp_get_thread_num();
 
@@ -148,10 +151,10 @@ int main(int argc, char* argv[])
 #pragma omp for schedule(static) ordered 
 		for (size_t d=0;d<calpulsearray.size();++d)
 		{ // outermost loop for calibration.get_ndelays() to produce //
-			//std::cerr << "\tinside parallel region for actual loop\td = " << d << "\ttid = " << tid << std::endl << std::flush;
+			std::cerr << "\tinside parallel region for actual loop\td = " << d << "\ttid = " << tid << std::endl << std::flush;
 			//initialize with masterpulse
-			calpulsearray[d] = new PulseFreq(masterpulse);
-			PulseFreq* calpulsePtr = calpulsearray[d];
+			PulseFreq calpulse(masterpulse);
+			PulseFreq* calpulsePtr = &calpulse;
 			PulseFreq calcrosspulse(masterpulse);
 			PulseFreq* calcrosspulsePtr = &calcrosspulse;
 
@@ -251,7 +254,8 @@ int main(int argc, char* argv[])
 			calcrosspulsePtr->fft_tofreq();
 			calpulsePtr->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
-			*(calpulsePtr) -= *(calcrosspulsePtr);
+			calpulse -= calcrosspulse;
+			calpulsearray[d] = new PulseFreq(calpulse);
 		} // end of loop calibration.get_ndelays() to produce //
 
 #pragma omp flush 
@@ -268,36 +272,32 @@ int main(int argc, char* argv[])
 
 			for (size_t n=0;n<calpulsearray.size();++n){
 				calpulsearray[n]->appendwavelength(&calibrationstream);
-				delete calpulsearray[n];
-				calpulsearray[n]=NULL;
 			}
 			calibrationstream.close();
-		std::cout << "Finished with the calibration image/matrix" << std::endl << std::flush;
-		}
+			std::cout << "Finished with the calibration image/matrix" << std::endl << std::flush;
 
-		//std::cerr << "inside parallel region for images\ttid = " << tid << std::endl << std::flush;
-
-		if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0) && tid ==0)
-		{
-			masterpulse.addrandomphase();
-			std::string filename = scanparams.filebase() + "spectralphaseFTpower.dat";
-			std::ofstream outfile(filename.c_str(),std::ios::out);
-			masterpulse.print_phase_powerspectrum(outfile);
-			outfile.close();
-			filename = scanparams.filebase() + "spectralphase.dat";
-			outfile.open(filename.c_str(),std::ios::out);
-			masterpulse.print_phase(outfile);
-			outfile.close();
-			filename = scanparams.filebase() + "spectralamp.dat";
-			outfile.open(filename.c_str(),std::ios::out);
-			masterpulse.print_amp(outfile);
-			outfile.close();
-
+			if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0))
+			{
+				masterpulse.addrandomphase();
+				std::string filename = scanparams.filebase() + "spectralphaseFTpower.dat";
+				std::ofstream outfile(filename.c_str(),std::ios::out);
+				masterpulse.print_phase_powerspectrum(outfile);
+				outfile.close();
+				filename = scanparams.filebase() + "spectralphase.dat";
+				outfile.open(filename.c_str(),std::ios::out);
+				masterpulse.print_phase(outfile);
+				outfile.close();
+				filename = scanparams.filebase() + "spectralamp.dat";
+				outfile.open(filename.c_str(),std::ios::out);
+				masterpulse.print_amp(outfile);
+				outfile.close();
+			}
 		}
 
 #pragma omp for schedule(static) ordered 
-		for (size_t n=0;n<scanparams.nimages();++n){ // outermost loop for nimages to produce //
-			if (tid==0 && n<nthreads) {
+		for (size_t n=0;n<scanparams.nimages();++n)
+		{ // outermost loop for nimages to produce //
+			if (n==0) {
 				std::cout << "\n\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
 					<< "\n\t ==== use this for defining multiple fibers as ===="
 					<< "\n\t ==== contiguous blocks for row-wise FFT as 2D ====\n" << std::flush;
@@ -456,16 +456,23 @@ int main(int argc, char* argv[])
 
 			// std::cerr << "\n\t ---- moving to next image in nimages loop ----" << std::endl;
 		} // outermost loop for nimages to produce //
-		std::cout << "\n\t\t-- deleting (cross)pulsearrays -- in tid = " << tid << "\n" << std::flush;
+		//std::cout << "\n\t\t-- deleting (cross)pulsearrays -- in tid = " << tid << "\n" << std::flush;
 		for (size_t f=0;f<pulsearray.size();++f){
 			delete pulsearray[f];
 			pulsearray[f] = NULL;
 			delete crosspulsearray[f];
 			crosspulsearray[f] = NULL;
 		}
-		std::cout << "\n\t... trying to leave parallel region" << std::endl;
+
+#pragma omp master
+		for (size_t i=0;i < calpulsearray.size();++i){
+			delete calpulsearray[i];
+			calpulsearray[i]=NULL;
+		}
+
+		//std::cout << "\n\t... trying to leave parallel region" << std::endl;
 	} // end parallel region
-	std::cout << "\n ---- just left parallel region ----" << std::endl;
+	//std::cout << "\n ---- just left parallel region ----" << std::endl;
 	std::cout << "masterresponse reflectance: " << masterresponse.getreflectance() << std::endl;
 	std::cout << "masterbundle fiberdiameter: " << masterbundle.fiberdiameter() << std::endl;
 	std::cout << "scanparams lambda_0: " << scanparams.lambda_0() << std::endl;

@@ -7,8 +7,8 @@ export datadir='./data/raw/';
 mkdir -p $datadir;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=512;
-export fsWindow=5000;
+export ncalibdelays=128;
+export fsWindow=6000;
 
 # for Omar, testing the addition of random phase
 export addrandomphase=0;
@@ -17,10 +17,10 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 #export nimages=100000;
-export nimages=10;
-export delays_mean=-500 #-2250;off to right side of screen #1250; off to left side
+export nimages=1000;
+export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
-export delays_std=1750;
+export delays_std=2000;
 
 export drifting_alpha=0.01; #0.1;
 
@@ -64,13 +64,13 @@ export printnoisesamples=0; # use this to control wheter to printout noise sampl
 
 export sampleinterval=4;
 
-export nu_low=0.4;
-export nu_high=0.65;
+export nu_low=0.6;
+export nu_high=0.75;
 
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-export nfibers=7; #109;
+export nfibers=19; #109;
 export fiberdiam=0.11;
 export laserdiam=1.7;
 export xraydiam=1.5;
@@ -119,7 +119,7 @@ touch logfile
 # call to main #
 export doublepulse=0; #bool that tells whether to expect a double pulse
 export doublepulsedelay=200;
-export chirp=-2000; #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
+export chirp=-2400; #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
 export TOD=0;
 export FOD=0;
 export fifthOD=0;
