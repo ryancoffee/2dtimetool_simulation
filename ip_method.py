@@ -26,7 +26,7 @@ def main():
 	procdir = './data/processed/'
 
 	nimages=100
-	OUT = np.zeros((nimages,imgmat.shape[0]+2),dtype=int)
+	OUT = np.zeros((nimages,2*imgmat.shape[0]+2),dtype=int)
 
 	for i in range(nimages):
 			imgmat = np.loadtxt(imgfile(datadir,filehead,i),dtype=int)
@@ -38,11 +38,17 @@ def main():
 			d = float(delay)
 			np.savetxt(outfile(procdir,filehead,i,'innerprod'),result,fmt='%i',header=line)
 			inds = np.argmax(result,axis=0)
+			maxs = np.max(result,axis=0)
 			OUT[i,0] = i
 			OUT[i,1] = d
-			OUT[i,2:] = inds
+                        OUT[i,2::2] = inds
+                        OUT[i,3::2] = maxs
 	outfname = procdir+filehead + '.innerprod_results'
 	np.savetxt(outfname,OUT,fmt='%i')
+        """
+        OK, mask on maxs.  If where maxs > 2e8 then fit 
+        OUT[:,2]... ugh too tired
+        """
 
 
 if __name__ == '__main__':

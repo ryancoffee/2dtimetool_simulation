@@ -1,0 +1,13 @@
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+a               = 3.35107          +/- 0.137        (4.087%)
+b               = 0.0211294        +/- 4.582e-05    (0.2168%)
+
+correlation matrix of the fit parameters:
+                a      b      
+a               1.000 
+b              -0.940  1.000 
+
+gnuplot> f(x)=a+b*(x-x0)
+gnuplot> x0=-2500
+
