@@ -255,7 +255,8 @@ int main(int argc, char* argv[])
 			calpulsePtr->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
 			calpulse -= calcrosspulse;
-			calpulsearray[d] = new PulseFreq(calpulse);
+			// reversing order for sake of chirp calib matrix
+			calpulsearray[calpulsearray.size()-d-1] = new PulseFreq(calpulse);
 		} // end of loop calibration.get_ndelays() to produce //
 
 #pragma omp flush 

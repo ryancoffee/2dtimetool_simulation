@@ -8,7 +8,7 @@ mkdir -p $datadir;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
 export ncalibdelays=32;
-export fsWindow=7000;
+export fsWindow=6000;
 
 # for Omar, testing the addition of random phase
 export addrandomphase=0;
@@ -17,7 +17,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 #export nimages=100000;
-export nimages=10;
+export nimages=4;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=2000;
@@ -34,7 +34,7 @@ export laser_distribution_lognormal_std=0.001; #0.1
 export xray_distribution_lognormal_mean=0.0;
 export xray_distribution_lognormal_std=0.005; #0.5
 
-export lambda0=550;
+export lambda0=500;
 export lambda_width=300;
 export lambda_onoff=100;
 #export tspan=4096;
