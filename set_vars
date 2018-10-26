@@ -7,7 +7,7 @@ export datadir='./data/raw/';
 mkdir -p $datadir;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=128;
+export ncalibdelays=80;
 export fsWindow=6000;
 
 # for Omar, testing the addition of random phase
@@ -17,7 +17,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 #export nimages=100000;
-export nimages=100;
+export nimages=10;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=2000;
@@ -70,10 +70,10 @@ export nu_high=0.75;
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-export nfibers=109;
+export nfibers=19; #109;
 export fiberdiam=0.11;
-export laserdiam=2;
-export xraydiam=0.125;
+export laserdiam=1;
+export xraydiam=0.0625; #0.125;
 export bundle_fsPmm=3333.;
 
 export stepwidth=30.0;

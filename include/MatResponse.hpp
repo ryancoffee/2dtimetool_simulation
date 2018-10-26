@@ -53,6 +53,8 @@ public:
 	void buffervectors(PulseFreq * pulse);
 
 	
+	inline void set_scale(const double in) { setscale(in); }
+	inline void setscale(const double in) { scale = in; }
 	inline void set_delay(double in) { setdelay(in); }
 	inline void setdelay(double in){ t0 = in/fsPau<float>(); }
 	inline void set_attenuation(double in) { setatten(in); }
@@ -72,7 +74,7 @@ public:
 
 private:
 	
-	double t0,twidth,attenuation,phase,a,alpha,b,beta;
+	double t0,twidth,attenuation,phase,a,alpha,b,beta,scale;
 	double etalondelay, reflectance;
 };
 

@@ -1,0 +1,2 @@
+git config --global user.email "coffee@slac.stanford.edu"
+git config --global user.name "Ryan Coffee"

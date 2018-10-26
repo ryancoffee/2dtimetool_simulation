@@ -329,6 +329,9 @@ int main(int argc, char* argv[])
 			for(size_t f = 0; f < parabundle.get_nfibers(); f++)
 			{ // begin fibers loop
 				startdelay = t0 + parabundle.delay(f);
+				pulsearray[f]->scale(parabundle.Ilaser(f));
+				crosspulsearray[f]->scale(parabundle.Ilaser(f));
+				pararesponse.setscale(parabundle.Ixray(f));
 				if (scanparams.addchirpnoise()){
 					std::vector<double> noise(scanparams.getchirpnoise());
 					pulsearray[f]->addchirp(noise); 

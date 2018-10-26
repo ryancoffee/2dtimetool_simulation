@@ -124,6 +124,10 @@ class PulseFreq
 
 		bool addrandomphase();
 
+		inline void scale(const double in){
+			DataOps::mul(cvec,in,samples);
+			cvec2rhophi();
+		}
 		unsigned getsamples(void) {
 			return samples;
 		}

@@ -5,6 +5,7 @@ MatResponse::MatResponse(MatResponse & rhs) // copy constructor
 {
 	t0=rhs.t0;
 	twidth=rhs.twidth;
+	scale = rhs.scale;
 	attenuation=rhs.attenuation;
 	phase=rhs.phase;
 	a=rhs.a;
@@ -18,6 +19,7 @@ MatResponse::MatResponse(MatResponse & rhs) // copy constructor
 MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in = 0.95,double phase_in = 0.03) :
 	t0(t0_in / fsPau<double>()),
 	twidth(width_in * root_pi<double>()/ fsPau<double>() / 2.0),
+	scale(1.0),
 	attenuation(atten_in),
 	phase(phase_in)
 {     
@@ -59,7 +61,7 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse){
                         arg -= (pulse.getdt()*pulse.getsamples());
                 }
                 if (arg > twidth) {
-                        pulse.modamp[i] = -1.0*(1.0-attenuation);
+                        pulse.modamp[i] = -1.0*(1.0-scale*attenuation);
                         pulse.modamp[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
                         pulse.modamp[i] += 1.0;
                
@@ -67,7 +69,7 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse){
                         if (arg < 0.0) {
                                 pulse.modamp[i] = 1.0;
                         } else {
-                                pulse.modamp[i] = -1.0* (1.0-attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
+                                pulse.modamp[i] = -1.0* (1.0-scale*attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
                                 pulse.modamp[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
                                 pulse.modamp[i] += 1.0;
                         }
@@ -84,14 +86,14 @@ void MatResponse::setstepvec_phase(PulseFreq & pulse){
                         arg -= (pulse.getdt()*pulse.getsamples());
                 }
                 if( arg > twidth){
-                        pulse.modphase[i] = phase;
+                        pulse.modphase[i] = scale*phase;
                         pulse.modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
 
                 } else {
                         if (arg < 0.0) {
                                 pulse.modphase[i] = 0.0;
                         } else {
-                                pulse.modphase[i] = phase * std::pow( sin(M_PI_2*arg/twidth ) ,int(2) ) ;
+                                pulse.modphase[i] = scale*phase * std::pow( sin(M_PI_2*arg/twidth ) ,int(2) ) ;
                                 pulse.modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
                         }
                 }
@@ -128,7 +130,7 @@ void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay){
                         arg -= (pulse.getdt()*pulse.getsamples());
                 }
                 if (arg > twidth) {
-                        thisamp = -1.0*(1.0-attenuation);
+                        thisamp = -1.0*(1.0-scale*attenuation);
                         thisamp *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
                         thisamp += 1.0;
 
@@ -136,7 +138,7 @@ void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay){
                         if (arg < 0.0) {
                                 thisamp = 1.0;
                         } else {
-                                thisamp = -1.0* (1.0-attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2) ) ;
+                                thisamp = -1.0* (1.0-scale*attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2) ) ;
                                 thisamp *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
                                 thisamp += 1.0;
                         }
@@ -157,14 +159,14 @@ void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay){
                         arg -= (pulse.getdt()*pulse.getsamples());
                 }
                 if( arg > twidth){
-                        thisphase = phase;
+                        thisphase = scale*phase;
                         thisphase *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
 
                 } else {
                         if (arg < 0.0) {
                                 thisphase = 0.0;
                         } else {
-                                thisphase = phase * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
+                                thisphase = scale*phase * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
                                 thisphase *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
                         }
                 }
