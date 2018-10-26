@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 	{ // begin parallel region
 		size_t tid = omp_get_thread_num();
 
-		MatResponse pararesponse(masterresponse);
+		MatResponse calibresponse(masterresponse);
 		std::vector< PulseFreq* > pulsearray(masterbundle.get_nfibers(),NULL);
 		std::vector< PulseFreq* > crosspulsearray(masterbundle.get_nfibers(),NULL);
 		for (size_t f=0;f<pulsearray.size();++f){
@@ -165,20 +165,20 @@ int main(int argc, char* argv[])
 			calcrosspulsePtr->fft_totime();
 
 			for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
-				pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-				pararesponse.setstepvec_amp(calpulsePtr);
-				pararesponse.setstepvec_phase(calpulsePtr);
-				pararesponse.setstepvec_amp(calcrosspulsePtr);
-				pararesponse.setstepvec_phase(calcrosspulsePtr);
+				calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
+				calibresponse.setstepvec_amp(calpulsePtr);
+				calibresponse.setstepvec_phase(calpulsePtr);
+				calibresponse.setstepvec_amp(calcrosspulsePtr);
+				calibresponse.setstepvec_phase(calcrosspulsePtr);
 				if (scanparams.doublepulse()){
-					pararesponse.addstepvec_amp(calpulsePtr,scanparams.doublepulsedelay());
-					pararesponse.addstepvec_phase(calpulsePtr,scanparams.doublepulsedelay());
-					pararesponse.addstepvec_amp(calcrosspulsePtr,scanparams.doublepulsedelay());
-					pararesponse.addstepvec_phase(calcrosspulsePtr,scanparams.doublepulsedelay());
+					calibresponse.addstepvec_amp(calpulsePtr,scanparams.doublepulsedelay());
+					calibresponse.addstepvec_phase(calpulsePtr,scanparams.doublepulsedelay());
+					calibresponse.addstepvec_amp(calcrosspulsePtr,scanparams.doublepulsedelay());
+					calibresponse.addstepvec_phase(calcrosspulsePtr,scanparams.doublepulsedelay());
 				}
 				// this pulls down the tail of the response so vector is periodic on nsamples	
-				pararesponse.buffervectors(calpulsePtr); 
-				pararesponse.buffervectors(calcrosspulsePtr); 
+				calibresponse.buffervectors(calpulsePtr); 
+				calibresponse.buffervectors(calcrosspulsePtr); 
 				calpulsePtr->modulateamp_time();
 				calpulsePtr->modulatephase_time();
 				calcrosspulsePtr->modulateamp_time();
@@ -189,28 +189,28 @@ int main(int argc, char* argv[])
 
 			for (size_t e=0;e<scanparams.netalon();e++){ // begin etalon loop
 				// back propagation step //
-				double etalondelay = startdelay - double(e+1) * (pararesponse.getetalondelay()); 
+				double etalondelay = startdelay - double(e+1) * (calibresponse.getetalondelay()); 
 				// at front surface, x-rays see counter-propagating light from one full etalon delay
 
 				PulseFreq etalonpulse=*(calpulsePtr);
 				PulseFreq crossetalonpulse=*(calcrosspulsePtr);
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){
-					pararesponse.setdelay(etalondelay + g*scanparams.backstep()); 
+					calibresponse.setdelay(etalondelay + g*scanparams.backstep()); 
 					// counterpropagating, x-rays work backwards through the optical
 
-					pararesponse.setstepvec_amp(etalonpulse);
-					pararesponse.setstepvec_phase(etalonpulse);
-					pararesponse.setstepvec_amp(crossetalonpulse);
-					pararesponse.setstepvec_phase(crossetalonpulse);
+					calibresponse.setstepvec_amp(etalonpulse);
+					calibresponse.setstepvec_phase(etalonpulse);
+					calibresponse.setstepvec_amp(crossetalonpulse);
+					calibresponse.setstepvec_phase(crossetalonpulse);
 					if (scanparams.doublepulse()){
-						pararesponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
-						pararesponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
-						pararesponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
-						pararesponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
 					}
-					pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-					pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+					calibresponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+					calibresponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 					etalonpulse.modulateamp_time();
 					etalonpulse.modulatephase_time();
 					crossetalonpulse.modulateamp_time();
@@ -218,20 +218,20 @@ int main(int argc, char* argv[])
 				}
 				// forward propagation //
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){
-					pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-					pararesponse.setstepvec_amp(etalonpulse);
-					pararesponse.setstepvec_phase(etalonpulse);
-					pararesponse.setstepvec_amp(crossetalonpulse);
-					pararesponse.setstepvec_phase(crossetalonpulse);
+					calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
+					calibresponse.setstepvec_amp(etalonpulse);
+					calibresponse.setstepvec_phase(etalonpulse);
+					calibresponse.setstepvec_amp(crossetalonpulse);
+					calibresponse.setstepvec_phase(crossetalonpulse);
 					if (scanparams.doublepulse()){
-						pararesponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
-						pararesponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
-						pararesponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
-						pararesponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
 
 					}
-					pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-					pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+					calibresponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+					calibresponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 					etalonpulse.modulateamp_time();
 					etalonpulse.modulatephase_time();
 					crossetalonpulse.modulateamp_time();
@@ -239,10 +239,10 @@ int main(int argc, char* argv[])
 				}
 				etalonpulse.fft_tofreq();
 				crossetalonpulse.fft_tofreq();
-				etalonpulse.delay(pararesponse.getetalondelay()); // delay and attenuate in frequency domain
-				etalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
-				crossetalonpulse.delay(pararesponse.getetalondelay()); // delay and attenuate in frequency domain
-				crossetalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
+				etalonpulse.delay(calibresponse.getetalondelay()); // delay and attenuate in frequency domain
+				etalonpulse.attenuate(pow(calibresponse.getreflectance(),(int)2));
+				crossetalonpulse.delay(calibresponse.getetalondelay()); // delay and attenuate in frequency domain
+				crossetalonpulse.attenuate(pow(calibresponse.getreflectance(),(int)2));
 				etalonpulse.fft_totime();
 				crossetalonpulse.fft_totime();
 				*(calpulsePtr) += etalonpulse;
@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
 				startdelay = t0 + parabundle.delay(f);
 				pulsearray[f]->scale(parabundle.Ilaser(f));
 				crosspulsearray[f]->scale(parabundle.Ilaser(f));
-				//pararesponse.setscale(.1);//parabundle.Ixray(f));
+				pararesponse.setscale(.1);//parabundle.Ixray(f));
 				if (scanparams.addchirpnoise()){
 					std::vector<double> noise(scanparams.getchirpnoise());
 					pulsearray[f]->addchirp(noise); 
