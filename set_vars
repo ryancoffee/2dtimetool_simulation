@@ -17,7 +17,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 #export nimages=100000;
-export nimages=10;
+export nimages=80;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=2000;

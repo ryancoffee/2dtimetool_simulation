@@ -183,8 +183,8 @@ PulseFreq & PulseFreq::operator*=(const PulseFreq &rhs){
 	return *this;
 }
 
-PulseFreq & PulseFreq::operator*=(const double scale){
-	DataOps::mul(cvec,scale,samples);
+PulseFreq & PulseFreq::operator*=(const double s){
+	DataOps::mul(cvec,s,samples);
 	cvec2rhophi();
 	return *this;
 }

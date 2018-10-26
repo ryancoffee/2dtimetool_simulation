@@ -40,6 +40,7 @@ void MatResponse::setstepvec_full(PulseFreq & pulse){
                 if( arg > twidth){
                         pulse.modphase[i] = phase;
                         pulse.modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
+                        pulse.modphase[i] *= scale;
 
                 } else {
                         if (arg < 0.0) {
@@ -47,6 +48,7 @@ void MatResponse::setstepvec_full(PulseFreq & pulse){
                         } else {
                                 pulse.modphase[i] = phase * std::pow( std::sin(half_pi<double>()*arg/twidth ), int(2) ) ;
                                 pulse.modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
+				pulse.modphase[i] *= scale;
                         }
                 }
         }
@@ -61,7 +63,7 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse){
                         arg -= (pulse.getdt()*pulse.getsamples());
                 }
                 if (arg > twidth) {
-                        pulse.modamp[i] = -1.0*(1.0-scale*attenuation);
+                        pulse.modamp[i] = -1.0*(1.0-attenuation);
                         pulse.modamp[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
                         pulse.modamp[i] += 1.0;
                
@@ -69,7 +71,7 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse){
                         if (arg < 0.0) {
                                 pulse.modamp[i] = 1.0;
                         } else {
-                                pulse.modamp[i] = -1.0* (1.0-scale*attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
+                                pulse.modamp[i] = -1.0* (1.0-attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
                                 pulse.modamp[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
                                 pulse.modamp[i] += 1.0;
                         }
@@ -86,15 +88,17 @@ void MatResponse::setstepvec_phase(PulseFreq & pulse){
                         arg -= (pulse.getdt()*pulse.getsamples());
                 }
                 if( arg > twidth){
-                        pulse.modphase[i] = scale*phase;
+                        pulse.modphase[i] = phase;
                         pulse.modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
+			pulse.modphase[i] *= scale;
 
                 } else {
                         if (arg < 0.0) {
                                 pulse.modphase[i] = 0.0;
                         } else {
-                                pulse.modphase[i] = scale*phase * std::pow( sin(M_PI_2*arg/twidth ) ,int(2) ) ;
+                                pulse.modphase[i] = phase * std::pow( sin(M_PI_2*arg/twidth ) ,int(2) ) ;
                                 pulse.modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
+				pulse.modphase[i] *= scale;
                         }
                 }
         }
@@ -130,16 +134,18 @@ void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay){
                         arg -= (pulse.getdt()*pulse.getsamples());
                 }
                 if (arg > twidth) {
-                        thisamp = -1.0*(1.0-scale*attenuation);
+                        thisamp = -1.0*(1.0-attenuation);
                         thisamp *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
+			thisamp *= scale;
                         thisamp += 1.0;
 
                 } else {
                         if (arg < 0.0) {
                                 thisamp = 1.0;
                         } else {
-                                thisamp = -1.0* (1.0-scale*attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2) ) ;
+                                thisamp = -1.0*(1.0-attenuation) * std::pow( sin(M_PI_2*arg/twidth ) , int(2) ) ;
                                 thisamp *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
+				thisamp *= scale;
                                 thisamp += 1.0;
                         }
                 }
@@ -159,15 +165,17 @@ void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay){
                         arg -= (pulse.getdt()*pulse.getsamples());
                 }
                 if( arg > twidth){
-                        thisphase = scale*phase;
+                        thisphase = phase;
                         thisphase *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
+			thisphase *= scale;
 
                 } else {
                         if (arg < 0.0) {
                                 thisphase = 0.0;
                         } else {
-                                thisphase = scale*phase * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
+                                thisphase = phase * std::pow( sin(M_PI_2*arg/twidth ) , int(2)) ;
                                 thisphase *= a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
+				thisphase *= scale;
                         }
                 }
                 pulse.modphase[i] += thisphase;

@@ -107,7 +107,7 @@ class PulseFreq
 		PulseFreq & operator-=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator*=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator/=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
-		PulseFreq & operator*=(const double scale);
+		PulseFreq & operator*=(const double s);
 		PulseFreq & diffamps(const PulseFreq &rhs);
 		PulseFreq & normamps(const PulseFreq &rhs);
 		PulseFreq & interfere(const PulseFreq &rhs);
