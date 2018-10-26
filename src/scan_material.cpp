@@ -313,6 +313,8 @@ int main(int argc, char* argv[])
 			double startdelay(0);
 
 			FiberBundle parabundle(masterbundle);
+			
+
 			parabundle.Ixray(scanparams.xray_inten_rand());
 			parabundle.Ilaser(scanparams.laser_inten_rand());
 			parabundle.delay_angle(scanparams.dalpha()*double(n));
@@ -324,6 +326,8 @@ int main(int argc, char* argv[])
 
 			if (tid==0){
 				DebugOps::pushout(std::string("Running for t0 = " + std::to_string(t0) + "in threaded for loop, thread " + std::to_string(tid)));
+				std::cerr << "damnit... tired, but somehow the x-ray intensity is an incredibly small number" << std::endl;
+				parabundle.print_zvals();
 			}
 
 			for(size_t f = 0; f < parabundle.get_nfibers(); f++)
@@ -331,7 +335,10 @@ int main(int argc, char* argv[])
 				startdelay = t0 + parabundle.delay(f);
 				pulsearray[f]->scale(parabundle.Ilaser(f));
 				crosspulsearray[f]->scale(parabundle.Ilaser(f));
-				pararesponse.setscale(.1);//parabundle.Ixray(f));
+				if (tid==0){
+					std::cerr << f << "\t" << parabundle.Ixray(f) << std::endl << std::flush;
+				}
+				pararesponse.setscale(double(f)/double(parabundle.get_nfibers()));//parabundle.Ixray(f));
 				if (scanparams.addchirpnoise()){
 					std::vector<double> noise(scanparams.getchirpnoise());
 					pulsearray[f]->addchirp(noise); 

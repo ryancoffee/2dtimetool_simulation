@@ -131,6 +131,13 @@ void FiberBundle::scalePolarCoords(void)
 {
 	std::transform(zvals.begin(), zvals.end(), zvals.begin(), std::bind2nd(std::multiplies< std::complex<double> >(),fiberdiam));
 }
+void FiberBundle::print_zvals(void)
+{
+	for (size_t i = 0 ; i< zvals.size(); ++i){
+		std::cerr << zvals[i].real() << "," << zvals[i].imag() << std::endl;
+	}
+	std::cerr << std::flush;
+}
 
 void FiberBundle::setnfibers(size_t n)
 {

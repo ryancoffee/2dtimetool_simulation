@@ -32,7 +32,10 @@ class FiberBundle {
 		inline double Ilaser(void){return ilaser;}
 		inline double Ixray(void){return ixray;}
 		inline double Ilaser(const size_t i){return ilaser*std::exp(-std::pow(std::abs(zvals[ids[i]]-laser_center)/laserdiam,int(2)));}
-		inline double Ixray(const size_t i){return ixray*std::exp(-std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
+		void print_zvals(void);
+
+		inline double Ixray(const size_t i){return std::exp(-1.0*std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
+		//inline double Ixray(const size_t i){return ixray*std::exp(-1.0*std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
 		inline void center_Ilaser(const double dx,const double dy){laser_center = std::complex<double>(dx,dy);}
 		inline void center_Ixray(const double dx,const double dy){xray_center = std::complex<double>(dx,dy);}
 		inline std::complex<double> center_Ilaser(void){return laser_center;}
