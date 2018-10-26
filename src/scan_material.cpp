@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
 				startdelay = t0 + parabundle.delay(f);
 				pulsearray[f]->scale(parabundle.Ilaser(f));
 				crosspulsearray[f]->scale(parabundle.Ilaser(f));
-				pararesponse.setscale(parabundle.Ixray(f));
+				pararesponse.setscale(.1);//parabundle.Ixray(f));
 				if (scanparams.addchirpnoise()){
 					std::vector<double> noise(scanparams.getchirpnoise());
 					pulsearray[f]->addchirp(noise); 

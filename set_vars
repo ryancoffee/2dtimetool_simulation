@@ -20,12 +20,12 @@ export randphase_std=5; # in units of pi
 export nimages=80;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
-export delays_std=2000;
+export delays_std=1000;
 
 export drifting_alpha=0.001; #0.1;
 
 export xray_pos_distribution_normal_mean=0;
-export xray_pos_distribution_normal_std=1.0; #0.1
+export xray_pos_distribution_normal_std=2.0; #0.1
 export laser_pos_distribution_normal_mean=0;
 export laser_pos_distribution_normal_std=0.1; #0.2
 
@@ -72,8 +72,8 @@ export nu_high=0.75;
 ##################################################################
 export nfibers=19; #109;
 export fiberdiam=0.11;
-export laserdiam=1;
-export xraydiam=0.0625; #0.125;
+export laserdiam=.5; ## this behaves properly
+export xraydiam=0.03125; #0.125;
 export bundle_fsPmm=3333.;
 
 export stepwidth=30.0;
