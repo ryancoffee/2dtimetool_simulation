@@ -117,3 +117,4 @@ scan_material
 
 
 core.*
+./data_container/raw/*.out*
