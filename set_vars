@@ -2,12 +2,12 @@
 
 starttime=$(date +%s);
 
-export nthreads=80;
-export datadir='./data/raw/';
+export nthreads=4;
+export datadir='./data_container/raw/';
 mkdir -p $datadir;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=80;
+export ncalibdelays=8;
 export fsWindow=6000;
 
 # for Omar, testing the addition of random phase
@@ -17,7 +17,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 #export nimages=100000;
-export nimages=80;
+export nimages=4;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1000;
@@ -25,7 +25,7 @@ export delays_std=1000;
 export drifting_alpha=0.001; #0.1;
 
 export xray_pos_distribution_normal_mean=0;
-export xray_pos_distribution_normal_std=1.0; #0.1
+export xray_pos_distribution_normal_std=0.5; #0.1
 export laser_pos_distribution_normal_mean=0;
 export laser_pos_distribution_normal_std=0.1; #0.2
 
