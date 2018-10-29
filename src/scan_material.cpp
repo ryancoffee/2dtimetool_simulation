@@ -76,7 +76,9 @@ int main(int argc, char* argv[])
 	masterbundle.xraydiameter(boost::lexical_cast<float>(atof(getenv("xraydiam"))));
 	masterbundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
 	masterbundle.scalePolarCoords();
-	masterbundle.shuffle_output();
+	if (getenv("shufflefibers")){
+		masterbundle.shuffle_output();
+	}
 	masterbundle.Ixray(float(1.));
 	masterbundle.Ilaser(float(1.));
 	std::string filename = scanparams.filebase() + "fibermap.out";
@@ -338,7 +340,10 @@ int main(int argc, char* argv[])
 				if (tid==0){
 					std::cerr << f << "\t" << parabundle.Ixray(f) << std::endl << std::flush;
 				}
-				pararesponse.setscale(double(f)/double(parabundle.get_nfibers()));//parabundle.Ixray(f));
+				//pararesponse.setscale(double(f)/double(parabundle.get_nfibers()));//parabundle.Ixray(f));
+				if (getenv("scalefibers")){
+					pararesponse.setscale(parabundle.Ixray(f));
+				}
 				if (scanparams.addchirpnoise()){
 					std::vector<double> noise(scanparams.getchirpnoise());
 					pulsearray[f]->addchirp(noise); 
