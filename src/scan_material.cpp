@@ -76,9 +76,15 @@ int main(int argc, char* argv[])
 	masterbundle.xraydiameter(boost::lexical_cast<float>(atof(getenv("xraydiam"))));
 	masterbundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
 	masterbundle.scalePolarCoords();
-	if (getenv("shufflefibers")){
-		masterbundle.shuffle_output();
+
+	std::cerr << "\t\tshuffle fibers?\t";
+	if (getenv("shuffle_fibers"))
+	{
+		std::cerr << "yes\n";masterbundle.shuffle_output();
+	} else {
+		std::cerr << "no\n";
 	}
+
 	masterbundle.Ixray(float(1.));
 	masterbundle.Ilaser(float(1.));
 	std::string filename = scanparams.filebase() + "fibermap.out";
@@ -341,6 +347,11 @@ int main(int argc, char* argv[])
 					std::cerr << "damnit... tired, but somehow the x-ray intensity is an incredibly small number" << std::endl;
 					parabundle.print_zvals();
 				}
+				std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
+				//std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
+				std::ofstream mapfile(mapfilename.c_str(),std::ios::out);
+				parabundle.print_mapping(mapfile);
+				mapfile.close();
 
 				for(size_t f = 0; f < parabundle.get_nfibers(); f++)
 				{ // begin fibers loop

@@ -101,13 +101,13 @@ bin/*
 
 # exclude data from source control by default
 # BUT keep filestructure
-/data/external/*.dat
-/data/interim/*.dat
-/data/processed/*.dat*
-/data/processed/*.out*
-/data/raw/*.dat
-/data/raw/*.out*
-/data/raw/tfrecord*
+/data*/external/*.dat
+/data*/interim/*.dat
+/data*/processed/*.dat*
+/data*/processed/*.out*
+/data*/raw/*.dat
+/data*/raw/*.out*
+/data*/raw/*fibermap*
 
 # exclude external models from source control
 /src/external/*
