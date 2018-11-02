@@ -97,19 +97,26 @@ target/
 .ipynb_checkpoints/
 
 # exclude compiled binaries
-bin/
+bin/*
 
 # exclude data from source control by default
-/data/external
-/data/interim
-/data/processed
-/data/raw
+# BUT keep filestructure
+/data*/external/*.dat
+/data*/interim/*.dat
+/data*/processed/*.dat*
+/data*/processed/*.out*
+/data*/raw/*.dat
+/data*/raw/*.out*
+/data*/raw/*fibermap*
 
 # exclude external models from source control
-/src/external/
+/src/external/*
 
 logfile
 
 # exclude the executable
 scan_material
 
+
+core.*
+./data_container/raw/*.out*

@@ -13,6 +13,7 @@
 #include <cassert>
 #include <random>
 #include <fftw3.h>
+#include <memory>
 
 
 // my headers
@@ -52,11 +53,11 @@ class PulseTime {
 		void setwidth(const double in);
 		void sett0(const double in);
 
-		inline double getstrength() { return strength; }
-		inline double getCtau() { return Ctau; }
-		inline double gett0() { return t0; }
+		double getstrength() { return strength; }
+		double getCtau() { return Ctau; }
+		double gett0() { return t0; }
 
-		inline bool getenvelope(const double t,double *FF,double *dFFdt) 
+		bool getenvelope(const double t,double *FF,double *dFFdt) 
 		{
 			if ( inpulse(t) ){
 				*FF = strength * ( std::pow( cos(half_pi<double>()*(t-t0)/Ctau) , int(2)) );
@@ -68,7 +69,7 @@ class PulseTime {
 				return false;
 			}
 		}
-		inline bool getenvelope(const double t,double *FF) 
+		bool getenvelope(const double t,double *FF) 
 		{
 			if ( inpulse(t) ){
 				*FF = strength * ( std::pow( cos(half_pi<double>()*(t-t0)/Ctau), int(2) ) );
@@ -82,7 +83,7 @@ class PulseTime {
 	private:
 		double strength, Ctau, t0;
 
-		inline bool inpulse(const double t) 
+		bool inpulse(const double t) 
 		{
 			if (t >= -Ctau && t <= Ctau){
 				return true;
@@ -94,23 +95,29 @@ class PulseTime {
 
 
 
-
-class PulseFreq {
+class PulseFreq 
+{
+	//std::enable_shared_from_this<fftw_plan>{};
 
 	friend class MatResponse;
 
 	public:
-		PulseFreq & operator=(PulseFreq const & rhs); // assignment
+		PulseFreq & operator=(const PulseFreq & rhs); // assignment
 		PulseFreq & operator+=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator-=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator*=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator/=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
-		PulseFreq & operator*=(const double scale);
+		PulseFreq & operator*=(const double s);
 		PulseFreq & diffamps(const PulseFreq &rhs);
 		PulseFreq & normamps(const PulseFreq &rhs);
 		PulseFreq & interfere(const PulseFreq &rhs);
 
+		void setplans(const PulseFreq & rhs);
+		void setmasterplans(fftw_plan * const forward,fftw_plan * const backward);
+		void setancillaryplans(fftw_plan * const r2hc,fftw_plan * const hc2r,fftw_plan * const r2hc_2x,fftw_plan * const hc2r_2x);
+
 	public:
+
 		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in);
 		PulseFreq(PulseFreq &rhs); // copy constructor
 		~PulseFreq(void);
@@ -121,24 +128,27 @@ class PulseFreq {
 
 		bool addrandomphase();
 
-		inline unsigned getsamples(void) {
+		inline void scale(const double in){
+			DataOps::mul(cvec,in,samples);
+			cvec2rhophi();
+		}
+		unsigned getsamples(void) {
 			return samples;
 		}
-		inline unsigned getdt(void) {
+		unsigned getdt(void) {
 			return dtime;
 		}
-		inline void fft_totime(void) {
-
-			fftw_execute(FTplan_backward);
+		void fft_totime(void) {
+			assert (infreq); //std::cerr << "died here at fft_tofreq()" << std::endl;
+			fftw_execute_dft(*FTplan_backwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq = false;
 			intime = true;
 		}
-		inline void fft_tofreq(void) {
-			if (infreq)
-				std::cerr << "died here at fft_tofreq()" << std::endl;
-			fftw_execute(FTplan_forward);
+		void fft_tofreq(void) {
+			assert (intime); //std::cerr << "died here at fft_tofreq()" << std::endl;
+			fftw_execute_dft(*FTplan_forwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq=true;
@@ -146,10 +156,7 @@ class PulseFreq {
 		}
 
 		int addchirp(double chirp_in) {
-			if (intime){
-				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
-				return 1;
-			}
+			assert (infreq);
 			phase_GDD = chirp_in;
 			addGDDtoindex(0,1);
 			addGDDtoindex(samples/2,-1);
@@ -161,10 +168,7 @@ class PulseFreq {
 		}
 
 		int addchirp(double* chirp_in) {
-			if (intime){
-				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
-				return 1;
-			}
+			assert (infreq);
 			phase_GDD = chirp_in[0];
 			phase_TOD = chirp_in[1];
 			phase_4th = chirp_in[2];
@@ -226,7 +230,7 @@ class PulseFreq {
 		void delay(double delayin); // expects delay in fs
 		void phase(double phasein); // expects delay in units of pi , i.e. 1.0 = pi phase flip 
 
-		inline int modulateamp_time(const std::vector<double> & modulation) {
+		int modulateamp_time(const std::vector<double> & modulation) {
 			if (infreq){
 				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
 				return 1; }
@@ -242,7 +246,7 @@ class PulseFreq {
 			}
 			return 0;
 		}
-		inline int modulateamp_time(void) {
+		int modulateamp_time(void) {
 			if (infreq){
 				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
 				return 1; }
@@ -255,7 +259,7 @@ class PulseFreq {
 			return 0;
 		}
 
-		inline int modulatephase_time(const std::vector<double> & modulation) {
+		int modulatephase_time(const std::vector<double> & modulation) {
 			if (infreq){
 				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
 				return 1;
@@ -272,7 +276,7 @@ class PulseFreq {
 			}
 			return 0;
 		}
-		inline int modulatephase_time(void) {
+		int modulatephase_time(void) {
 			if (infreq){
 				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
 				return 1;
@@ -377,7 +381,7 @@ class PulseFreq {
 		void printfrequencydelaychirp(std::ofstream * outfile, const double *delay,const double *chirp);
 		void printtime(std::ofstream * outfile);
 		void printwavelength(std::ofstream * outfile,const double *delay);
-		inline double gettime(unsigned ind){return (time[ind]*fsPau<double>());}
+		double gettime(unsigned ind){return (time[ind]*fsPau<double>());}
 
 
 	private:
@@ -400,9 +404,19 @@ class PulseFreq {
 		double dtime,time_center,time_wdith;
 
 		// FFTW variables //
-		fftw_plan FTplan_forward;
-		fftw_plan FTplan_backward;
+		// fftw defining the plans before first instantiation, this allows only one forward and backward plan to be created 
+		std::shared_ptr<fftw_plan> FTplan_forwardPtr;
+		std::shared_ptr<fftw_plan> FTplan_backwardPtr;
+		std::shared_ptr<fftw_plan> FTplan_r2hcPtr;
+		std::shared_ptr<fftw_plan> FTplan_hc2rPtr;
+		std::shared_ptr<fftw_plan> FTplan_r2hc_2xPtr;
+		std::shared_ptr<fftw_plan> FTplan_hc2r_2xPtr;
+
 		std::complex<double> * cvec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
+		double * r_vec; // this will get fftw_malloc() for sake of fftw memory alignment 
+		double * hc_vecFT; // this will get fftw_malloc() for sake of fftw memory alignment 
+		double * r_vec_2x; // this will get fftw_malloc() for sake of fftw memory alignment 
+		double * hc_vec_2xFT; // this will get fftw_malloc() for sake of fftw memory alignment 
 
 		std::vector<double> rhovec;
 		std::vector<double> modamp;
@@ -415,8 +429,8 @@ class PulseFreq {
 
 		unsigned i_low, i_high;
 
-		inline void rhophi2cvec(const size_t i){ cvec[i] = std::polar(rhovec[i],phivec[i]);}
-		inline void cvec2rhophi(const size_t i){ rhovec[i] = std::abs(cvec[i]); phivec[i] = std::arg(cvec[i]); }
+		void rhophi2cvec(const size_t i){ cvec[i] = std::polar(rhovec[i],phivec[i]);}
+		void cvec2rhophi(const size_t i){ rhovec[i] = std::abs(cvec[i]); phivec[i] = std::arg(cvec[i]); }
 		void rhophi2cvec(void);
 		void cvec2rhophi(void);
 
@@ -425,30 +439,29 @@ class PulseFreq {
 		void buildvectors(void);
 		void factorization(void);
 		void killvectors(void);
-		void killtheseonly(void);
 
-		inline void addGDDtoindex(const unsigned indx,const int omega_sign) {
+		void addGDDtoindex(const unsigned indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_GDD*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(2));
 			rhophi2cvec(indx);
 		}	
-		inline void addTODtoindex(const unsigned indx,const int omega_sign) {
+		void addTODtoindex(const unsigned indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_TOD*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(3));
 			rhophi2cvec(indx);
 		}	
-		inline void add4thtoindex(const unsigned indx,const int omega_sign) {
+		void add4thtoindex(const unsigned indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_4th*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(4));
 			rhophi2cvec(indx);
 		}	
-		inline void add5thtoindex(const unsigned indx,const int omega_sign) {
+		void add5thtoindex(const unsigned indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_5th*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(5));
 			rhophi2cvec(indx);
 		}	
 
-		inline void modampatindx(const unsigned indx,const std::vector<double> & modvec) {
+		void modampatindx(const unsigned indx,const std::vector<double> & modvec) {
 			rhovec[indx] *= modvec[indx];
 			rhophi2cvec(indx);
 		}
-		inline void modampatindx(const unsigned indx) {
+		void modampatindx(const unsigned indx) {
 			rhovec[indx] *= modamp[indx];
 			rhophi2cvec(indx);
 		}
@@ -460,22 +473,22 @@ class PulseFreq {
 		   = E0 exp(i w(t)*t) exp(i -w(t)*t0(t))
 		   = E(t) exp(i -(w0 + 1/GDD*t + 1/TOD*t**2 + 1/FOD*t**3)*t0(t))
 		 */
-		inline void modphaseatindx(const unsigned indx,const std::vector<double> & modvec) {
+		void modphaseatindx(const unsigned indx,const std::vector<double> & modvec) {
 			if (modvec[indx]!=0){
 				phivec[indx] += modvec[indx];
 				rhophi2cvec(indx);
 			}
 		}
-		inline void modphaseatindx(const unsigned indx) {
+		void modphaseatindx(const unsigned indx) {
 			if (modphase[indx] != 0){
 				phivec[indx] += modphase[indx];
 				rhophi2cvec(indx);
 			}
 		}
-		inline double rising(const unsigned indx) {
+		double rising(const unsigned indx) {
 			return std::pow(sin(double(Constants::half_pi<double>()*(indx-startind)/onwidth)),int(2));
 		}
-		inline double falling(const unsigned indx) {
+		double falling(const unsigned indx) {
 			return std::pow(sin(double(Constants::half_pi<double>()*(stopind-indx)/offwidth)),int(2));
 		}
 };

@@ -22,6 +22,7 @@
 #include "Pulse.hpp"
 #include "MatResponse.hpp"
 #include "FiberBundle.hpp"
+#include "CalibMat.hpp"
 
 // parallel includes
 #include <omp.h>

@@ -39,20 +39,22 @@ public:
 	}
 
 	void setstepvec_full(PulseFreq & pulse);
-	//void setstepvec_full(PulseFreq * pulse);
+	void setstepvec_full(PulseFreq * pulse);
 	void setstepvec_amp(PulseFreq & pulse);
-	//void setstepvec_amp(PulseFreq * pulse);
+	void setstepvec_amp(PulseFreq * pulse);
 	void setstepvec_phase(PulseFreq & pulse);
-	//void setstepvec_phase(PulseFreq * pulse);
+	void setstepvec_phase(PulseFreq * pulse);
 	void addstepvec_amp(PulseFreq & pulse,double delay);
-	//void addstepvec_amp(PulseFreq * pulse,double delay);
+	void addstepvec_amp(PulseFreq * pulse,double delay);
 	void addstepvec_phase(PulseFreq & pulse,double delay);
-	//void addstepvec_phase(PulseFreq * pulse,double delay);
+	void addstepvec_phase(PulseFreq * pulse,double delay);
 	
 	void buffervectors(PulseFreq & pulse);
-	//void buffervectors(PulseFreq * pulse);
+	void buffervectors(PulseFreq * pulse);
 
 	
+	inline void set_scale(const double in) { setscale(in); }
+	inline void setscale(const double in) { scale = in; }
 	inline void set_delay(double in) { setdelay(in); }
 	inline void setdelay(double in){ t0 = in/fsPau<float>(); }
 	inline void set_attenuation(double in) { setatten(in); }
@@ -72,7 +74,7 @@ public:
 
 private:
 	
-	double t0,twidth,attenuation,phase,a,alpha,b,beta;
+	double t0,twidth,attenuation,phase,a,alpha,b,beta,scale;
 	double etalondelay, reflectance;
 };
 

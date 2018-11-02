@@ -2,41 +2,59 @@
 
 starttime=$(date +%s);
 
-export nthreads=2;
-#export datadir='/u1/mldrp/coffee/sharedata/raw/';
-export datadir='./data/raw/';
+export nthreads=4;
+export datadir='./data_container/raw/';
 mkdir -p $datadir;
+
+#unsetting to clear previous export commands
+unset skipcalibration
+unset skipimages
+#comment out the export definition to get this env var to act like a strict bool (e.g. true if defined, only false if unset)
+export skipcalibration
+#export skipimages
+
+# for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
+export ncalibdelays=4;
+export fsWindow=6000;
 
 # for Omar, testing the addition of random phase
 export addrandomphase=0;
 export phaseNoiseLowpass=10000; # this is in units of total number of time samples... and that is enormous.
 export randphase_mean=0;
-export randphase_std=0; #5; # in units of pi
+export randphase_std=5; # in units of pi
 
-export nimages=100000;
-export delays_mean=-500 #-2250;off to right side of screen #1250; off to left side
-export delays_std=1750;
+#export nimages=100000;
+export nimages=4;
+export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
+#export delays_std=1000;
+export delays_std=1000;
 
 export drifting_alpha=0.001; #0.1;
 
 export xray_pos_distribution_normal_mean=0;
-export xray_pos_distribution_normal_std=0.001; #0.1
+export xray_pos_distribution_normal_std=0.25; #0.1
 export laser_pos_distribution_normal_mean=0;
 export laser_pos_distribution_normal_std=0.001; #0.2
 
 export laser_distribution_lognormal_mean=0.0;
-export laser_distribution_lognormal_std=0.001; #0.1
+export laser_distribution_lognormal_std=0.1; #0.1
 export xray_distribution_lognormal_mean=0.0;
-export xray_distribution_lognormal_std=1.5; #0.5
+export xray_distribution_lognormal_std=0.5;
 
-export lambda0=600;
+export lambda0=500;
 export lambda_width=300;
 export lambda_onoff=100;
+#export tspan=4096;
+#export tspan=8192;
 export tspan=16384;
+#export tspan=32768;
+#export tspan=131072;
+#export tspan=65536;
+#export tspan=1048576;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
 export backdelay=0.5; 
-export netalon=1; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
+export netalon=2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
 export etalon=.16; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
 export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
@@ -51,21 +69,24 @@ export noisescale=.00005;
 export noisesampleskip=5;
 export printnoisesamples=0; # use this to control wheter to printout noise samples
 
-export sampleinterval=8;
+export sampleinterval=4;
 
-export nu_low=0.4;
-export nu_high=0.65;
+export nu_low=0.6;
+export nu_high=0.75;
 
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-export nfibers=109;
+export nfibers=60; #109;
+#export shufflefibers;
+unset shufflefibers;
+export scalefibers;
 export fiberdiam=0.11;
-export laserdiam=2.;
-export xraydiam=2.5;
+export laserdiam=5.5; ## this behaves properly
+export xraydiam=0.25;
 export bundle_fsPmm=3333.;
 
-export stepwidth=50.0;
+export stepwidth=30.0;
 export attenuation=1.0;
 export phase=0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
 # phase should be the optical phase which is a function of optical frequency Dn(omega)*C/thickness/omega
@@ -108,7 +129,7 @@ touch logfile
 # call to main #
 export doublepulse=0; #bool that tells whether to expect a double pulse
 export doublepulsedelay=200;
-export chirp=-1220; # typically a value of -1200 is about the usual chirp we use in spectral timing.
+export chirp=-2400; #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
 export TOD=0;
 export FOD=0;
 export fifthOD=0;
@@ -119,16 +140,18 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=20000000;
-export saturate=4096;
+export saturate=40960;
 export lamsamples=1024;
 
 #export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
-export filebase=$datadir"uint12_"$interferedelay"_";
-echo $filebase
+#export filebase=$datadir"tfrecord_chirp"$chirp"_"$interferedelay"_";
+export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_";
+echo "---	Environment variables exported";
+echo "---	filebase = "$filebase;
 #./scan_material
-stoptime=$(date +%s);
-echo "$(expr $stoptime - $starttime)s runtime"
+#stoptime=$(date +%s);
+#echo "$(expr $stoptime - $starttime)s runtime"
 

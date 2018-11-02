@@ -10,7 +10,6 @@ FiberBundle::FiberBundle(size_t n = 109)
 : ixray(1.0)
 , ilaser(1.0)
 , alpha(0.0)
-, nrows(1)
 {
 	std::cerr << "In constructor FiberBundle() " << std::endl;
 
@@ -25,6 +24,8 @@ FiberBundle::FiberBundle(size_t n = 109)
 			<< "\n\t\t========================="
 			<< std::endl;
 	}
+
+        alpha = (double)atof(getenv("alpha"));
 
 	ids.resize(nfibers);
 	ovals.resize(nfibers);
@@ -71,10 +72,12 @@ bool FiberBundle::load_mapping(std::ifstream & in)
 
 }
 */
-bool FiberBundle::print_mapping(std::ofstream & out)
+
+bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
 {
 	if (!out.is_open() )
 		return false;
+	out << "#delay = " << t0 << "\n"; 
 	out << "#i\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\n"; 
 	for (size_t i=0;i<zvals.size();++i){
 		out << ids[i] << "\t"
@@ -83,7 +86,7 @@ bool FiberBundle::print_mapping(std::ofstream & out)
 			<< zvals[ids[i]].real() << "\t" 
 			<< zvals[ids[i]].imag() << "\t" 
 			<< ovals[ids[i]] << "\t" 
-			<< delay(ids[i]) << "\t" 
+			<< (t0+delay(ids[i])) << "\t" 
 			<< Ilaser(ids[i]) << "\t" 
 			<< Ixray(ids[i]) << "\n";
 	}
@@ -105,7 +108,7 @@ bool FiberBundle::set_polarcoords(size_t n)
 	c=std::cos(pi_3<double>());
 	s=std::sin(pi_3<double>());
 
-	setnrows(n);
+	setnfibers(n);
 	std::cout << "\n========== running " << nfibers << " fibers ============\n" << std::flush;
 	zvals.resize(nfibers);
 
@@ -155,37 +158,38 @@ void FiberBundle::scalePolarCoords(void)
 {
 	std::transform(zvals.begin(), zvals.end(), zvals.begin(), std::bind2nd(std::multiplies< std::complex<double> >(),fiberdiam));
 }
+void FiberBundle::print_zvals(void)
+{
+	for (size_t i = 0 ; i< zvals.size(); ++i){
+		std::cerr << zvals[i].real() << "," << zvals[i].imag() << std::endl;
+	}
+	std::cerr << std::flush;
+}
 
-void FiberBundle::setnrows(size_t n)
+void FiberBundle::setnfibers(size_t n)
 {
 	if (n<2){ // r=0
 		nfibers = 1;
-		nrows = 0;
 		return; // this works... don't know why
 	}
 	if (n<8){ // r=1
 		nfibers = 7;
-		nrows = 1;
 		return; // this is failing... don't know why
 	}
 	if (n<20){ // r=2
 		nfibers = 19;
-		nrows = 3;
 		return; // this works... don't know why
 	}
 	if (n<38){ // r=3
 		nfibers = 37;
-		nrows = 6;
 		return;
 	}
 	if (n<62){ // r=4
 		nfibers = 61;
-		nrows = 10;
 		return;
 	}
 	if (n<110){ // r=5
 		nfibers = 109;
-		nrows = 18;
 		return;
 	}
 }

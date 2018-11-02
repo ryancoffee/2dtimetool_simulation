@@ -16,8 +16,8 @@
 class FiberBundle {
 	public:
 		FiberBundle(size_t n);
-		bool print_mapping(std::ofstream & out);
 		//bool load_mapping(std::ifstream & in);
+		bool print_mapping(std::ofstream & out,double t0);
 		bool shuffle_output(void);
 		void scalePolarCoords(void);
 		inline void set_fsPmm(const double x = 3333){fsPmm = x;}
@@ -33,17 +33,17 @@ class FiberBundle {
 		inline double Ilaser(void){return ilaser;}
 		inline double Ixray(void){return ixray;}
 		inline double Ilaser(const size_t i){return ilaser*std::exp(-std::pow(std::abs(zvals[ids[i]]-laser_center)/laserdiam,int(2)));}
-		inline double Ixray(const size_t i){return ixray*std::exp(-std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
+		void print_zvals(void);
+
+		inline double Ixray(const size_t i){return std::exp(-1.0*std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
+		//inline double Ixray(const size_t i){return ixray*std::exp(-1.0*std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
 		inline void center_Ilaser(const double dx,const double dy){laser_center = std::complex<double>(dx,dy);}
 		inline void center_Ixray(const double dx,const double dy){xray_center = std::complex<double>(dx,dy);}
 		inline std::complex<double> center_Ilaser(void){return laser_center;}
 		inline std::complex<double> center_Ixray(void){return xray_center;}
 		inline void delay_angle(const double a){alpha = a;}
 		inline double delay_angle(void){return alpha;}
-		inline double delay(const size_t i)
-		{
-			return fsPmm * std::abs(zvals[ids[i]])*std::cos(std::arg(zvals[ids[i]]) + alpha);
-		}
+		inline double delay(const size_t i){ return fsPmm * (std::cos(alpha)*x(i) + std::sin(alpha)*y(i)); }
 		inline double x(const size_t i){return zvals[ids[i]].real();}
 		inline double y(const size_t i){return zvals[ids[i]].imag();}
 		inline double o(const size_t i){return ovals[ids[i]];}
@@ -54,7 +54,6 @@ class FiberBundle {
 
 	private:
 		size_t nfibers;
-		size_t nrows;
 		double fsPmm,fiberdiam,laserdiam,xraydiam;
 		double ilaser,ixray,alpha;
 		std::complex<double> laser_center;
@@ -63,7 +62,7 @@ class FiberBundle {
 		std::vector<double> ovals;
 		std::vector<std::complex<double> > zvals;
 
-		void setnrows(size_t n);
+		void setnfibers(size_t n);
 		bool set_polarcoords(size_t n);
 
 	protected:
