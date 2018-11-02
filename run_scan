@@ -11,10 +11,11 @@ mkdir -p $datadir;
 export addrandomphase=0;
 export phaseNoiseLowpass=10000; # this is in units of total number of time samples... and that is enormous.
 export randphase_mean=0;
-export randphase_std=0; #5; # in units of pi
+export randphase_std=5; # in units of pi
 
 export nimages=100000;
 export delays_mean=-500 #-2250;off to right side of screen #1250; off to left side
+#export delays_std=1000;
 export delays_std=1750;
 
 export drifting_alpha=0.001; #0.1;
@@ -32,9 +33,9 @@ export xray_distribution_lognormal_std=1.5; #0.5
 export lambda0=600;
 export lambda_width=300;
 export lambda_onoff=100;
-export tspan=4096;
+#export tspan=4096;
 #export tspan=8192;
-#export tspan=16384;
+export tspan=16384;
 #export tspan=32768;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
@@ -54,7 +55,7 @@ export noisescale=.00005;
 export noisesampleskip=5;
 export printnoisesamples=0; # use this to control wheter to printout noise samples
 
-export sampleinterval=8;
+export sampleinterval=4;
 
 export nu_low=0.4;
 export nu_high=0.65;
@@ -63,6 +64,7 @@ export nu_high=0.65;
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
 export nfibers=109;
+#export nfibers=7;
 export fiberdiam=0.11;
 export laserdiam=2.;
 export xraydiam=2.5;
@@ -121,12 +123,14 @@ export chirpnoise=0;
 export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
-export interferedelay=823; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+
+export interferedelay=617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=20000000;
 export saturate=4096;
 export lamsamples=1024;
 
+#export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 export filebase=$datadir"uint12_"$interferedelay"_";
 echo $filebase
 #./scan_material

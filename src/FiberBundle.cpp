@@ -1,5 +1,4 @@
 #include "FiberBundle.hpp"
-#include "DataOps.hpp"
 
 #include "Constants.hpp"
 using Constants::pi;
@@ -47,31 +46,6 @@ bool FiberBundle::shuffle_output(void)
 	std::mt19937 e(seed);
 	std::shuffle(ids.begin(),ids.end(),e);
 }
-
-/*
-bool FiberBundle::load_mapping(std::ifstream & in)
-{
-	if (!in.is_open())
-		return false;
-	std::vector< std::vector < double> > datamat;
-
-	in >> datamat;
-
-	nfibers = datamat.size();
-	std::cout << "nfibers read in is " << nfibers << std::endl;
-	for (size_t i=0; i<nfibers;++i){
-		ids[i] = datamat[i][0];
-		//zvals[ids[i]] = std::complex<double>(datamat[i][3],datamat[i][4]);
-		//ovals[ids[i]] = datamat[i][5];
-		//delay(ids[i],datamat[i][6]);
-		//Ilaser(ids[i],datamat[i][7]) << "\t" 
-		//Ixray(ids[i],datamat[i][8]) << "\n";
-	}
-
-	return true;
-
-}
-*/
 
 bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
 {

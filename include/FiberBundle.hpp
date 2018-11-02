@@ -16,7 +16,6 @@
 class FiberBundle {
 	public:
 		FiberBundle(size_t n);
-		//bool load_mapping(std::ifstream & in);
 		bool print_mapping(std::ofstream & out,double t0);
 		bool shuffle_output(void);
 		void scalePolarCoords(void);

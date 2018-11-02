@@ -174,7 +174,6 @@ unset colorbox
 #set auto cb
 set term png size 700,800
 set output 'random.zoom.png'
-
 set multiplot layout 2,2
 set cbrange [:1.5e3]
 set title '-3634.7 fs'
