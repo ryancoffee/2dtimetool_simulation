@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	std::string filename = scanparams.filebase() + "fibermap.out";
 	std::cout << "fibermap file = " << filename << std::endl << std::flush;
 	std::ofstream mapfile(filename.c_str(),std::ios::out);
-	masterbundle.print_mapping(mapfile);
+	masterbundle.print_mapping(mapfile,double(0.0));
 	mapfile.close();
 
 	// file for delay bins
@@ -350,7 +350,7 @@ int main(int argc, char* argv[])
 				std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
 				//std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
 				std::ofstream mapfile(mapfilename.c_str(),std::ios::out);
-				parabundle.print_mapping(mapfile);
+				parabundle.print_mapping(mapfile,t0);
 				mapfile.close();
 
 				for(size_t f = 0; f < parabundle.get_nfibers(); f++)

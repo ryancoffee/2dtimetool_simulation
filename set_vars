@@ -32,7 +32,7 @@ export delays_std=1000;
 export drifting_alpha=0.001; #0.1;
 
 export xray_pos_distribution_normal_mean=0;
-export xray_pos_distribution_normal_std=0.5; #0.1
+export xray_pos_distribution_normal_std=0.25; #0.1
 export laser_pos_distribution_normal_mean=0;
 export laser_pos_distribution_normal_std=0.001; #0.2
 
@@ -51,7 +51,7 @@ export tspan=16384;
 #export tspan=131072;
 #export tspan=65536;
 #export tspan=1048576;
-export ngroupsteps=2; # figure out how to handle the group delays
+export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
 export backdelay=0.5; 
 export netalon=2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
@@ -77,13 +77,13 @@ export nu_high=0.75;
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-export nfibers=19; #109;
+export nfibers=60; #109;
 #export shufflefibers;
 unset shufflefibers;
 export scalefibers;
 export fiberdiam=0.11;
 export laserdiam=5.5; ## this behaves properly
-export xraydiam=0.125;
+export xraydiam=0.25;
 export bundle_fsPmm=3333.;
 
 export stepwidth=30.0;
@@ -148,7 +148,7 @@ export lamsamples=1024;
 
 #export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 #export filebase=$datadir"tfrecord_chirp"$chirp"_"$interferedelay"_";
-export filebase=$datadir"ascii_chirp"$chirp"_nfibers"$nfibers"_"$interferedelay"_";
+export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_";
 echo "---	Environment variables exported";
 echo "---	filebase = "$filebase;
 #./scan_material

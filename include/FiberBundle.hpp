@@ -16,7 +16,7 @@
 class FiberBundle {
 	public:
 		FiberBundle(size_t n);
-		bool print_mapping(std::ofstream & out);
+		bool print_mapping(std::ofstream & out,double t0);
 		bool shuffle_output(void);
 		void scalePolarCoords(void);
 		inline void set_fsPmm(const double x = 3333){fsPmm = x;}

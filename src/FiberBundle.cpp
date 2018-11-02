@@ -47,10 +47,11 @@ bool FiberBundle::shuffle_output(void)
 	std::shuffle(ids.begin(),ids.end(),e);
 }
 
-bool FiberBundle::print_mapping(std::ofstream & out)
+bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
 {
 	if (!out.is_open() )
 		return false;
+	out << "#delay = " << t0 << "\n"; 
 	out << "#i\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\n"; 
 	for (size_t i=0;i<zvals.size();++i){
 		out << ids[i] << "\t"
@@ -59,7 +60,7 @@ bool FiberBundle::print_mapping(std::ofstream & out)
 			<< zvals[ids[i]].real() << "\t" 
 			<< zvals[ids[i]].imag() << "\t" 
 			<< ovals[ids[i]] << "\t" 
-			<< delay(ids[i]) << "\t" 
+			<< (t0+delay(ids[i])) << "\t" 
 			<< Ilaser(ids[i]) << "\t" 
 			<< Ixray(ids[i]) << "\n";
 	}
