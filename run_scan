@@ -32,7 +32,10 @@ export xray_distribution_lognormal_std=1.5; #0.5
 export lambda0=600;
 export lambda_width=300;
 export lambda_onoff=100;
-export tspan=16384;
+export tspan=4096;
+#export tspan=8192;
+#export tspan=16384;
+#export tspan=32768;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
 export backdelay=0.5; 
@@ -118,14 +121,12 @@ export chirpnoise=0;
 export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
-
-export interferedelay=617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=823; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=20000000;
 export saturate=4096;
 export lamsamples=1024;
 
-#export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 export filebase=$datadir"uint12_"$interferedelay"_";
 echo $filebase
 #./scan_material

@@ -94,7 +94,6 @@ class PulseTime {
 };
 
 
-
 class PulseFreq 
 {
 	//std::enable_shared_from_this<fftw_plan>{};
