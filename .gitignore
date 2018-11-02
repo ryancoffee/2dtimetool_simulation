@@ -114,7 +114,6 @@ bin/*
 
 # exclude the executable
 scan_material
-
-
+logfile
 core.*
 ./data_container/raw/*.out*
