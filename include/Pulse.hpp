@@ -128,6 +128,9 @@ class PulseFreq
 			DataOps::mul(cvec,in,samples);
 			cvec2rhophi();
 		}
+		inline double maxsignal(void){
+			return *std::max_element(rhovec.begin(),rhovec.end());
+		}
 		unsigned getsamples(void) {
 			return samples;
 		}

@@ -364,7 +364,7 @@ void PulseFreq::printfrequency(std::ofstream * outfile){
 	for (unsigned i = i_low;i<i_high;i+=(unsigned)(atoi(getenv("sampleinterval")))){
 		nu = (omega[i]/(2.0*pi<double>())/fsPau<double>());
 		lambda = C_nmPfs<double>()/nu;
-		(*outfile) << nu << "\t" << lambda << "\t" << rhovec[i] << "\t" << phivec[i] << "\n";
+		(*outfile) << nu << "\t" << lambda << "\t" << std::pow(rhovec[i],int(2)) << "\t" << phivec[i] << "\n";
 	}
 }
 void PulseFreq::printwavelengthbins(std::ofstream * outfile)
@@ -385,7 +385,7 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 	std::vector<double> y(i_high-i_low);	
 	for (size_t i=0;i<y.size();++i){
 		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
-		y[i] = std::min(rhovec[i_low+i] * m_gain,double(m_saturate));
+		y[i] = std::min(uint16_t(std::pow(rhovec[i_low+i],int(2)) * m_gain),uint16_t(m_saturate));
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
 	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
@@ -397,8 +397,8 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 }
 void PulseFreq::appendfrequency(std::ofstream * outfile){
         for (unsigned i = i_low;i<i_high;i+=m_sampleinterval){ 
-		uint16_t val = std::min(unsigned(rhovec[i] * m_gain),unsigned(m_saturate));
-       		(*outfile) << val << "\t";
+		uint16_t val = std::min(uint16_t(rhovec[i] * m_gain),uint16_t(m_saturate));
+       		(*outfile) << std::pow(val,int(2)) << "\t";
         }
 	(*outfile) << std::endl;
 }
@@ -406,7 +406,7 @@ void PulseFreq::appendfrequency(std::ofstream * outfile){
 void PulseFreq::appendnoisy(std::ofstream * outfile){
 	std::normal_distribution<double> norm_dist( 0.0, m_noisescale);
         for (unsigned i = i_low;i<i_high;i+=m_sampleinterval){ 
-		double outval = rhovec[i] + norm_dist(rng);
+		double outval = std::pow(rhovec[i],int(2)) + norm_dist(rng);
        		(*outfile) << outval << "\t" ;
         }
 	(*outfile) << std::endl;
@@ -461,7 +461,7 @@ void PulseFreq::printwavelength(std::ofstream * outfile,const double *delay){
                 nu = (omega[i]/(2.0*pi<double>())/fsPau<double>());
                 lambda = (double)((int)((C_nmPfs<double>()/nu)*10.0))/10.0;
 		if (lambda>lamlast & (int)(lambda*10)%5 == 0){
-                	(*outfile) << lambda << "\t" << (*delay) << "\t" << rhovec[i] << "\n";
+                	(*outfile) << lambda << "\t" << (*delay) << "\t" << std::pow(rhovec[i],int(2)) << "\n";
 			lamlast = lambda;
 		}
         }

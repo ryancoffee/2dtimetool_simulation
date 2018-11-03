@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	std::string filename = scanparams.filebase() + "fibermap.out";
 	std::cout << "fibermap file = " << filename << std::endl << std::flush;
 	std::ofstream mapfile(filename.c_str(),std::ios::out);
-	masterbundle.print_mapping(mapfile,double(0.0));
+	//masterbundle.print_mapping(mapfile,double(0.0));
 	mapfile.close();
 
 	// file for delay bins
@@ -339,13 +339,10 @@ int main(int argc, char* argv[])
 				parabundle.center_Ixray(scanparams.xray_pos_rand(),scanparams.xray_pos_rand());
 				parabundle.center_Ilaser(scanparams.laser_pos_rand(),scanparams.laser_pos_rand());
 
-				MatResponse pararesponse(masterresponse);
 
 
 				if (tid==0){
 					DebugOps::pushout(std::string("Running for t0 = " + std::to_string(t0) + "in threaded for loop, thread " + std::to_string(tid)));
-					std::cerr << "damnit... tired, but somehow the x-ray intensity is an incredibly small number" << std::endl;
-					parabundle.print_zvals();
 				}
 				std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
 				//std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
@@ -359,8 +356,9 @@ int main(int argc, char* argv[])
 					pulsearray[f]->scale(parabundle.Ilaser(f));
 					crosspulsearray[f]->scale(parabundle.Ilaser(f));
 					if (tid==0){
-						std::cerr << f << "\t" << parabundle.Ixray(f) << std::endl << std::flush;
+						std::cerr << "parabundle.Ixray(" << f << ") = " << parabundle.Ixray(f) << std::endl << std::flush;
 					}
+					MatResponse pararesponse(masterresponse);
 					//pararesponse.setscale(double(f)/double(parabundle.get_nfibers()));//parabundle.Ixray(f));
 					if (getenv("scalefibers")){
 						pararesponse.setscale(parabundle.Ixray(f));
@@ -486,7 +484,16 @@ int main(int argc, char* argv[])
 				pulsearray[0]->printwavelengthbins(&interferestream);
 				for (size_t f=0;f<parabundle.get_nfibers();f++){
 					*(pulsearray[f]) -= *(crosspulsearray[f]);
-					*(pulsearray[f]) *= parabundle.Ilaser(size_t(f)); 
+					//*(pulsearray[f]) *= parabundle.Ilaser(f); 
+					pulsearray[f]->scale(parabundle.Ilaser(f)); 
+					pulsearray[f]->scale(parabundle.Ixray(f)); 
+					if (tid == 0){
+						int max = boost::lexical_cast<double>(getenv("gain")) * pulsearray[f]->maxsignal();
+						for (size_t i=0;i<max/100;++i){
+							std::cout << '.';
+						}
+						std::cout << "\n" << std::flush;
+					}
 					pulsearray[f]->appendwavelength(&interferestream);
 				}
 				interferestream.close();
