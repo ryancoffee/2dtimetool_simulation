@@ -47,10 +47,10 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
 	m_lamsamples = (size_t)atoi(getenv("lamsamples"));
-	m_gain = (unsigned long)(atoi( getenv("gain")));
-	m_noisescale = (double)( atof( getenv("noisescale") ) );
-	m_sampleinterval = (unsigned)(atoi(getenv("sampleinterval")));
-	m_saturate = uint16_t( atoi( getenv("saturate")));
+	m_gain = boost::lexical_cast<float>( getenv("gain"));
+	m_noisescale = boost::lexical_cast<double>( getenv("noisescale") ) ;
+	m_sampleinterval = boost::lexical_cast<size_t>(getenv("sampleinterval"));
+	m_saturate = uint16_t( boost::lexical_cast<int>( getenv("saturate")));
 }
 
 
@@ -385,13 +385,13 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 	std::vector<double> y(i_high-i_low);	
 	for (size_t i=0;i<y.size();++i){
 		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
-		//y[i] = std::min(uint16_t(std::pow(rhovec[i_low+i],int(2)) * m_gain),uint16_t(m_saturate));
-		y[i] = std::pow(rhovec[i_low+i],int(2));
+		//y[i] = std::pow(rhovec[i_low+i],int(2)) * 200000000000;
+		y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
 	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
 	for (size_t i=0;i<m_lamsamples;++i){
-		(*outfile) << float(interpolant(x.back()+i*dlam)) << "\t";
+		(*outfile) << uint16_t(interpolant(x.back()+i*dlam)) << "\t";
 	}
 	(*outfile) << std::endl;
 	return;

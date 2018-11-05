@@ -145,7 +145,7 @@ export fifthODnoise=0;
 
 export interferedelay=823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
-export gain=20000000;
+export gain=200000000000; #20000000;
 export saturate=40960;
 export lamsamples=1024;
 
