@@ -370,9 +370,11 @@ int main(int argc, char* argv[])
 
 					if (getenv("scalefibers")){
 						pararesponse.setscale(parabundle.Ixray(f));
+/*
 						if (tid==0){
 							std::cerr << "parabundle.Ixray(" << f << ") = " << parabundle.Ixray(f) << std::endl << std::flush;
 						}
+*/
 					}
 
 					if (scanparams.addchirpnoise()){
