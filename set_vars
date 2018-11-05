@@ -4,7 +4,7 @@ starttime=$(date +%s);
 
 export nthreads=4;
 #export datadir='./data_container/raw/';
-export datadir='./data/raw/';
+export datadir='./data_fs/raw/';
 mkdir -p $datadir;
 
 #unsetting to clear previous export commands

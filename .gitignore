@@ -101,6 +101,8 @@ bin/*
 
 # exclude data from source control by default
 # BUT keep filestructure
+/data_fs/*
+/data_fs
 /data*/external/*.dat
 /data*/interim/*.dat
 /data*/processed/*.dat*
@@ -118,4 +120,3 @@ logfile
 scan_material
 logfile
 core.*
-./data_container/raw/*.out*
