@@ -13,6 +13,8 @@
 #include <DebugOps.hpp>
 #include <ScanParams.hpp>
 
+#include <cstddef> // for nullptr
+
 using namespace Constants;
 
 /* Here's main */
@@ -25,6 +27,13 @@ int main(int argc, char* argv[])
 		<< "\t\t======================================\n" << std::flush;
 
 	unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
+	std::cerr << "Scaling fibers =\t";
+	if (getenv("scalefibers")){
+		std::cerr << "yes\n";
+	} else {
+		std::cerr << "no\n";
+	}
+	std::cerr << std::flush;
 
 	ScanParams scanparams;
 	scanparams.nimages(size_t(atoi(getenv("nimages"))));
@@ -350,19 +359,22 @@ int main(int argc, char* argv[])
 				parabundle.print_mapping(mapfile,t0);
 				mapfile.close();
 
+
 				for(size_t f = 0; f < parabundle.get_nfibers(); f++)
 				{ // begin fibers loop
 					startdelay = t0 + parabundle.delay(f);
 					pulsearray[f]->scale(parabundle.Ilaser(f));
 					crosspulsearray[f]->scale(parabundle.Ilaser(f));
-					if (tid==0){
-						std::cerr << "parabundle.Ixray(" << f << ") = " << parabundle.Ixray(f) << std::endl << std::flush;
-					}
+
 					MatResponse pararesponse(masterresponse);
-					//pararesponse.setscale(double(f)/double(parabundle.get_nfibers()));//parabundle.Ixray(f));
+
 					if (getenv("scalefibers")){
 						pararesponse.setscale(parabundle.Ixray(f));
+						if (tid==0){
+							std::cerr << "parabundle.Ixray(" << f << ") = " << parabundle.Ixray(f) << std::endl << std::flush;
+						}
 					}
+
 					if (scanparams.addchirpnoise()){
 						std::vector<double> noise(scanparams.getchirpnoise());
 						pulsearray[f]->addchirp(noise); 
@@ -464,8 +476,6 @@ int main(int argc, char* argv[])
 					pulsearray[f]->delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 				} // end nfibers loop
 
-				//std::cerr << "\n\t\t ---- after end nfibers loop ----" << std::endl;
-				//
 
 				std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);// + ".tid" + std::to_string(tid);
 				ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
@@ -484,12 +494,10 @@ int main(int argc, char* argv[])
 				pulsearray[0]->printwavelengthbins(&interferestream);
 				for (size_t f=0;f<parabundle.get_nfibers();f++){
 					*(pulsearray[f]) -= *(crosspulsearray[f]);
-					//*(pulsearray[f]) *= parabundle.Ilaser(f); 
 					pulsearray[f]->scale(parabundle.Ilaser(f)); 
-					pulsearray[f]->scale(parabundle.Ixray(f)); 
 					if (tid == 0){
-						int max = boost::lexical_cast<double>(getenv("gain")) * pulsearray[f]->maxsignal();
-						for (size_t i=0;i<max/100;++i){
+						int max = boost::lexical_cast<double>(getenv("gain")) * std::pow(pulsearray[f]->maxsignal(),int(2));
+						for (size_t i=0;i<std::log(max);++i){
 							std::cout << '.';
 						}
 						std::cout << "\n" << std::flush;
@@ -500,7 +508,6 @@ int main(int argc, char* argv[])
 
 				// std::cerr << "\n\t ---- moving to next image in nimages loop ----" << std::endl;
 			} // outermost loop for nimages to produce //
-			//std::cout << "\n\t\t-- deleting (cross)pulsearrays -- in tid = " << tid << "\n" << std::flush;
 			for (size_t f=0;f<pulsearray.size();++f){
 				delete pulsearray[f];
 				pulsearray[f] = NULL;
@@ -508,13 +515,6 @@ int main(int argc, char* argv[])
 				crosspulsearray[f] = NULL;
 			}
 
-			/*
-#pragma omp master
-			for (size_t i=0;i < calpulsearray.size();++i){
-				delete calpulsearray[i];
-				calpulsearray[i]=NULL;
-			}
-			*/
 		}
 
 		//std::cout << "\n\t... trying to leave parallel region" << std::endl;

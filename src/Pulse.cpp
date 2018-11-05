@@ -385,12 +385,13 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 	std::vector<double> y(i_high-i_low);	
 	for (size_t i=0;i<y.size();++i){
 		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
-		y[i] = std::min(uint16_t(std::pow(rhovec[i_low+i],int(2)) * m_gain),uint16_t(m_saturate));
+		//y[i] = std::min(uint16_t(std::pow(rhovec[i_low+i],int(2)) * m_gain),uint16_t(m_saturate));
+		y[i] = std::pow(rhovec[i_low+i],int(2));
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
 	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
 	for (size_t i=0;i<m_lamsamples;++i){
-		(*outfile) << uint16_t(interpolant(x.back()+i*dlam)) << "\t";
+		(*outfile) << float(interpolant(x.back()+i*dlam)) << "\t";
 	}
 	(*outfile) << std::endl;
 	return;
