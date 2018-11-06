@@ -358,7 +358,7 @@ int main(int argc, char* argv[])
 
 
 
-				if (tid==0){
+				if ((tid==0) | (tid==nthreads-1)){
 					DebugOps::pushout(std::string("Running image " + std::to_string(n) + " for t0 = " + std::to_string(t0) + " in threaded for loop, thread " + std::to_string(tid)));
 				}
 				std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
