@@ -24,6 +24,9 @@ int main(int argc, char* argv[])
 	std::cout << "\t\t======================================\n"
 		<< "\t\t======= scan_material started ========\n"
 		<< "\t\t===== " << std::asctime(std::localtime(&tstart)) 
+		<< "\t\t===== on host " << getenv("HOSTNAME") << "\n"
+		<< "\t\t===== for " << getenv("nimages") << " images\n"
+		<< "\t\t===== with " << getenv("nfibers") << " fibers\n"
 		<< "\t\t======================================\n" << std::flush;
 
 	unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
@@ -38,6 +41,8 @@ int main(int argc, char* argv[])
 	ScanParams scanparams;
 	scanparams.nimages(size_t(atoi(getenv("nimages"))));
 	scanparams.filebase(std::string(getenv("filebase")));
+
+	std::vector<float> imagetimes(scanparams.nimages(),0); // for benchmarking the processors
 
 	scanparams.dalpha((atof(getenv("drifting_alpha")))*pi<double>()/scanparams.nimages());
 
@@ -154,7 +159,7 @@ int main(int argc, char* argv[])
 
 	std::vector< PulseFreq* > calpulsearray(calibration.get_ndelays(),NULL);
 
-#pragma omp parallel num_threads(nthreads) shared(calpulsearray) 
+#pragma omp parallel num_threads(nthreads) shared(calpulsearray,imagetimes) 
 	//#pragma omp parallel num_threads(nthreads) shared(calpulsearray,masterresponse,masterpulse,scanparams) 
 	//#pragma omp parallel num_threads(nthreads) 
 	{ // begin parallel region
@@ -319,6 +324,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
+
 		if (!getenv("skipimages"))
 		{
 
@@ -330,6 +336,8 @@ int main(int argc, char* argv[])
 						<< "\n\t ==== use this for defining multiple fibers as ===="
 						<< "\n\t ==== contiguous blocks for row-wise FFT as 2D ====\n" << std::flush;
 				}
+
+				std::time_t imgstart = std::time(nullptr);
 
 				for (size_t f=0;f<pulsearray.size();++f){
 					*(pulsearray[f]) = masterpulse;
@@ -351,7 +359,7 @@ int main(int argc, char* argv[])
 
 
 				if (tid==0){
-					DebugOps::pushout(std::string("Running for t0 = " + std::to_string(t0) + "in threaded for loop, thread " + std::to_string(tid)));
+					DebugOps::pushout(std::string("Running image " + std::to_string(n) + " for t0 = " + std::to_string(t0) + " in threaded for loop, thread " + std::to_string(tid)));
 				}
 				std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
 				//std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
@@ -370,9 +378,11 @@ int main(int argc, char* argv[])
 
 					if (getenv("scalefibers")){
 						pararesponse.setscale(parabundle.Ixray(f));
+						/*
 						if (tid==0){
 							std::cerr << "parabundle.Ixray(" << f << ") = " << parabundle.Ixray(f) << std::endl << std::flush;
 						}
+						*/
 					}
 
 					if (scanparams.addchirpnoise()){
@@ -495,18 +505,23 @@ int main(int argc, char* argv[])
 				for (size_t f=0;f<parabundle.get_nfibers();f++){
 					*(pulsearray[f]) -= *(crosspulsearray[f]);
 					pulsearray[f]->scale(parabundle.Ilaser(f)); 
-					if (tid == 0){
-						int max = boost::lexical_cast<double>(getenv("gain")) * std::pow(pulsearray[f]->maxsignal(),int(2));
+					pulsearray[f]->appendwavelength(&interferestream);
+				}
+				if (tid == 0){
+					for (size_t f=0;f<parabundle.get_nfibers();f++){
+						int max = boost::lexical_cast<double>(getenv("gain")) * pulsearray[f]->maxsignal();
 						for (size_t i=0;i<std::log(max);++i){
 							std::cout << '.';
 						}
-						std::cout << "\n" << std::flush;
+						std::cout << "|";
 					}
-					pulsearray[f]->appendwavelength(&interferestream);
+					std::cout << "\n" <<  std::flush;
 				}
 				interferestream.close();
 
-				// std::cerr << "\n\t ---- moving to next image in nimages loop ----" << std::endl;
+				std::time_t imgstop = std::time(nullptr);
+				imagetimes[n] = float(imgstop - imgstart);
+
 			} // outermost loop for nimages to produce //
 			for (size_t f=0;f<pulsearray.size();++f){
 				delete pulsearray[f];
@@ -527,11 +542,26 @@ int main(int argc, char* argv[])
 	fftw_destroy_plan(backward);
 
 	std::time_t tstop = std::time(nullptr);
+	tstop -= tstart;
 	std::cout << "\t\t======================================\n"
 		<< "\t\t======== scan_material stopped =======\n"
 		<< "\t\t===== " << std::asctime(std::localtime(&tstop)) 
-		<< "\t\t===== in " << int(tstop-tstart) << " s \n"
+		<< "\t\t===== in " << tstop << " s \n"
 		<< "\t\t======================================\n" << std::flush;
+	std::string timesfilename = scanparams.filebase() + "runtimes.log";
+	std::ofstream timesout(timesfilename.c_str(),std::ios::app);
+	timesout << "#########################################\n" << std::flush;
+	timesout << "# HOSTNAME:\t" << getenv("HOSTNAME") << "\n" << std::flush;
+	timesout << "# total time (seconds):\t" << tstop << "\n" << std::flush;
+	timesout << "# nfibers :\t" << masterbundle.get_nfibers() << "\n" << std::flush;
+	timesout << "# nthreads :\t" << nthreads << "\n" << std::flush;
+	timesout << "# mean time / image:\t" << DataOps::mean(imagetimes) 
+		<< "\t/ fiber\t" << DataOps::mean(imagetimes)/float(masterbundle.get_nfibers()) << "\n" << std::flush;
+	for (size_t i=0 ;i< imagetimes.size();++i){
+		timesout << imagetimes[i] << "\t";
+	}
+	timesout << "\n" << std::flush;
+	timesout.close();
 
 	return 0;
 }

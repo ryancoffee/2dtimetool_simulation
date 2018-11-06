@@ -129,7 +129,7 @@ class PulseFreq
 			cvec2rhophi();
 		}
 		inline double maxsignal(void){
-			return *std::max_element(rhovec.begin(),rhovec.end());
+			return std::pow(*std::max_element(rhovec.begin(),rhovec.end()),int(2));
 		}
 		unsigned getsamples(void) {
 			return samples;

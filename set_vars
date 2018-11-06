@@ -1,6 +1,7 @@
 #!/bin/bash
 
 starttime=$(date +%s);
+export HOSTNAME=$HOSTNAME:
 
 export nthreads=4;
 #export datadir='./data_container/raw/';
@@ -26,7 +27,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 #export nimages=100000;
-export nimages=12;
+export nimages=8;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1000;
@@ -79,7 +80,10 @@ export nu_high=0.75;
 ##################################################################
 ########## Calculating for simulating Fiber bundles. #############
 ##################################################################
-export nfibers=19; #109;
+## 1 + sum_{n=1,nrows} n * 6
+## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
+
+export nfibers=61; #109;
 unset shufflefibers;
 unset scalefibers;
 #export shufflefibers=1;
