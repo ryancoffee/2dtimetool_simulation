@@ -101,7 +101,6 @@ bin/*
 
 # exclude data from source control by default
 # BUT keep filestructure
-/data_fs/*
 /data_fs
 /data*/external/*.dat
 /data*/interim/*.dat

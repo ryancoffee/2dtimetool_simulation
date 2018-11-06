@@ -1,0 +1,77 @@
+#########################################
+# HOSTNAME:	beanbox:
+# total time (seconds):	148
+# nfibers :	61
+# nthreads :	4
+# mean time / image:	56.75
+57	56	57	57	57	57	57	56	
+#########################################
+# HOSTNAME:	beanbox:
+# total time (seconds):	67
+# nfibers :	19
+# nthreads :	4
+# mean time / image:	17.375	/ fiber	0.914474
+17	17	17	18	18	17	18	17	
+#########################################
+# HOSTNAME:	beanbox:
+# total time (seconds):	45
+# nfibers :	7
+# nthreads :	4
+# mean time / image:	6.375	/ fiber	0.910714
+6	6	6	7	6	7	6	7	
+#########################################
+# HOSTNAME:	beanbox:
+# total time (seconds):	102
+# nfibers :	37
+# nthreads :	4
+# mean time / image:	34.5	/ fiber	0.932432
+35	34	34	35	35	34	34	35	
+#########################################
+# HOSTNAME:	beanbox:
+# total time (seconds):	148
+# nfibers :	61
+# nthreads :	4
+# mean time / image:	56.875	/ fiber	0.932377
+57	57	57	56	57	57	57	57	
+#########################################
+# HOSTNAME:	beanbox:
+# total time (seconds):	252
+# nfibers :	109
+# nthreads :	4
+# mean time / image:	106.875	/ fiber	0.980505
+108	104	107	107	108	106	109	106	
+#########################################
+# HOSTNAME:	roaster:
+# total time (seconds):	146
+# nfibers :	61
+# nthreads :	4
+# mean time / image:	56.125	/ fiber	0.920082
+56	56	57	55	56	56	57	56	
+#########################################
+# HOSTNAME:	roaster:
+# total time (seconds):	45
+# nfibers :	7
+# nthreads :	4
+# mean time / image:	6.5	/ fiber	0.928571
+7	6	7	6	7	6	7	6	
+#########################################
+# HOSTNAME:	roaster:
+# total time (seconds):	67
+# nfibers :	19
+# nthreads :	4
+# mean time / image:	17.375	/ fiber	0.914474
+17	17	17	18	17	18	17	18	
+#########################################
+# HOSTNAME:	roaster:
+# total time (seconds):	101
+# nfibers :	37
+# nthreads :	4
+# mean time / image:	33.875	/ fiber	0.915541
+34	33	34	34	34	34	34	34	
+#########################################
+# HOSTNAME:	roaster:
+# total time (seconds):	247
+# nfibers :	109
+# nthreads :	4
+# mean time / image:	103.375	/ fiber	0.948394
+107	103	104	102	104	102	102	103	

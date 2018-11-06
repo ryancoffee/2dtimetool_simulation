@@ -226,7 +226,7 @@ namespace DataOps
 			for (unsigned i=0;i<vec.size();++i){
 				outs << vec[i] << "\t";
 			}
-			outs << std::flush;
+			outs << "\n" << std::flush;
 			return outs;
 		}
 
