@@ -19,7 +19,8 @@ Project Organization
     ├── README.md
     ├── bin
     ├── config
-    ├── data
+    ├── data_fs [link to host filesystem, mirror of data_container]
+    ├── data_container
     │   ├── external
     │   ├── interim
     │   ├── processed
@@ -29,10 +30,9 @@ Project Organization
     ├── reports
     │   └── figures
     ├── makefile
+    ├── objects
     ├── include
     └── src
-        ├── data
-        ├── external
         ├── models
         ├── tools
         └── visualization
