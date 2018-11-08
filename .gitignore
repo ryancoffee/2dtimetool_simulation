@@ -111,8 +111,7 @@ bin/*
 /data*/raw/*fibermap*
 
 # exclude external models from source control
-/src/external/*
-
+/models/*.*
 logfile
 
 # exclude the executable
