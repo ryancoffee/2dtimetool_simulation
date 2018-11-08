@@ -26,13 +26,12 @@ Project Organization
     │   ├── processed
     │   └── raw
     ├── docs
+    ├── figs
+    ├── include
+    ├── makefile
+    ├── models 
     ├── notebooks
+    ├── objects
     ├── reports
     │   └── figures
-    ├── makefile
-    ├── objects
-    ├── include
     └── src
-        ├── models
-        ├── tools
-        └── visualization
