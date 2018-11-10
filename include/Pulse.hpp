@@ -23,13 +23,6 @@
 #include <DataOps.hpp>
 
 // my definitions
-#define SAMPLEROUND 1000
-
-#define NU_LOW 0.3
-#define NU_HIGH 0.7
-#define LAMBDA_LOW 400
-#define LAMBDA_HIGH 900
-
 using namespace Constants;
 
 class ScanParams;

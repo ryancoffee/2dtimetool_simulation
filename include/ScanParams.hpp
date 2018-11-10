@@ -9,6 +9,7 @@
 
 using namespace Constants;
 
+
 class ScanParams 
 {
 	friend class PulseFreq;
