@@ -1,0 +1,25 @@
+#!/bin/bash
+
+DATADIR_ATHOME=/data/projects/slac/data
+DATADIR_ONGRU=/u1/coffee/data
+DATADIR_ONMINION=./data
+DATADIR_CONTAINER=./data_container
+if [ -d "$DATADIR_ATHOME" ] 
+then
+	echo "Hey there,\n\tworking from home... so link to $DATADIR_ATHOME "
+	ln -sf $DATADIR_ATHOME ./data_fs
+else
+	if [ -d "$DATADIR_ONGRU" ]
+	then
+		echo "Well then, must be working on Gru, \n \t So link to $DATADIR_ONGRU "
+		ln -sf $DATADIR_ONGRU ./data_fs
+	else
+		if [ -f "$DATADIR_ONMINION/raw" ]
+		then
+			echo "OK, working on a minion, \n \t So link to $DATADIR_ONMINION "
+			ln -sf $DATADIR_ONMINION ./data_fs
+		else
+			echo "OK, can't figure out filestructure\n\t So linking to $DATADIR_CONTAINER "
+			ln -sf $DATADIR_CONTAINER ./data_fs
+		fi
+fi
