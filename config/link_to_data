@@ -11,15 +11,16 @@ then
 else
 	if [ -d "$DATADIR_ONGRU" ]
 	then
-		echo "Well then, must be working on Gru, \n \t So link to $DATADIR_ONGRU "
+		echo "Well then, must be working on Gru, So link to $DATADIR_ONGRU "
 		ln -sf $DATADIR_ONGRU ./data_fs
 	else
 		if [ -f "$DATADIR_ONMINION/raw" ]
 		then
-			echo "OK, working on a minion, \n \t So link to $DATADIR_ONMINION "
+			echo "OK, working on a minion, So link to $DATADIR_ONMINION "
 			ln -sf $DATADIR_ONMINION ./data_fs
 		else
-			echo "OK, can't figure out filestructure\n\t So linking to $DATADIR_CONTAINER "
+			echo "OK, can't figure out filestructure, So linking to $DATADIR_CONTAINER "
 			ln -sf $DATADIR_CONTAINER ./data_fs
 		fi
+	fi
 fi
