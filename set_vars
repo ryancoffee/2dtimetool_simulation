@@ -87,7 +87,7 @@ export nfibers=61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 export shuffle_fibers=1;
-export scalefibers=1;
+export scale_fibers=1;
 export fiberdiam=0.11;
 export laserdiam=5.5; ## this behaves properly
 export xraydiam=0.125;
