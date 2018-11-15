@@ -17,7 +17,7 @@ export skipcalibration=true;
 #export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=4;
+export ncalibdelays=120;
 export fsWindow=6000;
 
 # for Omar, testing the addition of random phase
@@ -26,8 +26,8 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-#export nimages=100000;
-export nimages=8;
+export nimages=2400;
+#export nimages=8;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1000;
@@ -84,9 +84,9 @@ export nu_high=0.75;
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
 export nfibers=61; #109;
-unset shufflefibers;
-unset scalefibers;
-#export shufflefibers=1;
+unset shuffle_fibers;
+unset scale_fibers;
+export shuffle_fibers=1;
 export scalefibers=1;
 export fiberdiam=0.11;
 export laserdiam=5.5; ## this behaves properly
@@ -154,11 +154,7 @@ export saturate=40960;
 export lamsamples=1024;
 
 #export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
-#export filebase=$datadir"tfrecord_chirp"$chirp"_"$interferedelay"_";
-export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_";
+export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_nfibers"$nfibers"_";
 echo "---	Environment variables exported";
 echo "---	filebase = "$filebase;
-#./scan_material
-#stoptime=$(date +%s);
-#echo "$(expr $stoptime - $starttime)s runtime"
 

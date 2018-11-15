@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 
 	unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
 	std::cerr << "Scaling fibers =\t";
-	if (getenv("scalefibers")){
+	if (getenv("scale_fibers")){
 		std::cerr << "yes\n";
 	} else {
 		std::cerr << "no\n";
@@ -376,7 +376,7 @@ int main(int argc, char* argv[])
 
 					MatResponse pararesponse(masterresponse);
 
-					if (getenv("scalefibers")){
+					if (getenv("scale_fibers")){
 						pararesponse.setscale(parabundle.Ixray(f));
 						/*
 						if (tid==0){
