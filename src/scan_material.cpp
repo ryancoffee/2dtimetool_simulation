@@ -177,7 +177,10 @@ int main(int argc, char* argv[])
 #pragma omp for schedule(static) ordered 
 			for (size_t d=0;d<calpulsearray.size();++d)
 			{ // outermost loop for calibration.get_ndelays() to produce //
-				std::cerr << "\tinside parallel region for actual loop\td = " << d << "\ttid = " << tid << std::endl << std::flush;
+				if ((tid == 0) || tid == (nthreads-1)){
+					std::cerr << "\tinside parallel region for actual loop\td = " 
+						<< d << "\ttid = " << tid << std::endl << std::flush;
+				}
 				//initialize with masterpulse
 				PulseFreq calpulse(masterpulse);
 				PulseFreq* calpulsePtr = &calpulse;
