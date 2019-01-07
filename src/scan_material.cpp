@@ -14,6 +14,7 @@
 #include <ScanParams.hpp>
 
 #include <cstddef> // for nullptr
+#include <cstdint> // for writing as an int32_t and int16_t
 
 using namespace Constants;
 
@@ -296,16 +297,20 @@ int main(int argc, char* argv[])
 				// print rows in order, eventually in tf_record or matrix or so. //
 				std::string calfilename = scanparams.filebase() + "interference.calibration";
 				ofstream calibrationstream(calfilename.c_str(),ios::out); 
-				std::cout << "\tcalibration filename out = " << calfilename << std::endl;
+				std::string bin_calfilename = scanparams.filebase() + "interference.calibration.bin";
+				ofstream bin_calibrationstream(bin_calfilename.c_str(),ios::out | ios::binary); 
+				std::cout << "\tcalibration filename out = " << calfilename << "\n\t and \t" << bin_calfilename << std::endl;
 				calibrationstream << "#";
 				calpulsearray[0]->printwavelengthbins(&calibrationstream);
 
 				for (size_t n=0;n<calpulsearray.size();++n){
 					calpulsearray[n]->appendwavelength(&calibrationstream);
+					calpulsearray[n]->appendwavelength_bin(&bin_calibrationstream);
 					delete calpulsearray[n];
 					calpulsearray[n] = NULL;
 				}
 				calibrationstream.close();
+				bin_calibrationstream.close();
 				std::cout << "Finished with the calibration image/matrix" << std::endl << std::flush;
 
 				if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0))
