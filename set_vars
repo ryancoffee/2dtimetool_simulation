@@ -17,7 +17,8 @@ unset skipimages
 export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=120;
+#export ncalibdelays=120;
+export ncalibdelays=12;
 export fsWindow=6000;
 
 # for Omar, testing the addition of random phase

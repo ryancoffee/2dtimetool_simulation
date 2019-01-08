@@ -14,6 +14,7 @@
 #include <DataOps.hpp>
 #include <random>
 #include <cassert>
+#include <cstdint> // for appendwavelegth() and int32_t
 
 using namespace Constants;
 using namespace DataOps;
@@ -408,7 +409,7 @@ void PulseFreq::appendwavelength_bin(std::ofstream * outfile)
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
 	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
 	for (size_t i=0;i<m_lamsamples;++i){
-		(*outfile) << int16_t(interpolant(x.back()+i*dlam));
+		(*outfile) << int32_t(interpolant(x.back()+i*dlam));
 	}
 	return;
 }

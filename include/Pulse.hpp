@@ -328,6 +328,7 @@ class PulseFreq
 		std::shared_ptr<fftw_plan> FTplan_hc2r_2xPtr;
 
 		std::complex<double> * cvec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
+		std::int32_t * ovec; // this is still fftw_malloc() for sake of fftw memory alignment optimization
 		double * r_vec; // this will get fftw_malloc() for sake of fftw memory alignment 
 		double * hc_vecFT; // this will get fftw_malloc() for sake of fftw memory alignment 
 		double * r_vec_2x; // this will get fftw_malloc() for sake of fftw memory alignment 
