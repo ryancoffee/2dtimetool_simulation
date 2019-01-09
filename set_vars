@@ -5,7 +5,7 @@ export HOSTNAME=$HOSTNAME:
 
 export nthreads=4;
 #export datadir='./data_container/raw/';
-export datadir='./data_fs/raw/';
+export datadir='./data_fs/extern/';
 mkdir -p $datadir;
 
 #unsetting to clear previous export commands
@@ -61,7 +61,8 @@ export backdelay=0.5;
 export netalon=2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
 export etalon=.16; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
-export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
+#export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
+export etalondelay=500; # for YAG at 20 microns thick 20 mu / .3 [mu/fs] * n_yag * 2 for double pass
 # this should be n(omega)*thickness/C = 1.5*10microns/(.3micronsPfs) = 15/.3 in femtoseconds
 # try delays again... etalon delay is the round trip of the light, .3microns/fs is C, so 1fs in .3 microns, double passed means 6fs in a SiN of 1 micron thick... N=2, C=.3microns/fs, thickness = 2 microns, double pass gives 4 microns of delay... so 2/.3*2*2 = 8/.3 
 # 1.3/.3*10microns*2 double pass for liquid water sheet = 86.6 fs.
@@ -94,7 +95,7 @@ export laserdiam=5.5; ## this behaves properly
 export xraydiam=0.125;
 export bundle_fsPmm=3333.;
 
-export stepwidth=30.0;
+export stepwidth=100.0;
 export attenuation=1.0;
 export phase=0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
 # phase should be the optical phase which is a function of optical frequency Dn(omega)*C/thickness/omega
@@ -148,7 +149,7 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=1200; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=200000000000; #20000000;
 export saturate=40960;

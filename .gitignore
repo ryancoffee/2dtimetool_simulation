@@ -102,13 +102,13 @@ bin/*
 # exclude data from source control by default
 # BUT keep filestructure
 /data_fs
-/data*/external/*.dat
-/data*/interim/*.dat
-/data*/processed/*.dat*
-/data*/processed/*.out*
-/data*/raw/*.dat
-/data*/raw/*.out*
-/data*/raw/*fibermap*
+/data_container/external/*.dat
+/data_container/interim/*.dat
+/data_container/processed/*.dat*
+/data_container/processed/*.out*
+/data_container/raw/*.dat
+/data_container/raw/*.out*
+/data_container/raw/*fibermap*
 
 # exclude external models from source control
 /models/*.*
