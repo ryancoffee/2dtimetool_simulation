@@ -183,6 +183,7 @@ int main(int argc, char* argv[])
 						<< d << "\ttid = " << tid << std::endl << std::flush;
 				}
 				//initialize with masterpulse
+				std::cerr << "\n\n\t\t###### Made it here HERE HERE HERE debugging seg fault ######\n\n" << std::flush;
 				PulseFreq calpulse(masterpulse);
 				PulseFreq* calpulsePtr = &calpulse;
 				PulseFreq calcrosspulse(masterpulse);
@@ -215,6 +216,7 @@ int main(int argc, char* argv[])
 					calcrosspulsePtr->modulatephase_time();
 				}// end groupsteps loop
 
+				std::cerr << "\n\n\t\t###### Made it here too\t\tHERE HERE HERE debugging seg fault ######\n\n" << std::flush;
 
 
 				for (size_t e=0;e<scanparams.netalon();e++){ // begin etalon loop
