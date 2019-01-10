@@ -167,12 +167,6 @@ int main(int argc, char* argv[])
 		size_t tid = omp_get_thread_num();
 
 		MatResponse calibresponse(masterresponse);
-		std::vector< PulseFreq* > pulsearray(masterbundle.get_nfibers(),NULL);
-		std::vector< PulseFreq* > crosspulsearray(masterbundle.get_nfibers(),NULL);
-		for (size_t f=0;f<pulsearray.size();++f){
-			pulsearray[f] = new PulseFreq(masterpulse);
-			crosspulsearray[f] = new PulseFreq(masterpulse);
-		}
 		if (!getenv("skipcalibration"))
 		{
 #pragma omp for schedule(static) ordered 
@@ -337,6 +331,12 @@ int main(int argc, char* argv[])
 
 		if (!getenv("skipimages"))
 		{
+			std::vector< PulseFreq* > pulsearray(masterbundle.get_nfibers(),NULL);
+			std::vector< PulseFreq* > crosspulsearray(masterbundle.get_nfibers(),NULL);
+			for (size_t f=0;f<pulsearray.size();++f){
+				pulsearray[f] = new PulseFreq(masterpulse);
+				crosspulsearray[f] = new PulseFreq(masterpulse);
+			}
 
 #pragma omp for schedule(static) ordered 
 			for (size_t n=0;n<scanparams.nimages();++n)
