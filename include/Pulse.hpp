@@ -128,7 +128,9 @@ class PulseFreq
 		inline unsigned getsamples(void) {return samples;}
 		inline unsigned getdt(void) {return dtime;}
 		void fft_totime(void) {
-			assert (infreq); //std::cerr << "died here at fft_tofreq()" << std::endl;
+			if (intime)
+				std::cerr << "died here at fft_totime():\t domain() = " << domain() << "\n" << std::flush;
+			assert (infreq);
 			fftw_execute_dft(*FTplan_backwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
@@ -136,13 +138,19 @@ class PulseFreq
 			intime = true;
 		}
 		void fft_tofreq(void) {
-			assert (intime); //std::cerr << "died here at fft_tofreq()" << std::endl;
+			if (infreq)
+				std::cerr << "died here at fft_tofreq():\t domain() = " << domain() << "\n" << std::flush;
+			assert (intime);
 			fftw_execute_dft(*FTplan_forwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);
 			DataOps::mul(cvec,1./std::sqrt(samples),samples);
 			cvec2rhophi();
 			infreq=true;
 			intime=false;
 		}
+
+		inline bool is_intime(void){return intime;}
+		inline bool is_infreq(void){return infreq;}
+		std::string domain(void){return (intime ? std::string("Time") : std::string("Frequency"));}
 
 		int addchirp(double chirp_in) {
 			assert (infreq);
@@ -184,7 +192,7 @@ class PulseFreq
 		}
 		int addchirp(std::vector<double> & chirp_in) {
 			if (intime){
-				std::cerr << "whoops, trying to add phase in the time domain" << std::endl;
+				std::cerr << "whoops, trying to add phase in the time domain\n" << std::flush;
 				return 1;
 			}
 			assert(chirp_in.size()==4);
@@ -220,7 +228,7 @@ class PulseFreq
 
 		int modulateamp_time(const std::vector<double> & modulation) {
 			if (infreq){
-				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
+				std::cerr << "whoops, trying time modulation but in frequency domain\n" << std::flush;
 				return 1; }
 			if (modulation.size() < samples){
 				std::cerr << "size mismatch, out of range in modulateamp_time()" << std::endl;
@@ -236,7 +244,7 @@ class PulseFreq
 		}
 		int modulateamp_time(void) {
 			if (infreq){
-				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
+				std::cerr << "whoops, trying time modulation but in frequency domain\t" << std::flush;
 				return 1; }
 			modampatindx(0);
 			modampatindx(samples/2);
@@ -249,7 +257,7 @@ class PulseFreq
 
 		int modulatephase_time(const std::vector<double> & modulation) {
 			if (infreq){
-				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
+				std::cerr << "whoops, trying time modulation but in frequency domain\n" << std::flush;
 				return 1;
 			}
 			if (modulation.size() < samples){
@@ -266,7 +274,7 @@ class PulseFreq
 		}
 		int modulatephase_time(void) {
 			if (infreq){
-				std::cerr << "whoops, trying time modulation but in frequency domain" << std::endl;
+				std::cerr << "whoops, trying time modulation but in frequency domain\n" << std::flush;
 				return 1;
 			}
 			modphaseatindx(0);

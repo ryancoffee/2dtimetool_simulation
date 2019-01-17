@@ -17,7 +17,7 @@ unset skipimages
 #export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=12; # 128;
+export ncalibdelays=128; # 128;
 export fsWindow=10000;
 
 # for Omar, testing the addition of random phase
@@ -47,17 +47,17 @@ export xray_distribution_lognormal_std=0.5;
 export lambda0=550;
 export lambda_width=400;
 export lambda_onoff=10;
-export tspan=4096;
+#export tspan=4096;
 #export tspan=8192;
 #export tspan=16384;
-#export tspan=32768;
+export tspan=32768;
 #export tspan=131072;
 #export tspan=65536;
 #export tspan=1048576;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
 export backdelay=0.5; 
-export netalon=0; #2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
+export netalon=1; #2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
 export etalon=.16; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
 # YAG index 1.8
