@@ -44,7 +44,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
 	dtime = tspan_in/double(samples);
 	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
-	buildvectors();
+	buildvectors(samples);
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
 	m_lamsamples = (size_t)atoi(getenv("lamsamples"));
@@ -55,28 +55,28 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 }
 
 
-PulseFreq::PulseFreq(PulseFreq &rhs): // deep-ish copy constructor
-	omega_center(rhs.omega_center),
-	omega_width(rhs.omega_width),
-	omega_high(rhs.omega_high),
-	omega_onwidth(rhs.omega_onwidth),
-	domega(rhs.domega),
-	intime(rhs.intime),
-	infreq(rhs.infreq),
-	i_low(rhs.i_low), 
-	i_high(rhs.i_high), 
-	m_noisescale(rhs.m_noisescale),
-	m_sampleinterval(rhs.m_sampleinterval),
-	m_saturate(rhs.m_saturate),
-	m_gain(rhs.m_gain),
-	m_lamsamples(rhs.m_lamsamples),
-	sampleround(1000)
+PulseFreq::PulseFreq(PulseFreq &rhs,const size_t s) // deep-ish copy constructor
+	:samples(s)
+	,omega_center(rhs.omega_center)
+	,omega_width(rhs.omega_width)
+	,omega_high(rhs.omega_high)
+	,omega_onwidth(rhs.omega_onwidth)
+	,domega(rhs.domega)
+	,intime(rhs.intime)
+	,infreq(rhs.infreq)
+	,i_low(rhs.i_low) 
+	,i_high(rhs.i_high)
+	,m_noisescale(rhs.m_noisescale)
+	,m_sampleinterval(rhs.m_sampleinterval)
+	,m_saturate(rhs.m_saturate)
+	,m_gain(rhs.m_gain)
+	,m_lamsamples(rhs.m_lamsamples)
+	,sampleround(1000)
 {
-	//std::cerr << "\t\t\t+++++  Copy constructor of PulseFreq::PulseFreq(PulseFreq &rhs)\n" << std::flush;
+	//std::cerr << "\t\t\t+++++  Copy constructor of PulseFreq::PulseFreq(PulseFreq &rhs)\n\t\tsamples = " << samples << "\n" << std::flush;
 	DataOps::clone(omega,rhs.omega);
 	DataOps::clone(time,rhs.time);
 
-	samples = rhs.samples;
 	startind = rhs.startind;stopind=rhs.stopind;onwidth=rhs.onwidth;offwidth=rhs.offwidth;
 	tspan = rhs.tspan;
 	lambda_center=rhs.lambda_center;lambda_width=rhs.lambda_width;
@@ -88,23 +88,25 @@ PulseFreq::PulseFreq(PulseFreq &rhs): // deep-ish copy constructor
 	nu0=rhs.nu0;
 	FTplan_forwardPtr = rhs.FTplan_forwardPtr; 
 	FTplan_backwardPtr = rhs.FTplan_backwardPtr; 
-	buildvectors();
+	buildvectors(s);
 
 	DataOps::clone(rhovec,rhs.rhovec);
 	DataOps::clone(phivec,rhs.phivec);
-	DataOps::clone(cvec,rhs.cvec,samples);
-	DataOps::clone(r_vec,rhs.r_vec,samples);
-	DataOps::clone(hc_vecFT,rhs.hc_vecFT,samples);
-	DataOps::clone(r_vec_2x,rhs.r_vec_2x,2*samples);
-	DataOps::clone(hc_vec_2xFT,rhs.hc_vec_2xFT,2*samples);
+	DataOps::clone(cvec,rhs.cvec,s);
+	DataOps::clone(r_vec,rhs.r_vec,s);
+	DataOps::clone(hc_vecFT,rhs.hc_vecFT,s);
+	DataOps::clone(r_vec_2x,rhs.r_vec_2x,2*s);
+	DataOps::clone(hc_vec_2xFT,rhs.hc_vec_2xFT,2*s);
 
 	DataOps::clone(modamp,rhs.modamp);
 	DataOps::clone(modphase,rhs.modphase);
 }
 
-PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // shallow-ish assignment
+PulseFreq & PulseFreq::operator=(PulseFreq & rhs) // shallow-ish assignment
 {
-	//std::cerr << "\t\t\t+++++  Shallow copy of PulseFreq::operator=\n" << std::flush;
+	//std::cerr << "\n\n\t\t########### !!!!!!! copying into a PulseFreq that is not the sam enumber of samples !!!!!! ##########\n\n" << std::flush;
+	std::cerr << "\t\t\t+++++  Shallow copy of PulseFreq::operator= with " << samples << " samples and " << rhs.getsamples() << " on rhs \n" << std::flush;
+	samples=rhs.samples;
 	omega_center=rhs.omega_center;
 	omega_width=rhs.omega_width;
 	omega_high=rhs.omega_high;
@@ -122,7 +124,6 @@ PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // shallow-ish assignmen
 	m_gain=rhs.m_gain;
 	m_lamsamples=rhs.m_lamsamples;
 
-	samples = rhs.samples;
 	startind = rhs.startind;stopind=rhs.stopind;onwidth=rhs.onwidth;offwidth=rhs.offwidth;
 	tspan = rhs.tspan;
 	lambda_center=rhs.lambda_center;lambda_width=rhs.lambda_width;
@@ -498,33 +499,33 @@ void PulseFreq::printtime(std::ofstream * outfile){
 } 
 
 
-void PulseFreq::buildvectors(void){
+void PulseFreq::buildvectors(const size_t s){
 	//std::cerr << "allocating with fftw_malloc with samples = " << samples << std::endl;
-	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * samples);
+	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * size_t(s));
         std::fill(cvec,cvec + samples,std::complex<double>(0));
-	r_vec = (double *) fftw_malloc(sizeof(double) * samples);
-        std::fill(r_vec,r_vec + samples,double(0));
+	r_vec = (double *) fftw_malloc(sizeof(double) * size_t(s));
+        std::fill(r_vec,r_vec + s,double(0));
 	//std::cerr << "\t\t...allocated with fftw_malloc with samples = " << samples << std::endl;
-	hc_vecFT = (double *) fftw_malloc(sizeof(double) * samples);
-        std::fill(hc_vecFT,hc_vecFT + samples,double(0));
+	hc_vecFT = (double *) fftw_malloc(sizeof(double) * size_t(s));
+        std::fill(hc_vecFT,hc_vecFT + s,double(0));
 	//std::cerr << "allocating with fftw_malloc with samples = " << (2*samples) << std::endl;
-	r_vec_2x = (double *) fftw_malloc(sizeof(double) * samples * 2);
+	r_vec_2x = (double *) fftw_malloc(sizeof(double) * size_t(s) * 2);
         //std::fill(r_vec_2x,r_vec_2x + 2*samples,double(0));
-	hc_vec_2xFT = (double *) fftw_malloc(sizeof(double) * samples * 2);
-        std::fill(hc_vec_2xFT,hc_vec_2xFT + 2*samples,double(0));
+	hc_vec_2xFT = (double *) fftw_malloc(sizeof(double) * size_t(s) * 2);
+        std::fill(hc_vec_2xFT,hc_vec_2xFT + 2*s,double(0));
 	//std::cerr << "\t\t...allocated with fftw_malloc with 2*samples = " << (2*samples) << std::endl;
 
-	rhovec.resize(samples,0.0);
-	phivec.resize(samples,0.0);
-	modamp.resize(samples,1.0);
-	modphase.resize(samples,0.0);
-	omega.resize(samples);
-	time.resize(samples);
+	rhovec.resize(s,0.0);
+	phivec.resize(s,0.0);
+	modamp.resize(s,1.0);
+	modphase.resize(s,0.0);
+	omega.resize(s);
+	time.resize(s);
 
 	omega[0] = 0.0;
 	time[0] = 0.0;
-	omega[samples/2] = -(double)(samples/2)*domega;
-	time[samples/2] = -(double)(samples/2)*dtime;
+	omega[s/2] = -(double)(s/2)*domega;
+	time[s/2] = -(double)(s/2)*dtime;
 
 	startind = (unsigned)((omega_center-(omega_width/2.0))/domega);
 	stopind = (unsigned)((omega_center+(omega_width/2.0))/domega);
@@ -541,36 +542,36 @@ void PulseFreq::buildvectors(void){
 		time[i] = dtime*i;
 		rhovec[i] = rising(i);
 		cvec[i] = std::polar(rhovec[i],phivec[i]);
-		omega[samples-i] = -domega*(double)i;
-		time[samples-i] = -dtime*(double)i;
-		rhovec[samples-i] = rising(i);
-		cvec[samples-i] = std::polar(rhovec[samples-i],phivec[samples-i]);
+		omega[s-i] = -domega*(double)i;
+		time[s-i] = -dtime*(double)i;
+		rhovec[s-i] = rising(i);
+		cvec[s-i] = std::polar(rhovec[s-i],phivec[s-i]);
 	}
 	for (unsigned i = startind+onwidth;i<stopind-offwidth; i++){
 		omega[i] = domega*i;
 		time[i] = dtime*i;
 		rhovec[i] = 1.0;
 		cvec[i] = std::polar(rhovec[i],phivec[i]);
-		omega[samples-i] = -domega*(double)i;
-		time[samples-i] = -dtime*(double)i;
-		rhovec[samples-i] = 1.0;
-		cvec[samples-i] = std::polar(rhovec[samples-i],phivec[samples-i]);
+		omega[s-i] = -domega*(double)i;
+		time[s-i] = -dtime*(double)i;
+		rhovec[s-i] = 1.0;
+		cvec[s-i] = std::polar(rhovec[s-i],phivec[s-i]);
 	}
 	for (unsigned i = stopind-offwidth;i<stopind; i++){
 		omega[i] = domega*i;
 		time[i] = dtime*i;
 		rhovec[i] = falling(i);
 		cvec[i] = std::polar(rhovec[i],phivec[i]);
-		omega[samples-i] = -domega*i;
-		time[samples-i] = -dtime*i;
-		rhovec[samples-i] = falling(i);
-		cvec[samples - i] = std::polar(rhovec[samples - i],phivec[samples - i]);
+		omega[s-i] = -domega*i;
+		time[s-i] = -dtime*i;
+		rhovec[s-i] = falling(i);
+		cvec[s- i] = std::polar(rhovec[s- i],phivec[s- i]);
 	}
-	for (unsigned i = stopind;i<samples/2; i++){
+	for (unsigned i = stopind;i<s/2; i++){
 		omega[i] = domega*i;
 		time[i] = dtime*i;
-		omega[samples-i] = -domega*i;
-		time[samples-i] = -dtime*i;
+		omega[s-i] = -domega*i;
+		time[s-i] = -dtime*i;
 	}
 	
 }

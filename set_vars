@@ -17,7 +17,7 @@ unset skipimages
 export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=24;
+export ncalibdelays=128;
 export fsWindow=10000;
 
 # for Omar, testing the addition of random phase
@@ -49,8 +49,8 @@ export lambda_width=400;
 export lambda_onoff=10;
 #export tspan=4096;
 #export tspan=8192;
-export tspan=16384;
-#export tspan=32768;
+#export tspan=16384;
+export tspan=32768;
 #export tspan=131072;
 #export tspan=65536;
 #export tspan=1048576;
@@ -88,7 +88,7 @@ export nu_high=0.769; # 390nm
 export nfibers=61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
-export shuffle_fibers=1;
+#export shuffle_fibers=1;
 export scale_fibers=1;
 export fiberdiam=0.11;
 #export laserdiam=5.5; ## this behaves properly
@@ -151,7 +151,7 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=1650; #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=200000000000; #20000000;
 export saturate=40960;

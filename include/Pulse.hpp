@@ -95,7 +95,7 @@ class PulseFreq
 	friend class MatResponse;
 
 	public:
-		PulseFreq & operator=(const PulseFreq & rhs); // assignment
+		PulseFreq & operator=(PulseFreq & rhs); // assignment
 		PulseFreq & operator+=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator-=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator*=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
@@ -112,7 +112,7 @@ class PulseFreq
 	public:
 
 		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in);
-		PulseFreq(PulseFreq &rhs); // copy constructor
+		PulseFreq(PulseFreq &rhs,const size_t s); // copy constructor
 		~PulseFreq(void);
 
 		bool addrandomphase();
@@ -352,7 +352,7 @@ class PulseFreq
 
 		std::random_device rng;
 
-		void buildvectors(void);
+		void buildvectors(const size_t s);
 		void factorization(void);
 		void killvectors(void);
 
