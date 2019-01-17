@@ -95,7 +95,7 @@ class PulseFreq
 	friend class MatResponse;
 
 	public:
-		PulseFreq & operator=(PulseFreq & rhs); // assignment
+		PulseFreq & operator=(const PulseFreq & rhs); // assignment
 		PulseFreq & operator+=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator-=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
 		PulseFreq & operator*=(const PulseFreq &rhs); // function definitions must follow the PulseFreq definition
@@ -112,7 +112,7 @@ class PulseFreq
 	public:
 
 		PulseFreq(const double omcenter_in,const double omwidth_in,const double omonoff_in, double tspan_in);
-		PulseFreq(PulseFreq &rhs,const size_t s); // copy constructor
+		PulseFreq(const PulseFreq &rhs); // copy constructor
 		~PulseFreq(void);
 
 		bool addrandomphase();
@@ -124,12 +124,9 @@ class PulseFreq
 		inline double maxsignal(void){
 			return std::pow(*std::max_element(rhovec.begin(),rhovec.end()),int(2));
 		}
-		unsigned getsamples(void) {
-			return samples;
-		}
-		unsigned getdt(void) {
-			return dtime;
-		}
+		inline unsigned get_samples(void) {return getsamples();}
+		inline unsigned getsamples(void) {return samples;}
+		inline unsigned getdt(void) {return dtime;}
 		void fft_totime(void) {
 			assert (infreq); //std::cerr << "died here at fft_tofreq()" << std::endl;
 			fftw_execute_dft(*FTplan_backwardPtr.get(),(fftw_complex*)cvec,(fftw_complex*)cvec);

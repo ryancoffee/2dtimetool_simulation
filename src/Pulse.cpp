@@ -38,7 +38,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	r_vec_2x(NULL),
 	hc_vec_2xFT(NULL)
 {
-	std::cerr << "In constructor PulseFreq()" << std::endl;
+	std::cout << "In constructor PulseFreq()" << std::endl;
 	i_low =  (unsigned)(double( atof( getenv("nu_low") ) )* twopi<double>()*fsPau<double>()/domega);
 	i_high =  (unsigned)(double( atof( getenv("nu_high") ) )* twopi<double>()*fsPau<double>()/domega);
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
@@ -52,11 +52,12 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	m_noisescale = boost::lexical_cast<double>( getenv("noisescale") ) ;
 	m_sampleinterval = boost::lexical_cast<size_t>(getenv("sampleinterval"));
 	m_saturate = uint16_t( boost::lexical_cast<int>( getenv("saturate")));
+	std::cout << "exiting constructor PulseFreq()" << std::endl;
 }
 
 
-PulseFreq::PulseFreq(PulseFreq &rhs,const size_t s) // deep-ish copy constructor
-	:samples(s)
+PulseFreq::PulseFreq(const PulseFreq &rhs) // deep-ish copy constructor
+	:samples(rhs.samples)
 	,omega_center(rhs.omega_center)
 	,omega_width(rhs.omega_width)
 	,omega_high(rhs.omega_high)
@@ -88,24 +89,24 @@ PulseFreq::PulseFreq(PulseFreq &rhs,const size_t s) // deep-ish copy constructor
 	nu0=rhs.nu0;
 	FTplan_forwardPtr = rhs.FTplan_forwardPtr; 
 	FTplan_backwardPtr = rhs.FTplan_backwardPtr; 
-	buildvectors(s);
+	buildvectors(samples);
 
 	DataOps::clone(rhovec,rhs.rhovec);
 	DataOps::clone(phivec,rhs.phivec);
-	DataOps::clone(cvec,rhs.cvec,s);
-	DataOps::clone(r_vec,rhs.r_vec,s);
-	DataOps::clone(hc_vecFT,rhs.hc_vecFT,s);
-	DataOps::clone(r_vec_2x,rhs.r_vec_2x,2*s);
-	DataOps::clone(hc_vec_2xFT,rhs.hc_vec_2xFT,2*s);
+	DataOps::clone(cvec,rhs.cvec,samples);
+	DataOps::clone(r_vec,rhs.r_vec,samples);
+	DataOps::clone(hc_vecFT,rhs.hc_vecFT,samples);
+	DataOps::clone(r_vec_2x,rhs.r_vec_2x,2*samples);
+	DataOps::clone(hc_vec_2xFT,rhs.hc_vec_2xFT,2*samples);
 
 	DataOps::clone(modamp,rhs.modamp);
 	DataOps::clone(modphase,rhs.modphase);
 }
 
-PulseFreq & PulseFreq::operator=(PulseFreq & rhs) // shallow-ish assignment
+PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // shallow-ish assignment
 {
-	//std::cerr << "\n\n\t\t########### !!!!!!! copying into a PulseFreq that is not the sam enumber of samples !!!!!! ##########\n\n" << std::flush;
-	std::cerr << "\t\t\t+++++  Shallow copy of PulseFreq::operator= with " << samples << " samples and " << rhs.getsamples() << " on rhs \n" << std::flush;
+	//std::cerr << "\n\n\t\t########### !!!!!!! copying into a PulseFreq, make sure same enumber of samples !!!!!! ##########\n\n" << std::flush;
+	//std::cerr << "\t\t\t+++++  assignment copy of PulseFreq::operator= with " << samples << " samples and " << rhs.getsamples() << " on rhs \n" << std::flush;
 	samples=rhs.samples;
 	omega_center=rhs.omega_center;
 	omega_width=rhs.omega_width;
