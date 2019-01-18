@@ -3,7 +3,7 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=2;
+export nthreads=1;
 #export datadir='./data_container/raw/';
 export datadir='./data_fs/raw/';
 export calibdir='./data_fs/extern/';
@@ -15,10 +15,10 @@ unset skipimages
 #comment out the export definition to get this env var to act like a strict bool (e.g. true if defined, only false if unset)
 #but to be defined, we have to set it to some value
 #export skipcalibration=true;
-#export skipimages=true;
+export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=256; # 128;
+export ncalibdelays=512; # 128;
 export fsWindow=10000;
 
 # for Omar, testing the addition of random phase
