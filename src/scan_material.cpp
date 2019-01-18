@@ -334,6 +334,7 @@ int main(int argc, char* argv[])
 		}
 
 
+#pragma omp barrier
 
 #pragma omp master
 		{
@@ -359,15 +360,19 @@ int main(int argc, char* argv[])
 			std::cout << "Finished with the calibration image/matrix" << std::endl << std::flush;
 
 
+
 			std::cout << "\t\t############ entering images ###########\n" << std::flush;
 
 		}
 
 #pragma omp barrier
+	//calpulsearray.resize(1,masterpulse);
+	//calpulsearray.shrink_to_fit();
 
 		if (!getenv("skipimages"))
 		{
-#pragma omp master
+	//pulsearray.resize(masterbundle.get_nfibers(),masterpulse);
+	//crosspulsearray.resize(masterbundle.get_nfibers(),masterpulse);
 			if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0))
 			{
 				masterpulse.addrandomphase();
@@ -594,6 +599,12 @@ int main(int argc, char* argv[])
 				imagetimes[n] = float(imgstop - imgstart);
 
 			} // outermost loop for nimages to produce //
+	/*
+	pulsearray.resize(1,masterpulse);
+	crosspulsearray.resize(1,masterpulse);
+	pulsearray.shrink_to_fit();
+	crosspulsearray.shrink_to_fit();
+	*/
 		} // end if (!getenv("skipimages")
 
 #pragma omp master
