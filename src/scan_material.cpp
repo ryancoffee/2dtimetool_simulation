@@ -367,9 +367,6 @@ int main(int argc, char* argv[])
 	} // end if (!getenv("skipcalibration"))
 
 
-	PulseFreq testpulse(masterpulse);
-	std::cerr << "testpulse.getsamples() = " << testpulse.getsamples() << "\n" << std::flush;
-
 	//############## Images section ##############
 
 #pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse)
@@ -411,11 +408,13 @@ int main(int argc, char* argv[])
 #pragma omp for schedule(dynamic)
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //
-				//std::cerr << "\tinside the parallel region for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
+				//std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
 				if (n==0 & tid==0) {
-					std::cout << "\n\t\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
-						<< "\n\t\t ==== use this for defining multiple fibers as ===="
-						<< "\n\t\t ==== contiguous blocks for row-wise FFT as 2D ====\n" << std::flush;
+					std::cout << "========================================================================="
+						<<   "\n\t\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
+						<<   "\n\t\t ====         use this for defining multiple fibers as         ===="
+						<<   "\n\t\t ====         contiguous blocks for row-wise FFT as 2D         ===="
+						<<   "\n\t\t ==================================================================\n" << std::flush;
 				}
 
 				std::time_t imgstart = std::time(nullptr);
