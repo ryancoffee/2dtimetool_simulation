@@ -28,6 +28,8 @@ class ScanParams
 	inline bool doublepulse(void){return dpbool;}
 	std::string filebase(std::string in){fbase=in;return fbase;}
 	inline std::string filebase(void){return fbase;}
+	std::string calfilebase(std::string in){calfbase=in;return calfbase;}
+	inline std::string calfilebase(void){return calfbase;}
 	double tspan( double in) { tspn = in; return tspn;} 
 	inline double tspan( void) { return tspn;} 
 
@@ -110,6 +112,7 @@ class ScanParams
 	bool userandphase;
 
 	std::string fbase;
+	std::string calfbase;
 
 	std::vector<double> chirpvec;//(4,double(0));
 

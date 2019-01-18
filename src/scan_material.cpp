@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
 	ScanParams scanparams;
 	scanparams.nimages(size_t(atoi(getenv("nimages"))));
 	scanparams.filebase(std::string(getenv("filebase")));
+	scanparams.calfilebase(std::string(getenv("calfilebase")));
 
 	std::vector<float> imagetimes(scanparams.nimages(),0); // for benchmarking the processors
 
@@ -342,7 +343,7 @@ int main(int argc, char* argv[])
 			//std::cerr << "\t\t###### Made it here too #####\n\t\t##### should call only once in master #######\n" << std::flush;
 			// print out the calibration as ascii for now //
 			// print rows in order, eventually in tf_record or matrix or so. //
-			std::string calfilename = scanparams.filebase() + "interference.calibration";
+			std::string calfilename = scanparams.calfilebase() + "interference.calibration";
 			ofstream calibrationstream(calfilename.c_str(),ios::out); 
 			std::string bin_calfilename = scanparams.filebase() + "interference.calibration.bin";
 			ofstream bin_calibrationstream(bin_calfilename.c_str(),ios::out | ios::binary); 

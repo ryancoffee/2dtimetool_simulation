@@ -3,9 +3,10 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=3;
+export nthreads=2;
 #export datadir='./data_container/raw/';
-export datadir='./data_fs/extern/';
+export datadir='./data_fs/raw/';
+export calibdir='./data_fs/extern/';
 mkdir -p $datadir;
 
 #unsetting to clear previous export commands
@@ -158,7 +159,9 @@ export saturate=40960;
 export lamsamples=1024;
 
 #export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
-export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_nfibers"$nfibers"_noetalon_";
+export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_nfibers"$nfibers"_";
+export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_ncalibdelays"$ncalibdelays"_";
 echo "---	Environment variables exported";
 echo "---	filebase = "$filebase;
+echo "---	calfilebase = "$calfilebase;
 
