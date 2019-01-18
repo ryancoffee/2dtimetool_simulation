@@ -18,7 +18,7 @@ unset skipimages
 #export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=16; # 128;
+export ncalibdelays=256; # 128;
 export fsWindow=10000;
 
 # for Omar, testing the addition of random phase
@@ -28,7 +28,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 #export nimages=100;
-export nimages=8;
+export nimages=100;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1000;
@@ -49,9 +49,9 @@ export lambda0=550;
 export lambda_width=400;
 export lambda_onoff=10;
 #export tspan=4096;
-export tspan=8192;
+#export tspan=8192;
 #export tspan=16384;
-#export tspan=32768;
+export tspan=32768;
 #export tspan=131072;
 #export tspan=65536;
 #export tspan=1048576;
@@ -86,7 +86,7 @@ export nu_high=0.769; # 390nm
 ## 1 + sum_{n=1,nrows} n * 6
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
-export nfibers=61; #109;
+export nfibers=109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 #export shuffle_fibers=1;
