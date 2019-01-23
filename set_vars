@@ -3,9 +3,10 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=3;
+export nthreads=1;
 #export datadir='./data_container/raw/';
-export datadir='./data_fs/extern/';
+export datadir='./data_fs/raw/';
+export calibdir='./data_fs/extern/';
 mkdir -p $datadir;
 
 #unsetting to clear previous export commands
@@ -14,10 +15,10 @@ unset skipimages
 #comment out the export definition to get this env var to act like a strict bool (e.g. true if defined, only false if unset)
 #but to be defined, we have to set it to some value
 #export skipcalibration=true;
-#export skipimages=true;
+export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=16; # 128;
+export ncalibdelays=512; # 128;
 export fsWindow=10000;
 
 # for Omar, testing the addition of random phase
@@ -27,7 +28,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 #export nimages=100;
-export nimages=8;
+export nimages=100;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1000;
@@ -48,9 +49,9 @@ export lambda0=550;
 export lambda_width=400;
 export lambda_onoff=10;
 #export tspan=4096;
-export tspan=8192;
+#export tspan=8192;
 #export tspan=16384;
-#export tspan=32768;
+export tspan=32768;
 #export tspan=131072;
 #export tspan=65536;
 #export tspan=1048576;
@@ -85,7 +86,7 @@ export nu_high=0.769; # 390nm
 ## 1 + sum_{n=1,nrows} n * 6
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
-export nfibers=61; #109;
+export nfibers=109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 #export shuffle_fibers=1;
@@ -158,7 +159,9 @@ export saturate=40960;
 export lamsamples=1024;
 
 #export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
-export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_nfibers"$nfibers"_noetalon_";
+export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_nfibers"$nfibers"_";
+export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_ncalibdelays"$ncalibdelays"_";
 echo "---	Environment variables exported";
 echo "---	filebase = "$filebase;
+echo "---	calfilebase = "$calfilebase;
 
