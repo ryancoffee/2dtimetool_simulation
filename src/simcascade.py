@@ -54,17 +54,39 @@ def diamond_cascade(x,energy=9):
     result = 0.5*(1.+erf(x/wrise))*(y0+slope*x+quad*np.power(x,int(2)))*.5*(erfc((x-xfall)/wfall))
     return result
 
-def fourier_shift(x,t=0.):
-    X=fft(x)
-    F=fftfreq(x.shape[0])
-    X *=np.exp(-1j*2.*np.pi*F*t)
-    return np.real(ifft(X))
+def integrate(x):
+    _y = np.cumsum(x)
+    return _y
+
+def fourier_shift(x,t=0.,alpha=1e-4):
+    _X=fft(x)
+    _F=fftfreq(x.shape[0])
+    _alpha = alpha if len(x)>int(1./alpha) else 1./(len(x))
+    _denom = (_alpha+1j*_F)
+    _denom = np.power(_denom,int(-1))
+    _denom *=np.exp(-1j*2.*np.pi*_F*(x[0]))
+    _X *=np.exp(-1j*2.*np.pi*_F*t)
+    _X *= _denom
+    return np.real(ifft(_X))
 
 def fourier_shift_integrate(x,t=0.):
     X=fft(x)
     F=fftfreq(x.shape[0])
-    X *=np.exp(-1j*2.*np.pi*F*t)
-    denom = 1j*F
+    X *=np.exp(-1j*2.*np.pi*F*t) # time shift
+    denom = 1j*F # integrate
+    denom[1:] = np.power(denom[1:],int(-1))
+    denom[0]=0
+    result = np.real(ifft(X*denom))
+    result -= np.min(result)
+    result /= np.max(result)
+    return result
+
+def fourier_shift_decay_integrate(x,t=0.,alpha=10e-3):
+    X=fft(x)
+    _alpha = alpha if len(x)>int(1./alpha) else 1./(len(x))
+    F=fftfreq(x.shape[0])
+    X *=np.exp(-1j*2.*np.pi*F*t) #time shift
+    denom = 1j*F*(_alpha+1j*F)
     denom[1:] = np.power(denom[1:],int(-1))
     denom[0]=0
     result = np.real(ifft(X*denom))
@@ -73,7 +95,8 @@ def fourier_shift_integrate(x,t=0.):
     return result
 
 def main():
-    xvals = np.arange(-10,100000)
+    span = 1e4
+    xvals = np.arange(-span//100,99*span//100,dtype=float)
     y = diamond_cascade_params(xvals,energy=3)
     y2 = diamond_cascade_params(xvals,energy=5)
     y3 = diamond_cascade_params(xvals,energy=9)
@@ -81,15 +104,8 @@ def main():
     y5 = diamond_cascade_params(xvals,energy=24)
     out = np.column_stack((xvals,y,y2,y3,y4,y5))
     np.savetxt('cascades_function.out',out,fmt='%.4f')
-    yvals_3 = diamond_cascade(xvals,3)
-    yvals_9 = diamond_cascade(xvals,9)
-    yvals_24 = diamond_cascade(xvals,24)
-    np.savetxt('testcascades_3_9_24.out',np.column_stack((xvals,yvals_3,yvals_9,yvals_24)),fmt='%.4f')
-    intvals_3 = fourier_shift_integrate(yvals_3)
-    intvals_9 = fourier_shift_integrate(yvals_9)
-    intvals_24 = fourier_shift_integrate(yvals_24)
-    np.savetxt('testcascades_3_9_24.integrated.out',np.column_stack((xvals,intvals_3,intvals_9,intvals_24)),fmt='%.4f')
-
+    out = np.column_stack((xvals,y5,fourier_shift_integrate(y5)))
+    np.savetxt('./data_container/raw/testcascade.integrated.out',out,fmt='%.4f')
 
     return 0
 
