@@ -144,6 +144,8 @@ int main(int argc, char* argv[])
 	masterpulse.setancillaryplans(& plan_r2hc,& plan_hc2r,& plan_r2hc_2x,& plan_hc2r_2x);
 	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
+        masterresponse.fill_carriersvec(masterpulse,3.,5.47);
+
 
 	std::time_t tstop = std::time(nullptr);
 	std::cout << "\tIt has taken " << (tstop-tstart) << " s so far for initializing masterpulse and building fftw plans\n" << std::flush;

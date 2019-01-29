@@ -4,8 +4,33 @@ import numpy as np
 from scipy.special import erf,erfc
 from numpy.fft import fft,ifft,fftfreq
 
+def diamond_cascade_params_integral(x,energy=9.5):
+    # ultimately, these were had fit with Nikita's 2015 derivative curves... those are too slow by 50% or so he says
+    bandgap = 5.47 # [eV]
+    ncarriers_final = energy*1e3/(3*bandgap) # rule of thumb, 3x the bandgap is the average energy per final carrier after thermalization
+    y=np.zeros(x.shape)
+    decay=np.zeros(x.shape)
+    wfall = 0.77863 * energy
+    xfall = 0.0916548 * np.power(float(energy),int(2)) + 2.56726 * energy
+    quad =  0.014 * np.power(float(energy),int(-2))
+    slope = .95 * np.power(float(energy),int(-2))
+    y0 = .725 
+    inds = np.where(x>0)
+    y[inds] = (y0+slope*x[inds]+quad*np.power(x[inds],int(2)))*.5*(erfc((x[inds]-xfall)/wfall))
+    decay[inds] = 0.5*erf((x[inds]-xfall)/wfall)
+    Y = np.cumsum(y)
+    D = np.cumsum(decay)
+    Ysum = float(Y[-1])
+    Dsum = float(D[-1])
+    Y *= ncarriers_final/Ysum
+    D *= ncarriers_final/Dsum
+    #y[inds] -= decay[inds] * ncarriers_final/D
+    return Y
+
 def diamond_cascade_params(x,energy=9.5):
     # ultimately, these were had fit with Nikita's 2015 derivative curves... those are too slow by 50% or so he says
+    bandgap = 5.47 # [eV]
+    ncarriers_final = energy*1e3/(3*bandgap) # rule of thumb, 3x the bandgap is the average energy per final carrier after thermalization
     y=np.zeros(x.shape)
     decay=np.zeros(x.shape)
     wfall = 0.77863 * energy
@@ -18,8 +43,12 @@ def diamond_cascade_params(x,energy=9.5):
     decay[inds] = 0.5*erf((x[inds]-xfall)/wfall)
     D = np.sum(decay[inds])
     S = np.sum(y[inds])
-    y[inds] -= decay[inds] * S/D
+    y[inds] *= ncarriers_final/S
+    #y[inds] -= decay[inds] * ncarriers_final/D
     return y
+
+def simple_integrate(x):
+    return np.cumsum(x)
     
     
 
@@ -97,15 +126,29 @@ def fourier_shift_decay_integrate(x,t=0.,alpha=10e-3):
 def main():
     span = 1e4
     xvals = np.arange(-span//100,99*span//100,dtype=float)
-    y = diamond_cascade_params(xvals,energy=3)
+    y = diamond_cascade_params(xvals,energy=0.5)
+    y0 = diamond_cascade_params(xvals,energy=1)
+    y1 = diamond_cascade_params(xvals,energy=3)
     y2 = diamond_cascade_params(xvals,energy=5)
     y3 = diamond_cascade_params(xvals,energy=9)
     y4 = diamond_cascade_params(xvals,energy=15)
     y5 = diamond_cascade_params(xvals,energy=24)
-    out = np.column_stack((xvals,y,y2,y3,y4,y5))
+    y6 = diamond_cascade_params(xvals,energy=50)
+    y7 = diamond_cascade_params(xvals,energy=100)
+    y8 = diamond_cascade_params_integral(xvals,energy=100)
+    sy = simple_integrate(y)
+    sy0 = simple_integrate(y0)
+    sy1 = simple_integrate(y1)
+    sy2 = simple_integrate(y2)
+    sy3 = simple_integrate(y3)
+    sy4 = simple_integrate(y4)
+    sy5 = simple_integrate(y5)
+    sy6 = simple_integrate(y6)
+    sy7 = simple_integrate(y7)
+    out = np.column_stack((xvals,y,y0,y1,y2,y3,y4,y5,y6,y7,y8))
     np.savetxt('cascades_function.out',out,fmt='%.4f')
-    out = np.column_stack((xvals,y5,fourier_shift_integrate(y5)))
-    np.savetxt('./data_container/raw/testcascade.integrated.out',out,fmt='%.4f')
+    out = np.column_stack((xvals,sy,sy0,sy1,sy2,sy3,sy4,sy5,sy6,sy7))
+    np.savetxt('cascades_function.integrated.out',out,fmt='%.4f')
 
     return 0
 

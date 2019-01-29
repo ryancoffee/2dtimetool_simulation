@@ -43,11 +43,23 @@ public:
 	void setstepvec_amp(PulseFreq & pulse);
 	void setstepvec_amp(PulseFreq * pulse);
 	void setstepvec_phase(PulseFreq & pulse);
-	void setstepvec_phase(PulseFreq * pulse);
-	void addstepvec_amp(PulseFreq & pulse,double delay);
-	void addstepvec_amp(PulseFreq * pulse,double delay);
+        void setstepvec_phase(PulseFreq * pulse);
+        void addstepvec_amp(PulseFreq & pulse,double delay);
+        void addstepvec_amp(PulseFreq * pulse,double delay);
 	void addstepvec_phase(PulseFreq & pulse,double delay);
 	void addstepvec_phase(PulseFreq * pulse,double delay);
+
+
+        void fill_carriersvec(PulseFreq * pulse,double energy_keV,double bandgap_eV);
+        void fill_carriersvec(PulseFreq & pulse,double energy_keV,double bandgap_eV);
+        void setstepvec_amp_carriers(PulseFreq * pulse);
+        void setstepvec_amp_carriers(PulseFreq & pulse);
+        void setstepvec_phase_carriers(PulseFreq * pulse);
+        void setstepvec_phase_carriers(PulseFreq & pulse);
+        void addstepvec_amp_carriers(PulseFreq & pulse,double delay);
+        void addstepvec_amp_carriers(PulseFreq * pulse,double delay);
+	void addstepvec_phase_carriers(PulseFreq & pulse,double delay);
+	void addstepvec_phase_carriers(PulseFreq * pulse,double delay);
 	
 	void buffervectors(PulseFreq & pulse);
 	void buffervectors(PulseFreq * pulse);
@@ -76,6 +88,8 @@ private:
 	
 	double t0,twidth,attenuation,phase,a,alpha,b,beta,scale;
 	double etalondelay, reflectance;
+        std::vector<double> carriers;
+        std::vector<double> decay;
 };
 
 #endif
