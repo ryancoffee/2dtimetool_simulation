@@ -80,6 +80,7 @@ void MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5,dou
     std::transform(decay.begin(), decay.end(), decay.begin(), std::bind2nd(std::multiplies<double>(),scale) );
     //bandgap = 5.47 //# [eV]
     /*
+    From simcascade.py
        ncarriers_final = energy*1e3/(3*bandgap_eV) //# rule of thumb, 3x the bandgap is the average energy per final carrier after thermalization
        y=np.zeros(x.shape)
        decay=np.zeros(x.shape)
@@ -94,8 +95,8 @@ void MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5,dou
        D = np.sum(decay[inds])
        S = np.sum(y[inds])
        y[inds] *= ncarriers_final/S
-#y[inds] -= decay[inds] * ncarriers_final/D
-return y
+       y[inds] -= decay[inds] * ncarriers_final/D
+       return y
      */
 
 }
