@@ -341,20 +341,37 @@ int main(int argc, char* argv[])
 				// print out the calibration as ascii for now //
 				// print rows in order, eventually in tf_record or matrix or so. //
 				std::string calfilename = scanparams.calfilebase() + "interference.calibration";
+				std::string calfilename_delays = scanparams.calfilebase() + "interference.calibration.delays";
+				std::string calfilename_wavelengths = scanparams.calfilebase() + "interference.calibration.wavelengths";
 				ofstream calibrationstream(calfilename.c_str(),ios::out); 
+				ofstream calibrationstream_delays(calfilename_delays.c_str(),ios::out); 
+				ofstream calibrationstream_wavelengths(calfilename_wavelengths.c_str(),ios::out); 
+				/*
 				std::string bin_calfilename = scanparams.filebase() + "interference.calibration.bin";
 				ofstream bin_calibrationstream(bin_calfilename.c_str(),ios::out | ios::binary); 
 				std::cout << "\tcalibration filename out = " << calfilename << "\n\t and \t" << bin_calfilename << std::endl;
-				calibrationstream << "#";
+				*/
+				calibrationstream << "# wavelengths\n#";
 				calpulsearray[0].printwavelengthbins(&calibrationstream);
+				calpulsearray[0].printwavelengthbins(&calibrationstream_wavelengths);
+				calibrationstream << "# delays\n#";
+				calibrationstream_delays << "# delays\n";
+				for (size_t i = 0 ; i< calibration.get_ndelays(); ++i){
+					calibrationstream << calibration.get_delay(i) << "\t";
+					calibrationstream_delays << calibration.get_delay(i) << "\t";
+				}
+				calibrationstream << "\n";
+				calibrationstream_delays << "\n";
 
 				for (size_t n=0;n<calpulsearray.size();++n){
 					calpulsearray[n].appendwavelength(&calibrationstream);
-					calpulsearray[n].appendwavelength_bin(&bin_calibrationstream);
+					//	calpulsearray[n].appendwavelength_bin(&bin_calibrationstream);
 				}
 
 				calibrationstream.close();
-				bin_calibrationstream.close();
+				calibrationstream_delays.close();
+				calibrationstream_wavelengths.close();
+				//bin_calibrationstream.close();
 				std::cout << "Finished with the calibration image/matrix\n" << std::flush;
 
 

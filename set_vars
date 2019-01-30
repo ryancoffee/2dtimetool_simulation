@@ -3,7 +3,7 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=1;
+export nthreads=2;
 #export datadir='./data_container/raw/';
 export datadir='./data_fs/raw/';
 export calibdir='./data_fs/extern/';
@@ -18,7 +18,7 @@ unset skipimages
 export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=512; # 128;
+export ncalibdelays=256; # 128;
 export fsWindow=10000;
 
 # for Omar, testing the addition of random phase
