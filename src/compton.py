@@ -11,6 +11,12 @@ print(e_mc2)
 (re,unit,err) = pc["classical electron radius"]
 re *= 1e2 # in centimeters now
 
+def PofE(en,E0 = 511.):
+    k=E0/e_mc2 # in keV
+    a = np.power(E0,int(2))/e_mc2
+    b = en/(k*(a-en))
+    return (np.pi*np.power(re,int(2))) * ( (2*b - np.power( b , int(2))) / (k*(a-en) + k*en) )
+
 def differentialcrosssection(th,E0 = 511.):
     # from http://xdb.lbl.gov/Section3/Sec_3-1.html (2 of 5) [2/14/2005 6:48:57 PM] Janos Kirz
     k=E0/e_mc2 # in keV
@@ -36,23 +42,18 @@ def differentialcrosssectionofen(en,E0 = 511.):
     k=E0/e_mc2 # in keV
     return np.power(re,int(2))/2. * xofen(en,E0)*yofen(en,E0) / np.power( 1. + k*xofen(en,E0),int(2))
 
-def Precoil(en,E0 = 511.):
-    k=E0/e_mc2 # in keV
-    return 2.*np.pi * differentialcrosssectionofen(en,E0) / (E0*k) * (1 + (k-1)*xofen(en,E0) + k*np.power(xofen(en,E0),int(2))) / (1.-np.power(k*xofen(en,E0),int(2))) 
-
 def main():
     if len(sys.argv)<2:
         print('syntax is :$ ./compton.py E[in keV]')
         return
     th = np.arange(0,np.pi,np.pi/100)
     E = float(sys.argv[1])
-    differentialenergy = differentialcrosssection(th,E)*recoilenergy(th,E)
-    filename = "/home/coffee/projects/2dtimetool_simulation/data_fs/reference/compton/differentialenergy_compton.out"
-    np.savetxt(filename,np.column_stack((th,differentialcrosssection(th,E),recoilenergy(th,E),differentialenergy)),fmt='%.4e')
+    filename = "/home/coffee/projects/2dtimetool_simulation/data_fs/reference/compton/differentialenergy_compton.%ikeV.out" % int(E)
+    np.savetxt(filename,np.column_stack((th,differentialcrosssection(th,E),recoilenergy(th,E))),fmt='%.4e')
 
-    en = np.arange(0,511,5)
-    filename = "/home/coffee/projects/2dtimetool_simulation/data_fs/reference/compton/differentialenergy_compton_recoil.out"
-    np.savetxt(filename,np.column_stack((en,differentialcrosssectionofen(en,E),Precoil(en,E))),fmt='%.4e')
+    en = np.arange(0,E,5)
+    filename = "/home/coffee/projects/2dtimetool_simulation/data_fs/reference/compton/differentialenergy_compton_recoil.%ikeV.out" % int(E)
+    np.savetxt(filename,np.column_stack((en,PofE(en,E),differentialcrosssectionofen(en,E))),fmt='%.4e')
     return
 
 
