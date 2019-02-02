@@ -1,8 +1,38 @@
 #!/home/coffee/anaconda3/bin/python3
 
+
 import numpy as np
 from scipy.special import erf,erfc
 from numpy.fft import fft,ifft,fftfreq
+
+def diamond_cascade_params_improved(x,energy=9500):
+    # lookout, energy needs to be in eV not keV as before
+    #still basically hand fit, but these are more complete including long tail as additional exponential
+    # all params seemed to fit a nice power law
+    #f(x)=a*x**2+c*x**p
+    #e(x)=aa*exp(-(x-xfall)/ww)
+    #fall(x)=0.5*(1-erf((x-xfall)/wfall))
+    #rise(x)=0.5*(1+erf((x-xfall)/wfall))
+    #total(x) = f(x)*fall(x)+e(x)*rise(x)+y0
+    ##
+    #
+    y0=1e-4
+    a = 671000. * np.power(float(energy),int(-2)) ... excluding outliers at low energy
+    c = 250. * np.power(energy,-0.4)
+    p = 9 * np.power(energy,-0.5)
+    aa = 0.4
+    ww = 11
+    xfall = 8.24e-05 * np.power(energy,4./3)
+    wfall = 0.000373 * x
+    y=np.zeros(x.shape)
+    inds = np.where(x>0)
+    f = a*np.power(x[inds],int(2))+c*np.power(x[inds],p)
+    fall = 0.5*(1-erf((x[inds] - xfall)/wfall))
+    e=aa*np.exp(-(x[inds]-xfall)/ww)
+    rise=0.5*(1+erf((x[inds]-xfall)/wfall))
+    y[inds] = f*fall+e*rise+y0
+    return y
+    
 
 def diamond_cascade_params_integral(x,energy=9.5):
     # ultimately, these were had fit with Nikita's 2015 derivative curves... those are too slow by 50% or so he says
