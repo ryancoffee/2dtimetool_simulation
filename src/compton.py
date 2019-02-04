@@ -12,6 +12,12 @@ re = pc["classical electron radius"][0] * 1e2 # in centimeters
 re2 = np.power(re,int(2))*1e24 # in barns now
 print('classical electron area %.4f barns' % (pi*re2))
 
+def PofE_lecture(en,E0 = 511.):
+    # this seems to give bogus numbers out.  Somehow my derivation looks better, and closer to what the CdTe resutls looked like
+    A = k = E0/e_mc2 # in keV
+    s = en/E0
+    return pi*re2 / np.power(A*e_mc2,int(2)) * ( 2 + np.power(s,int(2))/np.power(A*(1-s),int(2)) + s/(1-s)*(s-2/A))
+    
 def PofE(en,E0 = 511.):
     k = E0/e_mc2 # in keV
     ka = np.power(E0,int(3))/np.power(e_mc2,int(2))
@@ -19,6 +25,11 @@ def PofE(en,E0 = 511.):
     result = (pi*re2)/ka * (2*b - np.power( b , int(2))) 
     result[np.where(result<0.)] = 0
     return result
+
+def total_xsection(E0 = 511.):
+    # from xdb.pdf http://xdb.lbl.gov/Section3/Sec_3-1.html (2 of 5) [2/14/2005 6:48:57 PM]
+    k = E0/e_mc2 # in keV
+    return 8*pi*re2*(1 + 2*k + 1.2*np.power(k,int(2)))/(3*np.power(1+2*k,int(2)))
 
 def differentialcrosssection(th,E0 = 511.):
     # from http://xdb.lbl.gov/Section3/Sec_3-1.html (2 of 5) [2/14/2005 6:48:57 PM] Janos Kirz
@@ -67,6 +78,7 @@ def main():
     inds = np.where(p1>0)
     nu1 = E-en
     out = np.copy(p1)
+    out_noscale = np.copy(p1)
     '''
     secondary_photos = nu1-Eb
     p_secondary_photos = np.zeros(p1.shape,dtype=float)
@@ -77,11 +89,19 @@ def main():
     '''
     for i in range(len(p1)):
         if p1[i]>0:
-            out += PofE(en,E0=nu1[i])*p1[i]/p1sum # need to multiply by the ratio of Compton to Photo... which is a function of en
+            # need to multiply by the ratio of Compton to Photo... which is a function of en
+            # just quickly taking diamond as an example
+            # OK now beyond diamond, need to get actual material for the ratio of Compton to Photoelectrons...
+            # then we might as well include the photos in the electron distributions.
+            absorb=1e9
+            ePatom=70
+            out += PofE(en,E0=nu1[i])*p1[i]/p1sum * (ePatom*total_xsection(nu1[i])/(ePatom*total_xsection(nu1[i])+absorb*np.power(nu1[i],int(-3)))) 
+            #print('\tat %f keV : Compton x-section %.4e\tPhotoAbs %.2e' % (nu1[i],6*total_xsection(nu1[i]),5e4*np.power(nu1[i],int(-3))))
+            out_noscale += PofE(en,E0=nu1[i])*p1[i]/p1sum # need to multiply by the ratio of Compton to Photo... which is a function of en
             # note to self... the files to look at are in laptop$ $HOME/projects/2dtimetool_simulation/docs/Compton/
     filename = "./data_fs/reference/compton/compton_recoil_electrons.2ndOrder.%ikeV.out" % int(E)
     headerstring = 'recoil energies\tprobability [barns/keV] primary Compton\tprobability [barns/keV] including secondary Compton events still ignoring photoelectrons'
-    np.savetxt(filename,np.column_stack((en,p1,out)),fmt='%.4e',header=headerstring)
+    np.savetxt(filename,np.column_stack((en,p1,out,out_noscale)),fmt='%.4e',header=headerstring)
     return
 
 
