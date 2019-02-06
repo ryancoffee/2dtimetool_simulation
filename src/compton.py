@@ -18,7 +18,18 @@ def PofE_lecture(en,E0 = 511.):
     s = en/E0
     return pi*re2 / np.power(A*e_mc2,int(2)) * ( 2 + np.power(s,int(2))/np.power(A*(1-s),int(2)) + s/(1-s)*(s-2/A))
     
+def PofE_photoabs(en,nu=e_mc2,bindings=np.array([50 , 10, 150])):
+    # in keV
+    peE = nu - bindings
+    binds = np.where(peE>0)
+    onehot = np.zeros(en.shape,dtype=float)
+    onehot[ np.where(en<peE[binds][-1]) ] = 1.
+    onehot[:-1] = np.abs(-np.diff(onehot))
+    #print((en*onehot))
+    return onehot
+
 def PofE_compton(en,E0 = 511.):
+    # in barns
     k = E0/e_mc2 # in keV
     ka = np.power(E0,int(3))/np.power(e_mc2,int(2))
     b = en/(ka-k*en)
@@ -79,6 +90,7 @@ def main():
     nu1 = E-en
     out = np.copy(p1)
     out_filescale = np.copy(p1)
+    out_photoelec = np.zeros(en.shape)
     '''
     secondary_photos = nu1-Eb
     p_secondary_photos = np.zeros(p1.shape,dtype=float)
@@ -101,6 +113,11 @@ def main():
     ytotal = np.interp(nu1,Xen,Ytotal)
     ycompton = np.interp(nu1,Xen,Ycompton)
     yphotoab = np.interp(nu1,Xen,Yphotoab)
+
+    bindingsfile = xsectionsdir + 'Cd.bind.dat'
+    bindings = np.loadtxt(bindingsfile,dtype=float,usecols=(1)) * 1e-3 # now in keV
+    out_photoelec += PofE_photoabs(en,nu=E,bindings=bindings) * yphotoab/ytotal
+    print(out_photoelec)
     
     for i in range(len(p1)):
         if p1[i]>0:
@@ -110,14 +127,18 @@ def main():
             # then we might as well include the photos in the electron distributions.
             absorb=1e9
             ePatom=6
+            #out_original += PofE_compton(en,E0=nu1[i])*p1[i]/p1sum * (ePatom*total_xsection(nu1[i])/(ePatom*total_xsection(nu1[i])+absorb*np.power(nu1[i],int(-3)))) 
             out += PofE_compton(en,E0=nu1[i])*p1[i]/p1sum * (ePatom*total_xsection(nu1[i])/(ePatom*total_xsection(nu1[i])+absorb*np.power(nu1[i],int(-3)))) 
             #print('\tat %f keV : Compton x-section %.4e\tPhotoAbs %.2e' % (nu1[i],6*total_xsection(nu1[i]),5e4*np.power(nu1[i],int(-3))))
             out_filescale += PofE_compton(en,E0=nu1[i])*p1[i]/p1sum * (ycompton[i]/ytotal[i])
+            out_photoelec += PofE_photoabs(en,nu=nu1[i],bindings=bindings) * yphotoab[i]/ytotal[i]
             # need to multiply by the ratio of Compton to Photo... which is a function of en
             # note to self... the files to look at are in laptop$ $HOME/projects/2dtimetool_simulation/docs/Compton/
     filename = "./data_fs/reference/compton/compton_recoil_electrons.2ndOrder.%ikeV.out" % int(E)
     headerstring = 'recoil energies\tprobability [barns/keV] primary Compton\tprobability [barns/keV] including secondary Compton events still ignoring photoelectrons'
-    np.savetxt(filename,np.column_stack((en,p1,out,out_filescale)),fmt='%.4e',header=headerstring)
+    print(out_filescale)
+    print(out_photoelec)
+    np.savetxt(filename,np.column_stack((en,p1,out,out_filescale,out_photoelec)),fmt='%.4e',header=headerstring)
     return
 
 
