@@ -21,6 +21,20 @@
 
 namespace DataOps 
 {
+	template <typename T>
+		std::vector<T>& sample_every(std::vector<T>& lhs, const std::vector<T>& rhs, const size_t nskip = 10, const size_t offset = 0)
+		{
+			if (lhs.size() < 1){
+				lhs.resize(int(rhs.size()/nskip),T(0));
+			}
+			if (lhs.size() > (rhs.size()+offset)/nskip ){
+				lhs.resize(size_t((rhs.size()+offset)/nskip));
+			}
+			for (size_t i = 0; i<lhs.size(); ++i){
+				lhs[i] = T(rhs[nskip*i+offset]);
+			}
+			return lhs;
+		}
 
 	template <typename T>
 		T* clone(T* lhs,const T* rhs,const size_t n)

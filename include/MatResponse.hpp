@@ -38,6 +38,9 @@ public:
 		beta=fsPau<double>()*betain;
 	}
 
+	inline double bandgap(double in=4.47){bandgap_eV = in; return bandgap_eV;}
+	inline double bandgap(void){return bandgap_eV;}
+
 	void setstepvec_full(PulseFreq & pulse);
 	void setstepvec_full(PulseFreq * pulse);
 	void setstepvec_amp(PulseFreq & pulse);
@@ -50,8 +53,8 @@ public:
 	void addstepvec_phase(PulseFreq * pulse,double delay);
 
 
-        void fill_carriersvec(PulseFreq * pulse,double energy_keV,double bandgap_eV);
-        void fill_carriersvec(PulseFreq & pulse,double energy_keV,double bandgap_eV);
+        bool fill_carriersvec(PulseFreq * pulse,double energy_keV);
+        bool fill_carriersvec(PulseFreq & pulse,double energy_keV);
         void setstepvec_amp_carriers(PulseFreq * pulse);
         void setstepvec_amp_carriers(PulseFreq & pulse);
         void setstepvec_phase_carriers(PulseFreq * pulse);
@@ -88,8 +91,10 @@ private:
 	
 	double t0,twidth,attenuation,phase,a,alpha,b,beta,scale;
 	double etalondelay, reflectance;
+	double bandgap_eV;
         std::vector<double> carriers;
         std::vector<double> decay;
+
 };
 
 #endif
