@@ -219,15 +219,23 @@ int main(int argc, char* argv[])
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 					calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
+					calibresponse.setstepvec_both_carriers(calpulse);
+					calibresponse.setstepvec_both_carriers(calcrosspulse);
+					/*
 					calibresponse.setstepvec_amp(calpulse);
 					calibresponse.setstepvec_phase(calpulse);
 					calibresponse.setstepvec_amp(calcrosspulse);
 					calibresponse.setstepvec_phase(calcrosspulse);
+					*/
 					if (scanparams.doublepulse()){
+						calibresponse.addstepvec_both_carriers(calpulse,scanparams.doublepulsedelay());
+						calibresponse.addstepvec_both_carriers(calcrosspulse,scanparams.doublepulsedelay());
+						/*
 						calibresponse.addstepvec_amp(calpulse,scanparams.doublepulsedelay());
 						calibresponse.addstepvec_phase(calpulse,scanparams.doublepulsedelay());
 						calibresponse.addstepvec_amp(calcrosspulse,scanparams.doublepulsedelay());
 						calibresponse.addstepvec_phase(calcrosspulse,scanparams.doublepulsedelay());
+						*/
 					}
 					// this pulls down the tail of the response so vector is periodic on nsamples	
 					calibresponse.buffervectors(calpulse); 
@@ -255,15 +263,23 @@ int main(int argc, char* argv[])
 						calibresponse.setdelay(etalondelay + g*scanparams.backstep()); 
 						// counterpropagating, x-rays work backwards through the optical
 
+						calibresponse.setstepvec_both_carriers(etalonpulse);
+						calibresponse.setstepvec_both_carriers(crossetalonpulse);
+						/*
 						calibresponse.setstepvec_amp(etalonpulse);
 						calibresponse.setstepvec_phase(etalonpulse);
 						calibresponse.setstepvec_amp(crossetalonpulse);
 						calibresponse.setstepvec_phase(crossetalonpulse);
+						*/
 						if (scanparams.doublepulse()){
+							calibresponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
+							calibresponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
+							/*
 							calibresponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
+							*/
 						}
 						calibresponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						calibresponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
@@ -279,15 +295,23 @@ int main(int argc, char* argv[])
 					// forward propagation //
 					for(size_t g=0;g<scanparams.ngroupsteps();g++){
 						calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
+						calibresponse.setstepvec_both_carriers(etalonpulse);
+						calibresponse.setstepvec_both_carriers(crossetalonpulse);
+						/*
 						calibresponse.setstepvec_amp(etalonpulse);
 						calibresponse.setstepvec_phase(etalonpulse);
 						calibresponse.setstepvec_amp(crossetalonpulse);
 						calibresponse.setstepvec_phase(crossetalonpulse);
+						*/
 						if (scanparams.doublepulse()){
+							calibresponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
+							calibresponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
+							/*
 							calibresponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
+							*/
 
 						}
 						calibresponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
