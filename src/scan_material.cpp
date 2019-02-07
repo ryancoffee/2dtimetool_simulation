@@ -176,10 +176,12 @@ int main(int argc, char* argv[])
 	{
 		// Setup the shared pulse arrays
 		std::vector< PulseFreq > calpulsearray(calibration.get_ndelays(),masterpulse);
+	std::cerr << "\n\t\t============= HERE HERE HERE HERE ===============\n" << std::flush;
 
 #pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse)
 		{ // begin parallel region 1
 			size_t tid = omp_get_thread_num();
+	std::cerr << "\n\t\t============= HERE HERE HERE HERE ===============\n" << std::flush;
 
 			// all non-shared objects must be created inside the parallel section for default is shared if defined outside
 			// http://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-data.html

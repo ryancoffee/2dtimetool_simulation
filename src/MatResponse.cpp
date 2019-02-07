@@ -33,30 +33,6 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
 	scale=1.0;
 	bandgap_eV = 5.47; // this is 5.47 for diamond.
 }        
-void MatResponse::setstepvec_full(PulseFreq * pulse){ setstepvec_full( *pulse); }
-void MatResponse::setstepvec_full(PulseFreq & pulse){
-	double arg;
-	for (unsigned i = 0 ; i < pulse.getsamples(); i++){
-		arg = (static_cast<double>(i)*pulse.getdt() - t0);
-		if( i > pulse.getsamples()/2){
-			arg -= (pulse.getdt()*pulse.getsamples());
-		}
-		if( arg > twidth){
-			pulse.modphase[i] = phase;
-			pulse.modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta));
-			pulse.modphase[i] *= scale;
-
-		} else {
-			if (arg < 0.0) {
-				pulse.modphase[i] = 0.0;
-			} else {
-				pulse.modphase[i] = phase * std::pow( std::sin(half_pi<double>()*arg/twidth ), int(2) ) ;
-				pulse.modphase[i] *= a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta));
-				pulse.modphase[i] *= scale;
-			}
-		}
-	}
-}
 
 bool MatResponse::fill_carriersvec(PulseFreq * pulse,double energy_keV = 9.5){return fill_carriersvec(*pulse,energy_keV);}
 bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
@@ -65,7 +41,7 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	std::vector<double> times(pulse.getsamples(),double(0.));
 	carriers.resize(pulse.getsamples(),double(0.));
 	decay.resize(pulse.getsamples(),double(0.));
-	size_t ncarriers_final = size_t(energy_keV*1e3/(3*bandgap_eV)); // this is a rule of thumb for exciton energy
+	size_t ncarriers_final = 1;// size_t(energy_keV*1e3/(3*bandgap_eV)); // this is a rule of thumb for exciton energy
 	double wfall = 0.77863 * energy_keV; // in [fs] !!!!!!!!!!!
 	double xfall = 0.0916548 * std::pow(energy_keV,int(2)) + 2.56726 * energy_keV; // in [fs] !!!!!!!!!!!
 	double quad =  0.014 * std::pow(energy_keV,int(-2)); // in [fs] !!!!!!!!!!!
@@ -97,21 +73,24 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	return true;
 }
 
-void MatResponse::setstepvec_amp_carriers(PulseFreq * pulse){ setstepvec_amp_carriers(*pulse); }
-void MatResponse::setstepvec_amp_carriers(PulseFreq & pulse){ setstepvec_amp(pulse);}
-void MatResponse::setstepvec_phase_carriers(PulseFreq * pulse){ setstepvec_phase_carriers(*pulse); }
-void MatResponse::setstepvec_phase_carriers(PulseFreq & pulse){ setstepvec_phase(pulse);}
+void MatResponse::setstepvec_both_carriers(PulseFreq * pulse,double delay){ setstepvec_both_carriers(*pulse,delay); }
+void MatResponse::setstepvec_both_carriers(PulseFreq & pulse,double delay)
+{ 
+	setstepvec_amp(pulse,delay);
+	setstepvec_phase(pulse,delay);
+}
+void MatResponse::addstepvec_both_carriers(PulseFreq * pulse,double delay){ addstepvec_both_carriers(*pulse,delay); }
+void MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay)
+{
+	addstepvec_amp(pulse,delay);
+	addstepvec_phase(pulse,delay);
+}
 
-void MatResponse::addstepvec_amp_carriers(PulseFreq * pulse,double delay){ addstepvec_amp_carriers(*pulse,delay); }
-void MatResponse::addstepvec_amp_carriers(PulseFreq & pulse,double delay){ addstepvec_amp(pulse,delay);}
-void MatResponse::addstepvec_phase_carriers(PulseFreq * pulse,double delay){ addstepvec_phase_carriers(*pulse,delay); }
-void MatResponse::addstepvec_phase_carriers(PulseFreq & pulse,double delay){ addstepvec_phase(pulse,delay);}
-
-void MatResponse::setstepvec_amp(PulseFreq * pulse){ setstepvec_amp(*pulse); }
-void MatResponse::setstepvec_amp(PulseFreq & pulse){
+void MatResponse::setstepvec_amp(PulseFreq * pulse,double delay){ setstepvec_amp(*pulse,delay); }
+void MatResponse::setstepvec_amp(PulseFreq & pulse,double delay){
 	double arg;
 	for (unsigned i = 0 ; i < pulse.getsamples(); i++){
-		arg = (static_cast<double>(i)*pulse.getdt() - t0);
+		arg = (static_cast<double>(i)*pulse.getdt() - (t0-delay));
 		if( i > pulse.getsamples()/2){
 			arg -= (pulse.getdt()*pulse.getsamples());
 		}
@@ -132,11 +111,11 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse){
 	}
 }
 
-void MatResponse::setstepvec_phase(PulseFreq * pulse){ setstepvec_phase(*pulse); }
-void MatResponse::setstepvec_phase(PulseFreq & pulse){
+void MatResponse::setstepvec_phase(PulseFreq * pulse, double delay){ setstepvec_phase(*pulse,delay); }
+void MatResponse::setstepvec_phase(PulseFreq & pulse,double delay){
 	double arg;
 	for (unsigned i = 0 ; i < pulse.getsamples(); i++){
-		arg = (static_cast<double>(i)*pulse.getdt() - t0);
+		arg = (static_cast<double>(i)*pulse.getdt() - (t0-delay));
 		if( i > pulse.getsamples()/2){
 			arg -= (pulse.getdt()*pulse.getsamples());
 		}

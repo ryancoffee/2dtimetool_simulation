@@ -74,33 +74,51 @@ PulseFreq::PulseFreq(const PulseFreq &rhs) // deep-ish copy constructor
 	,m_lamsamples(rhs.m_lamsamples)
 	,sampleround(1000)
 {
-	//std::cerr << "\t\t\t+++++  Copy constructor of PulseFreq::PulseFreq(PulseFreq &rhs)\n\t\tsamples = " << samples << "\n" << std::flush;
+	std::cerr << "\t\t\t+++++  Copy constructor of PulseFreq::PulseFreq(PulseFreq &rhs)\t\tsamples = " << samples << "\n" << std::flush;
+	std::cerr << "+" << std::flush;
 	DataOps::clone(omega,rhs.omega);
+	std::cerr << "+" << std::flush;
 	DataOps::clone(time,rhs.time);
 
+	std::cerr << "+" << std::flush;
 	startind = rhs.startind;stopind=rhs.stopind;onwidth=rhs.onwidth;offwidth=rhs.offwidth;
 	tspan = rhs.tspan;
+	std::cerr << "+" << std::flush;
 	lambda_center=rhs.lambda_center;lambda_width=rhs.lambda_width;
 	phase_GDD=rhs.phase_GDD;phase_TOD=rhs.phase_TOD;phase_4th=rhs.phase_4th;phase_5th=rhs.phase_5th;
 
+	std::cerr << "+" << std::flush;
 	dtime = rhs.dtime;time_center=rhs.time_center;time_wdith=rhs.time_wdith;
 
 
 	nu0=rhs.nu0;
+	std::cerr << "+" << std::flush;
 	FTplan_forwardPtr = rhs.FTplan_forwardPtr; 
 	FTplan_backwardPtr = rhs.FTplan_backwardPtr; 
+	std::cerr << "+" << std::flush;
+	// HERE HERE HERE HERE  is the seg fault //
 	buildvectors(samples);
 
+	std::cerr << "+" << std::flush;
 	DataOps::clone(rhovec,rhs.rhovec);
+	std::cerr << "+" << std::flush;
 	DataOps::clone(phivec,rhs.phivec);
+	std::cerr << "+" << std::flush;
 	DataOps::clone(cvec,rhs.cvec,samples);
+	std::cerr << "+" << std::flush;
 	DataOps::clone(r_vec,rhs.r_vec,samples);
+	std::cerr << "+" << std::flush;
 	DataOps::clone(hc_vecFT,rhs.hc_vecFT,samples);
+	std::cerr << "+" << std::flush;
 	DataOps::clone(r_vec_2x,rhs.r_vec_2x,2*samples);
+	std::cerr << "+" << std::flush;
 	DataOps::clone(hc_vec_2xFT,rhs.hc_vec_2xFT,2*samples);
-
+	std::cerr << "+" << std::flush;
 	DataOps::clone(modamp,rhs.modamp);
+	std::cerr << "+" << std::flush;
 	DataOps::clone(modphase,rhs.modphase);
+	std::cerr << "+" << std::flush;
+	std::cerr << "\t leaving Copy constructor of PulseFreq::PulseFreq(PulseFreq &rhs)\n" << std::flush;
 }
 
 PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // shallow-ish assignment
