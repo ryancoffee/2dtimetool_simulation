@@ -1,6 +1,7 @@
 #include <MatResponse.hpp>
 #include <Constants.hpp>
 #include <DataOps.hpp>
+#include <exception>
 
 MatResponse::MatResponse(MatResponse & rhs) // copy constructor
 {
@@ -73,17 +74,48 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	return true;
 }
 
-void MatResponse::setstepvec_both_carriers(PulseFreq * pulse,double delay_in){ setstepvec_both_carriers(*pulse,delay_in); }
-void MatResponse::setstepvec_both_carriers(PulseFreq & pulse,double delay_in)
+bool MatResponse::setstepvec_both_carriers(PulseFreq * pulse,double delay_in){ return setstepvec_both_carriers(*pulse,delay_in); }
+bool MatResponse::setstepvec_both_carriers(PulseFreq & pulse,double delay_in)
 { 
-	setstepvec_amp(pulse,delay_in);
-	setstepvec_phase(pulse,delay_in);
+	try {
+		int arg;
+		for (size_t i = 0;i<pulse.getsamples()/2;++i){
+			pulse.modamp[i] = 1.;
+			pulse.modphase[i] = 0.;
+			arg = int(i - (t0-delay_in)/pulse.getdt());
+			if (arg>0){
+				pulse.modamp[i] -= attenuation * carriers[arg]; // subtract 1... then scale... then add 1 back.
+				pulse.modphase[i] += phase * carriers[arg];
+			}
+		}
+		for (size_t i = pulse.getsamples()/2; i< pulse.getsamples() ;++i){
+			arg = i-pulse.getsamples() - int((t0-delay_in)/pulse.getdt());
+			pulse.modamp[i] = 1.;
+			if (arg>0){
+				pulse.modamp[i] -= attenuation * carriers[arg];
+				pulse.modphase[i] += phase * carriers[arg];
+			}
+		}
+	} catch(exception& e) {
+		std::cerr << "Error in setstepvec_both_carriers() method: " << e.what() << std::endl << std::flush;
+		setstepvec_amp(pulse,delay_in);
+		setstepvec_phase(pulse,delay_in);
+		return false;
+	}
+	return true;
 }
-void MatResponse::addstepvec_both_carriers(PulseFreq * pulse,double delay_in){ addstepvec_both_carriers(*pulse,delay_in); }
-void MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in)
+bool MatResponse::addstepvec_both_carriers(PulseFreq * pulse,double delay_in){ return addstepvec_both_carriers(*pulse,delay_in); }
+bool MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in)
 {
-	addstepvec_amp(pulse,delay_in);
-	addstepvec_phase(pulse,delay_in);
+	try {
+		double arg;
+	} catch(exception& e) {
+		std::cerr << "Error in setstepvec_both_carriers() method: " << e.what() << std::endl << std::flush;
+		addstepvec_amp(pulse,delay_in);
+		addstepvec_phase(pulse,delay_in);
+		return false;
+	}
+	return true;
 }
 
 void MatResponse::setstepvec_amp(PulseFreq * pulse,double delay_in){ setstepvec_amp(*pulse,delay_in); }

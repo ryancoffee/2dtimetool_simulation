@@ -53,10 +53,10 @@ public:
 
         bool fill_carriersvec(PulseFreq * pulse,double energy_keV);
         bool fill_carriersvec(PulseFreq & pulse,double energy_keV);
-	void setstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
-	void setstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
-	void addstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
-	void addstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
+	bool setstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
+	bool setstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
+	bool addstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
+	bool addstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
 	
 	void buffervectors(PulseFreq & pulse);
 	void buffervectors(PulseFreq * pulse);
