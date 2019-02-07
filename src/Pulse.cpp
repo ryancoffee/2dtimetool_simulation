@@ -43,7 +43,11 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	i_high =  (unsigned)(double( atof( getenv("nu_high") ) )* twopi<double>()*fsPau<double>()/domega);
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
 	dtime = tspan_in/double(samples);
-	omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
+	// no longer forcing gaussian sin2
+	// omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum
+	omega_onwidth = omonoff_in;
+	omega_offwidth = omonoff_in;
+
 	buildvectors(samples);
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
@@ -62,6 +66,7 @@ PulseFreq::PulseFreq(const PulseFreq &rhs) // deep-ish copy constructor
 	,omega_width(rhs.omega_width)
 	,omega_high(rhs.omega_high)
 	,omega_onwidth(rhs.omega_onwidth)
+	,omega_offwidth(rhs.omega_offwidth)
 	,domega(rhs.domega)
 	,intime(rhs.intime)
 	,infreq(rhs.infreq)
@@ -97,7 +102,9 @@ PulseFreq::PulseFreq(const PulseFreq &rhs) // deep-ish copy constructor
 	FTplan_backwardPtr = rhs.FTplan_backwardPtr; 
 	std::cerr << "+" << std::flush;
 	// HERE HERE HERE HERE  is the seg fault //
+	std::cerr << "\tEntering buildvectors\t" << std::flush;
 	buildvectors(samples);
+	std::cerr << "\tleft buildvectors\t" << std::flush;
 
 	std::cerr << "+" << std::flush;
 	DataOps::clone(rhovec,rhs.rhovec);
@@ -130,6 +137,7 @@ PulseFreq & PulseFreq::operator=(const PulseFreq & rhs) // shallow-ish assignmen
 	omega_width=rhs.omega_width;
 	omega_high=rhs.omega_high;
 	omega_onwidth=rhs.omega_onwidth;
+	omega_offwidth=rhs.omega_offwidth;
 	domega=rhs.domega;
 	intime=rhs.intime;
 	infreq=rhs.infreq;
@@ -519,20 +527,20 @@ void PulseFreq::printtime(std::ofstream * outfile){
 
 
 void PulseFreq::buildvectors(const size_t s){
-	//std::cerr << "allocating with fftw_malloc with samples = " << samples << std::endl;
+	std::cerr << "allocating with fftw_malloc with samples = " << samples << std::endl << std::flush;
 	cvec = (std::complex<double> *) fftw_malloc(sizeof(std::complex<double>) * size_t(s));
         std::fill(cvec,cvec + samples,std::complex<double>(0));
 	r_vec = (double *) fftw_malloc(sizeof(double) * size_t(s));
         std::fill(r_vec,r_vec + s,double(0));
-	//std::cerr << "\t\t...allocated with fftw_malloc with samples = " << samples << std::endl;
+	std::cerr << "\t\t...allocated with fftw_malloc with samples = " << samples << std::endl << std::flush;
 	hc_vecFT = (double *) fftw_malloc(sizeof(double) * size_t(s));
         std::fill(hc_vecFT,hc_vecFT + s,double(0));
-	//std::cerr << "allocating with fftw_malloc with samples = " << (2*samples) << std::endl;
+	std::cerr << "allocating with fftw_malloc with samples = " << (2*samples) << std::endl << std::flush;
 	r_vec_2x = (double *) fftw_malloc(sizeof(double) * size_t(s) * 2);
         //std::fill(r_vec_2x,r_vec_2x + 2*samples,double(0));
 	hc_vec_2xFT = (double *) fftw_malloc(sizeof(double) * size_t(s) * 2);
         std::fill(hc_vec_2xFT,hc_vec_2xFT + 2*s,double(0));
-	//std::cerr << "\t\t...allocated with fftw_malloc with 2*samples = " << (2*samples) << std::endl;
+	std::cerr << "\t\t...allocated with fftw_malloc with 2*samples = " << (2*samples) << std::endl << std::flush;
 
 	rhovec.resize(s,0.0);
 	phivec.resize(s,0.0);
@@ -550,6 +558,10 @@ void PulseFreq::buildvectors(const size_t s){
 	stopind = (unsigned)((omega_center+(omega_width/2.0))/domega);
 	onwidth = (unsigned)(omega_onwidth/domega); // 2.0)/domega);//  /10.0)/domega);// sin^2 goes from0..1 in 0..pi/2
 	offwidth = (unsigned)(omega_offwidth/domega); // 2.0)/domega);//  /10.0)/domega);// sin^2 goes from0..1 in 0..pi/2
+	std::vector<unsigned> temp(4);
+	temp = {startind,onwidth,stopind,offwidth};
+	std::cerr << "(startind,onwidth,stopind,offwidth) = ( " << temp << " )\n" << std::flush;
+
 	for (unsigned i = 1; i<startind;i++){
 		omega[i] = domega*i;
 		time[i] = dtime*i;
@@ -566,6 +578,7 @@ void PulseFreq::buildvectors(const size_t s){
 		rhovec[s-i] = rising(i);
 		cvec[s-i] = std::polar(rhovec[s-i],phivec[s-i]);
 	}
+	std::cerr << "Made it to HERE HERE HERE with startind+onwidth = "  << (startind+onwidth) << " and stopind-offwidth = " << (stopind-offwidth) << "\n" << std::flush;
 	for (unsigned i = startind+onwidth;i<stopind-offwidth; i++){
 		omega[i] = domega*i;
 		time[i] = dtime*i;
@@ -576,6 +589,7 @@ void PulseFreq::buildvectors(const size_t s){
 		rhovec[s-i] = 1.0;
 		cvec[s-i] = std::polar(rhovec[s-i],phivec[s-i]);
 	}
+	std::cerr << "Trying to make it to HERE NOW\n" << std::flush;
 	for (unsigned i = stopind-offwidth;i<stopind; i++){
 		omega[i] = domega*i;
 		time[i] = dtime*i;

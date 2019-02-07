@@ -41,22 +41,22 @@ public:
 	inline double bandgap(double in=4.47){bandgap_eV = in; return bandgap_eV;}
 	inline double bandgap(void){return bandgap_eV;}
 
-	void setstepvec_amp(PulseFreq & pulse,double delay = 0.);
-	void setstepvec_amp(PulseFreq * pulse,double delay = 0.);
-	void setstepvec_phase(PulseFreq & pulse,double delay = 0.);
-        void setstepvec_phase(PulseFreq * pulse,double delay = 0.);
-        void addstepvec_amp(PulseFreq & pulse,double delay = 0.);
-        void addstepvec_amp(PulseFreq * pulse,double delay = 0.);
-	void addstepvec_phase(PulseFreq & pulse,double delay = 0.);
-	void addstepvec_phase(PulseFreq * pulse,double delay = 0.);
+	void setstepvec_amp(PulseFreq & pulse,double delay_in = 0.);
+	void setstepvec_amp(PulseFreq * pulse,double delay_in = 0.);
+	void setstepvec_phase(PulseFreq & pulse,double delay_in = 0.);
+        void setstepvec_phase(PulseFreq * pulse,double delay_in = 0.);
+        void addstepvec_amp(PulseFreq & pulse,double delay_in = 0.);
+        void addstepvec_amp(PulseFreq * pulse,double delay_in = 0.);
+	void addstepvec_phase(PulseFreq & pulse,double delay_in = 0.);
+	void addstepvec_phase(PulseFreq * pulse,double delay_in = 0.);
 
 
         bool fill_carriersvec(PulseFreq * pulse,double energy_keV);
         bool fill_carriersvec(PulseFreq & pulse,double energy_keV);
-	void setstepvec_both_carriers(PulseFreq * pulse,double delay = 0.);
-	void setstepvec_both_carriers(PulseFreq & pulse,double delay = 0.);
-	void addstepvec_both_carriers(PulseFreq * pulse,double delay = 0.);
-	void addstepvec_both_carriers(PulseFreq & pulse,double delay = 0.);
+	void setstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
+	void setstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
+	void addstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
+	void addstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
 	
 	void buffervectors(PulseFreq & pulse);
 	void buffervectors(PulseFreq * pulse);
