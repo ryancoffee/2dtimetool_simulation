@@ -13,13 +13,21 @@
 using namespace std;
 
 // my headers
-#include "Constants.hpp"
-#include "Pulse.hpp"
+#include <Constants.hpp>
+#include <Pulse.hpp>
         
 // my definitions
 
 using namespace Constants;
 class PulseFreq;
+
+class CarriersNotSet : public exception
+{
+	virtual const char* what() const throw()
+	{
+		return "Carriers were not yet set";
+	}
+};
                 
 class MatResponse {
 
@@ -83,12 +91,12 @@ public:
 
 private:
 	
+	bool carriers_set;
 	double t0,twidth,attenuation,phase,a,alpha,b,beta,scale;
 	double etalondelay, reflectance;
 	double bandgap_eV;
         std::vector<double> carriers;
-        std::vector<double> decay;
-
 };
+
 
 #endif
