@@ -3,7 +3,7 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=2;
+export nthreads=60;
 #export datadir='./data_container/raw/';
 export datadir='./data_fs/raw/';
 export calibdir='./data_fs/extern/';
@@ -18,7 +18,7 @@ unset skipimages
 export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=64; # 256; # 128;
+export ncalibdelays=32; #8192; #256; # 128;
 export fsWindow=10000;
 
 # for Omar, testing the addition of random phase
@@ -36,7 +36,7 @@ export delays_std=1000;
 export drifting_alpha=0.001; #0.1;
 
 export bandgap_eV=5.47;
-export xrayphoton_energy=100; #40; # this is in keV
+export xrayphoton_energy=9.5; #40; # this is in keV
 export xray_pos_distribution_normal_mean=0;
 export xray_pos_distribution_normal_std=0.0625; #0.1
 export laser_pos_distribution_normal_mean=0;
@@ -53,15 +53,15 @@ export lambda_onoff=10;
 #export tspan=1024;
 #export tspan=4096;
 #export tspan=8192;
-export tspan=16384;
-#export tspan=32768; ## really using this one
+#export tspan=16384;
+export tspan=32768; ## really using this one
 #export tspan=131072;
 #export tspan=65536;
 #export tspan=1048576;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
 export backdelay=0.5; 
-export netalon=1; #2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
+export netalon=0; #2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
 export etalon=.16; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
 # YAG index 1.8
@@ -162,8 +162,8 @@ export saturate=40960;
 export lamsamples=1024;
 
 #export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
-export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_photonen"$xrayphoton_energy"_nfibers"$nfibers"_";
-export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_ncalibdelays"$ncalibdelays"_";
+export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_photonen"$xrayphoton_energy"_nfibers"$nfibers"_netalon"$netalon"_";
+export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_ncalibdelays"$ncalibdelays"_netalon"$netalon"_";
 echo "---	Environment variables exported";
 echo "---	filebase = "$filebase;
 echo "---	calfilebase = "$calfilebase;
