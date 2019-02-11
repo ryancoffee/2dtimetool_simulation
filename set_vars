@@ -3,7 +3,7 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=60;
+export nthreads=2;
 #export datadir='./data_container/raw/';
 export datadir='./data_fs/raw/';
 export calibdir='./data_fs/extern/';
@@ -36,7 +36,7 @@ export delays_std=1000;
 export drifting_alpha=0.001; #0.1;
 
 export bandgap_eV=5.47;
-export xrayphoton_energy=9.5; #40; # this is in keV
+export xrayphoton_energy=19.5; #40; # this is in keV
 export xray_pos_distribution_normal_mean=0;
 export xray_pos_distribution_normal_std=0.0625; #0.1
 export laser_pos_distribution_normal_mean=0;
@@ -52,9 +52,9 @@ export lambda_width=400;
 export lambda_onoff=10;
 #export tspan=1024;
 #export tspan=4096;
-#export tspan=8192;
+export tspan=8192;
 #export tspan=16384;
-export tspan=32768; ## really using this one
+#export tspan=32768; ## really using this one
 #export tspan=131072;
 #export tspan=65536;
 #export tspan=1048576;
@@ -163,7 +163,7 @@ export lamsamples=1024;
 
 #export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_photonen"$xrayphoton_energy"_nfibers"$nfibers"_netalon"$netalon"_";
-export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_ncalibdelays"$ncalibdelays"_netalon"$netalon"_";
+export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"newdiamond_ncalibdelays"$ncalibdelays"_netalon"$netalon"_";
 echo "---	Environment variables exported";
 echo "---	filebase = "$filebase;
 echo "---	calfilebase = "$calfilebase;

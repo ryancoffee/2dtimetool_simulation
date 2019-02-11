@@ -39,7 +39,31 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
 	scale=1.0;
 	bandgap_eV = 5.47; // this is 5.47 for diamond.
 }        
-
+/*
+ * total(x)=f(x)*fall(x)+e(x)*rise(x)+y0
+ * f(x)=a*x**2+c*x**p
+ * fall(x)=0.5*(1-erf((x-xfall)/wfall)
+ * e(x)=aa*exp(-(x-xfall)/ww)
+ * rise(x)=0.5*(1+erf((x-xfall)/wfall))
+ *
+#f(x)=a*x**2+c*x**p
+#e(x)=aa*exp(-(x-xfall)/ww)
+#fall(x)=0.5*(1-erf((x-xfall)/wfall))
+#rise(x)=0.5*(1+erf((x-xfall)/wfall))
+#y0=1e-4
+#total(x) = f(x)*fall(x)+e(x)*rise(x)+y0
+##
+#
+# param a(nu) = 671000 * x**-2 ... excluding outliers at low energy
+# param c(nu) = 250 * x ** -0.4
+# param p(nu) = 9 * x ** -0.5
+# param aa(nu) = 0.4
+# param ww(nu) = 11
+# param xfall(nu) = 8.24e-05 * x ** (4./3)
+# param wfall(nu) = 0.000373 * x
+ *
+ *
+*/
 bool MatResponse::fill_carriersvec(PulseFreq * pulse,double energy_keV = 9.5){return fill_carriersvec(*pulse,energy_keV);}
 bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	using namespace DataOps;
@@ -49,22 +73,37 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	std::vector<double> decay(carriers.size(),double(0.));
 	//std::cerr << "pulse.getsamples() = " << pulse.getsamples() << "\t" << std::flush;
 	//std::cerr << " pulse.modamp.size() = " << pulse.modamp.size() << "\n" << std::flush;
-	size_t ncarriers_final = 1;// size_t(energy_keV*1e3/(3*bandgap_eV)); // this is a rule of thumb for exciton energy
+	double a = 671000. * std::pow(energy_keV * 1e3,int(-2));
+	double c = 250. * std::pow(energy_keV * 1e3,float(-0.4));
+	double p = 9. * std::pow(energy_keV * 1e3,float(-0.5)); 
+	double aa = 0.4;
+	double ww = 11.;
+	double xfall = 8.24e-05 * std::pow(energy_keV * 1e3,float(4./3.));
+	double wfall = 0.000373 * energy_keV * 1e3;
+	double y0 = 1e-4;
+
+	/*
 	double wfall = 0.77863 * energy_keV; // in [fs] !!!!!!!!!!!
 	double xfall = 0.0916548 * std::pow(energy_keV,int(2)) + 2.56726 * energy_keV; // in [fs] !!!!!!!!!!!
 	double quad =  0.014 * std::pow(energy_keV,int(-2)); // in [fs] !!!!!!!!!!!
 	double slope = 0.95 * std::pow(energy_keV,int(-2)); // in [fs] !!!!!!!!!!!
 	double y0 = 0.725; // in [fs] !!!!!!!!!!!
-	double arg;
-	double scale;
+	*/
+
 	carriers[0] = 1.;
 	decay[0] = 0.;
 	for (size_t i = 1 ; i < carriers.size()/2; i++){
-		arg = double(i)*pulse.getdt()*Constants::fsPau<double>(); // remember, this needs to be in femtoseconds... and getdt() returns in atomic units
+		double arg = double(i)*pulse.getdt()*Constants::fsPau<double>(); // remember, this needs to be in femtoseconds... and getdt() returns in atomic units
+		double f = a*std::pow(arg,int(2)) + c * std::pow(arg,p);
+		double fall = 0.5*(1.-erf((arg-xfall)/wfall));
+		double e = aa*std::exp(-(arg-xfall)/ww);
+		double rise = 0.5 * (1.+erf((arg-xfall)/wfall));
 		times[i] = arg;
-		carriers[i] = carriers[i-1] + ((y0+slope*arg + quad * std::pow(arg,int(2))) * 0.5 * erfc((arg-xfall)/wfall));
+		carriers[i] = carriers[i-1] + (y0 + f*fall + e*rise);
 		decay[i] = decay[i-1] + 0.5*erf((arg-xfall)/wfall);
 	}
+	size_t ncarriers_final = 1;// size_t(energy_keV*1e3/(3*bandgap_eV)); // this is a rule of thumb for exciton energy
+	double scale;
 	scale = ncarriers_final / *std::max_element(carriers.begin(),carriers.end());
 	std::transform(carriers.begin(), carriers.end(), carriers.begin(), std::bind2nd(std::multiplies<double>(),scale) );
 	scale = ncarriers_final / *std::max_element(decay.begin(),decay.end());
