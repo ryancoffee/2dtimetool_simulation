@@ -52,43 +52,53 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
 #rise(x)=0.5*(1+erf((x-xfall)/wfall))
 #y0=1e-4
 #total(x) = f(x)*fall(x)+e(x)*rise(x)+y0
-##
-#
-# param a(nu) = 671000 * x**-2 ... excluding outliers at low energy
-# param c(nu) = 250 * x ** -0.4
-# param p(nu) = 9 * x ** -0.5
-# param aa(nu) = 0.4
-# param ww(nu) = 11
-# param xfall(nu) = 8.24e-05 * x ** (4./3)
-# param wfall(nu) = 0.000373 * x
- *
- *
+ * def diamond_cascade_params_improved(x,energy=9500):
+    # lookout, energy needs to be in eV not keV as before
+    #still basically hand fit, but these are more complete including long tail as additional exponential
+    # all params seemed to fit a nice power law
+    #f(x)=a*x**2+c*x**p
+    #e(x)=aa*exp(-(x-xfall)/ww)
+    #fall(x)=0.5*(1-erf((x-xfall)/wfall))
+    #rise(x)=0.5*(1+erf((x-xfall)/wfall))
+    #total(x) = f(x)*fall(x)+e(x)*rise(x)+y0
+    ##
+    #
+    y0=1e-4
+    a = 7.e7 * np.power(float(energy),float(-2.5))
+    c = 128. * np.power(energy-531,-1./3)
+    p = 10 * np.power(energy,-0.5)
+    aa = 0.499467* np.exp(-np.power(energy/45.e3,int(2)))
+    ww = 10*np.power(energy,2.e-6*energy)
+    xfall = 8.24e-05 * np.power(energy,4./3)
+    wfall = 0.000373 * energy
+    y=np.zeros(x.shape)
+    inds = np.where(x>0)
+    f = a*np.power(x[inds],int(2))+c*np.power(x[inds],p)
+    fall = 0.5*(1-erf((x[inds] - xfall)/wfall))
+    e=aa*np.exp(-(x[inds]-xfall)/ww)
+    rise=0.5*(1+erf((x[inds]-xfall)/wfall))
+    y[inds] = f*fall+e*rise+y0
+    return y
+
 */
 bool MatResponse::fill_carriersvec(PulseFreq * pulse,double energy_keV = 9.5){return fill_carriersvec(*pulse,energy_keV);}
 bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	using namespace DataOps;
+	double e = energy_keV*1e3;
 	// ultimately, these were had fit with Nikita's 2015 derivative curves... those are too slow by 50% or so he says
 	carriers.resize(pulse.getsamples(),double(0.));
 	std::vector<double> times(carriers.size(),double(0.));
 	std::vector<double> decay(carriers.size(),double(0.));
 	//std::cerr << "pulse.getsamples() = " << pulse.getsamples() << "\t" << std::flush;
 	//std::cerr << " pulse.modamp.size() = " << pulse.modamp.size() << "\n" << std::flush;
-	double a = 671000. * std::pow(energy_keV * 1e3,int(-2));
-	double c = 250. * std::pow(energy_keV * 1e3,float(-0.4));
-	double p = 9. * std::pow(energy_keV * 1e3,float(-0.5)); 
-	double aa = 0.4;
-	double ww = 11.;
-	double xfall = 8.24e-05 * std::pow(energy_keV * 1e3,float(4./3.));
-	double wfall = 0.000373 * energy_keV * 1e3;
+	double a = 7.e7 * std::pow(e,float(-2.5));
+	double c = 128. * std::pow(e,float(-1./3));
+	double p = 10. * std::pow(e,float(-0.5)); 
+	double aa = 0.5 * std::exp(-std::pow(energy_keV/45.,int(2)));
+	double ww = 10.*std::pow(e,e*2e-6);
+	double xfall = 8.24e-05 * std::pow(e,float(4./3.));
+	double wfall = 0.000373 * e;
 	double y0 = 1e-4;
-
-	/*
-	double wfall = 0.77863 * energy_keV; // in [fs] !!!!!!!!!!!
-	double xfall = 0.0916548 * std::pow(energy_keV,int(2)) + 2.56726 * energy_keV; // in [fs] !!!!!!!!!!!
-	double quad =  0.014 * std::pow(energy_keV,int(-2)); // in [fs] !!!!!!!!!!!
-	double slope = 0.95 * std::pow(energy_keV,int(-2)); // in [fs] !!!!!!!!!!!
-	double y0 = 0.725; // in [fs] !!!!!!!!!!!
-	*/
 
 	carriers[0] = 1.;
 	decay[0] = 0.;
