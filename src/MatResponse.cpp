@@ -3,6 +3,8 @@
 #include <DataOps.hpp>
 #include <exception>
 #include <algorithm>
+#include <boost/math/interpolators/barycentric_rational.hpp>
+#include <limits>
 
 MatResponse::MatResponse(MatResponse & rhs) // copy constructor
 : carriers_set(rhs.carriers_set)
@@ -81,6 +83,64 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
     return y
 
 */
+bool MatResponse::fill_carriersvec(PulseFreq * pulse,std::ifstream * instream){return fill_carriersvec(*pulse,*instream);}
+bool MatResponse::fill_carriersvec(PulseFreq & pulse,std::ifstream & instream)
+{
+	using namespace DataOps;
+	size_t column = (size_t)atoi(getenv("carriercolumn"));
+	carriers.resize(pulse.getsamples(),double(0.));
+	std::vector<double> times(carriers.size(),double(0.));
+	std::vector< std::vector<double> > data;
+	instream >> data;
+	std::cerr << "data.size() = " << data.size() << "\t" << data.front().size() << "\n" << std::flush;
+	if(column>=data.front().size()){
+		std::cerr << "failed data column in fill_carrersvec() method\n" << std::flush;
+		return fill_carriersvec(pulse,9.5);
+	}
+	double tstep = data[1][0] - data[0][0];
+	std::vector <double> c_times(data.size()+2);
+	std::vector <double> c_vholes(data.size()+2,double(0));
+	for (size_t i=0;i<data.size();++i){
+		if (i<10 || i>data.size()-10){
+			std::cerr << data[i][0] << "\t" << data[i][column] << "\t...\t" << std::flush;
+		}
+		c_times[i+2] = data[i][0];
+		c_vholes[i+2] = data[i][column];
+		if (i<10 || i>data.size()-10){
+			std::cerr << c_times[i] << "\t" << c_vholes[i] << "\n" << std::flush;
+		}
+	}
+	c_times[0] = (-double(carriers.size())*pulse.getdt()*Constants::fsPau<double>());
+	double smallestdouble = std::numeric_limits<double>::min();
+	c_times[1] = -1.*(smallestdouble);
+	c_vholes[0] = 0.;
+	c_vholes[1] = 0.;
+	double ncarriers_final = 1;// double(energy_keV*1e3/(3*bandgap_eV)); // this is a rule of thumb for exciton energy
+	double datamax = *std::max_element(c_vholes.begin(),c_vholes.end());
+	std::transform(c_vholes.begin(), c_vholes.end(), c_vholes.begin(), std::bind2nd(std::multiplies<double>(),ncarriers_final/datamax) );
+
+	std::cerr << "\n\t\t===== ready to fit the input data for carriersvec ==========\n" << std::flush;
+	for (size_t i = 0; i< 10;++i){
+		std::cerr << "\n\t\t===== " << c_times[i] << "\t" << c_vholes[i] << " ==========\n" << std::flush;
+	}
+
+	//boost::math::barycentric_rational<double> interpolant(c_times.data(), c_vholes.data(), c_vholes.size());
+	for (size_t i = 0 ; i < carriers.size(); i++){
+		times[i] = double(i)*pulse.getdt()*Constants::fsPau<double>(); // remember, this needs to be in femtoseconds... and getdt() returns in atomic units
+		carriers[i] = interpolate(c_times,c_vholes,times[i]);
+	}
+
+	std::vector<double> shortcopy(40);
+	std::vector<double> shortcopy_times(40);
+	sample_every(shortcopy,carriers,100);
+	sample_every(shortcopy_times,times,100);
+	std::cerr << shortcopy_times << "\n" << std::flush;
+	std::cerr << shortcopy << "\n" << std::flush;
+
+	carriers_set = true;
+	return carriers_set;
+}
+
 bool MatResponse::fill_carriersvec(PulseFreq * pulse,double energy_keV = 9.5){return fill_carriersvec(*pulse,energy_keV);}
 bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	using namespace DataOps;

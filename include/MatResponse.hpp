@@ -59,8 +59,10 @@ public:
 	void addstepvec_phase(PulseFreq * pulse,double delay_in = 0.);
 
 
-        bool fill_carriersvec(PulseFreq * pulse,double energy_keV);
-        bool fill_carriersvec(PulseFreq & pulse,double energy_keV);
+	bool fill_carriersvec(PulseFreq * pulse,std::ifstream * instream);
+	bool fill_carriersvec(PulseFreq & pulse,std::ifstream & instream);
+	bool fill_carriersvec(PulseFreq * pulse,double energy_keV);
+	bool fill_carriersvec(PulseFreq & pulse,double energy_keV);
 	bool setstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
 	bool setstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
 	bool addstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);

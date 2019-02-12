@@ -147,7 +147,15 @@ int main(int argc, char* argv[])
 
 	double xrayphoton_energy = double(atof(getenv("xrayphoton_energy")));
 	masterresponse.bandgap(double(atof(getenv("bandgap_eV")))); //
-	masterresponse.fill_carriersvec(masterpulse,xrayphoton_energy);
+	if (getenv("usediamond")){
+		masterresponse.fill_carriersvec(masterpulse,xrayphoton_energy);
+	} else {
+		std::string carriersfilename = getenv("carriersfile");
+		std::cerr << "carriersfilename = " << carriersfilename << "\n" << std::flush;
+		std::ifstream Nikita_file(carriersfilename.c_str(),std::ios::in);
+		masterresponse.fill_carriersvec(masterpulse,Nikita_file);
+	}
+
 
 	std::time_t tstop = std::time(nullptr);
 	std::cout << "\tIt has taken " << (tstop-tstart) << " s so far for initializing masterpulse and building fftw plans\n" << std::flush;
