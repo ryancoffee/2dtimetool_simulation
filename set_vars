@@ -3,19 +3,21 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=40;
+export nthreads=60;
 #export datadir='./data_container/raw/';
 export datadir='./data_fs/raw/';
 export calibdir='./data_fs/extern/';
-export carriercolumn=1; # this tells the code which of Nikita's columns to use
-export carriersdir='./data_fs/reference/fromNikita/OUTPUT_LYSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
-export carriersfilename='OUTPUT_LYSO_Density_derivative.dat';
-#export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
-#export carriersfilename='OUTPUT_BSO_Density_derivative.dat';
+export carriercolumn=5; # this tells the code which of Nikita's columns to use
+#export carriersdir='./data_fs/reference/fromNikita/OUTPUT_LYSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
+#export carriersfilename='OUTPUT_LYSO_Density_derivative.dat';
+export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
+export carriersfilename='OUTPUT_BSO_Density_derivative.dat';
+export carriersdir='./data_fs/reference/fromNikita/';
+export carriersfilename='OUTPUT_YAG_Density_9500.dat';
 #export usediamond=true;
 unset usediamond;
-export carriertag='LYSO511keV'
-export xrayphoton_energy=511; #40; # this is in keV
+export carriertag='YAG9.5keV'
+export xrayphoton_energy=9.5; #40; # this is in keV
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat';
 #export carriersfilename='OUTPUT_Diamond_Density_9500.dat';
 export bandgap_eV=5.47;
@@ -27,11 +29,11 @@ unset skipimages
 #comment out the export definition to get this env var to act like a strict bool (e.g. true if defined, only false if unset)
 #but to be defined, we have to set it to some value
 #export skipcalibration=true;
-export skipimages=true;
+#export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=512; #8192; #256; # 128;
-export fsWindow=40000;
+export ncalibdelays=8192; #256; # 128;
+export fsWindow=10000;
 
 # for Omar, testing the addition of random phase
 export addrandomphase=0;
@@ -39,8 +41,7 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-#export nimages=100;
-export nimages=100;
+export nimages=1000;
 export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1000;
@@ -64,8 +65,8 @@ export lambda_onoff=10;
 #export tspan=4096;
 #export tspan=8192;
 #export tspan=16384;
-#export tspan=32768; ## really using this one
-export tspan=65536;
+export tspan=32768; ## really using this one
+#export tspan=65536; ## this one when using a 40000 fs window and a chirp in the 6000-8000 range
 #export tspan=131072;
 #export tspan=1048576;
 export ngroupsteps=1; # figure out how to handle the group delays
@@ -154,7 +155,7 @@ touch logfile
 # call to main #
 export doublepulse=0; #bool that tells whether to expect a double pulse
 export doublepulsedelay=200;
-export chirp=-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
+export chirp=-2000; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
 export TOD=0;
 export FOD=0;
 export fifthOD=0;
@@ -165,16 +166,14 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=200000000000; #20000000;
 export saturate=40960;
 export lamsamples=1024;
 
-#export filebase=$datadir"multithread_"$interferedelay"_crossphase"$interferephase"_chirp"$chirp"_pm"$chirpnoise"_pmTOD"$TODnoise"_pmFOD"$FODnoise"_";
 export carriersfile=$carriersdir$carriersfilename;
-export filebase=$datadir"ascii_chirp"$chirp"_"$interferedelay"_photonen"$xrayphoton_energy"_carriertag"$carriertag"_nfibers"$nfibers"_netalon"$netalon"_";
-#export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_"$carriertag"_ncalibdelays"$ncalibdelays"_netalon"$netalon"_";
+export filebase=$datadir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_carriertag"$carriertag"_nfibers"$nfibers"_netalon"$netalon"_";
 export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_"$carriertag"_ncalibdelays"$ncalibdelays"_netalon"$netalon"_";
 echo "---	Environment variables exported";
 echo "---	filebase = "$filebase;
