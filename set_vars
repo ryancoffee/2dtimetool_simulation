@@ -3,7 +3,7 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=2;
+export nthreads=40;
 #export datadir='./data_container/raw/';
 export datadir='./data_fs/raw/';
 export calibdir='./data_fs/extern/';
@@ -12,8 +12,9 @@ export carriersdir='./data_fs/reference/fromNikita/OUTPUT_LYSO_single_cascade_ph
 export carriersfilename='OUTPUT_LYSO_Density_derivative.dat';
 #export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
 #export carriersfilename='OUTPUT_BSO_Density_derivative.dat';
-export usediamond=true;
-export carriertag='Diamond511keV'
+#export usediamond=true;
+unset usediamond;
+export carriertag='LYSO511keV'
 export xrayphoton_energy=511; #40; # this is in keV
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat';
 #export carriersfilename='OUTPUT_Diamond_Density_9500.dat';
@@ -29,7 +30,7 @@ unset skipimages
 export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
-export ncalibdelays=32; #8192; #256; # 128;
+export ncalibdelays=512; #8192; #256; # 128;
 export fsWindow=40000;
 
 # for Omar, testing the addition of random phase
@@ -164,7 +165,7 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=4000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=200000000000; #20000000;
 export saturate=40960;
