@@ -12,6 +12,7 @@ export carriersdir='./data_fs/reference/fromNikita/OUTPUT_LYSO_single_cascade_ph
 export carriersfilename='OUTPUT_LYSO_Density_derivative.dat';
 #export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
 #export carriersfilename='OUTPUT_BSO_Density_derivative.dat';
+unset usediamond;
 export usediamond=true;
 export carriertag='Diamond511keV'
 export xrayphoton_energy=511; #40; # this is in keV
@@ -164,7 +165,7 @@ export TODnoise=0;
 export FODnoise=0;
 export fifthODnoise=0;
 
-export interferedelay=4000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1;
 export gain=200000000000; #20000000;
 export saturate=40960;
