@@ -466,6 +466,12 @@ int main(int argc, char* argv[])
 			}
 
 
+/*
+	HERE HERE HERE HERE
+	Here we need to figure out how to run a rolling TDI style image superposition so that each thread 
+	produces a time-ordered series of images who are comprised of the most recent n_overlay images that
+	are superimposed with a 1x row-shift
+*/
 #pragma omp for schedule(dynamic)
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //
@@ -647,6 +653,13 @@ int main(int argc, char* argv[])
 					pulsearray[f].scale(parabundle.Ilaser(f)); 
 					pulsearray[f].appendwavelength(&interferestream);
 				}
+/*
+	HERE HERE HERE HERE
+	Here we need to figure out how to run a rolling TDI style image superposition so that each thread 
+	produces a time-ordered series of images who are comprised of the most recent n_overlay images that
+	are superimposed with a 1x row-shift
+	Looks like maybe we need to write another Pulse.accumwavelength(&interferestream,nshift)
+*/
 				if (tid % 10 < 2){
 					for (size_t f=0;f<parabundle.get_nfibers();f++){
 						int max = boost::lexical_cast<double>(getenv("gain")) * pulsearray[f].maxsignal();
