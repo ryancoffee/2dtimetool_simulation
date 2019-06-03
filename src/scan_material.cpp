@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
+#include <boost/numpy.hpp>
 #include <complex>
 #include <memory>
 #include <fftw3.h>
