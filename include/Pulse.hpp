@@ -291,6 +291,7 @@ class PulseFreq
 		void print_phase_powerspectrum(std::ofstream & outfile);
 		void printwavelengthbins(std::ofstream * outfile);
 		void appendwavelength(std::ofstream * outfile);
+		void appendwavelength_deriv(std::ofstream * outfile);
 		void appendwavelength_bin(std::ofstream * outfile);
 		void appendfrequency(std::ofstream * outfile);
 		void appendnoisy(std::ofstream * outfile);

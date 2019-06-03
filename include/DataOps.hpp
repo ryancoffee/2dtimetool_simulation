@@ -581,6 +581,18 @@ namespace DataOps
 			return;
 		}
 
+	template <typename T>
+		T  interpolate(const std::vector<T> &xData, const std::vector<T> & yData,T x)
+		{
+
+			if(x < xData.front()){return yData.front();}
+			if(x > xData.back()){return yData.back();}
+			size_t i = 0;
+			while (x>xData[i]){++i;}
+			size_t l=i-1;
+			T delta=(x - xData[l])/(xData[i] - xData[l]);
+			return delta*yData[i] + (1-delta) *yData[l];
+		}
 }
 
 #endif

@@ -15,6 +15,7 @@
 #include <random>
 #include <cassert>
 #include <cstdint> // for appendwavelegth() and int32_t
+#include <limits> // for std::numeric_limits<short int>::max() and min()
 
 using namespace Constants;
 using namespace DataOps;
@@ -406,6 +407,37 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 		(*outfile) << uint16_t(interpolant(x.back()+i*dlam)) << "\t";
 	}
 	(*outfile) << std::endl;
+	return;
+}
+void PulseFreq::appendwavelength_deriv(std::ofstream * outfile)
+{
+	std::vector<double> x(i_high-i_low);
+	std::vector<double> y(i_high-i_low);	
+	std::vector<int16_t> resultvec(m_lamsamples);
+	std::vector<double> diffvec(m_lamsamples);
+
+	for (size_t i=0;i<y.size();++i){
+		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
+		y[i] = std::pow(rhovec[i_low+i],int(2)) * m_gain;
+	}
+	double dlam = (x.front()-x.back())/double(m_lamsamples);
+	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
+	for (size_t i=0;i<m_lamsamples;++i){
+		diffvec[i] = interpolant(x.back()+(i+1)*dlam) - interpolant(x.back()+i*dlam);
+		//diffvec[i] -= interpolant(x.back()+(i+10)*dlam) - interpolant(x.back()+(i+11)*dlam);
+	}
+        double scale;
+        int16_t max = std::numeric_limits<int16_t>::max();
+        int16_t min = std::numeric_limits<int16_t>::min();
+	auto bounds = std::minmax_element(diffvec.begin(),diffvec.end());
+        if (*bounds.second>std::abs(*bounds.first)){
+                scale = max/ *bounds.second;
+        } else {
+                scale = min/ *bounds.first;
+        }
+        std::transform(diffvec.begin(),diffvec.end(),resultvec.begin(),[scale](double x){return int16_t(scale*x);});
+        *(outfile) << resultvec;
+
 	return;
 }
 void PulseFreq::appendwavelength_bin(std::ofstream * outfile)

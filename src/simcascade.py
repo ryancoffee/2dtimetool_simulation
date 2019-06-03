@@ -1,4 +1,4 @@
-#!/home/coffee/anaconda3/bin/python3
+#!/usr/bin/python3
 
 
 import numpy as np
@@ -17,13 +17,13 @@ def diamond_cascade_params_improved(x,energy=9500):
     ##
     #
     y0=1e-4
-    a = 671000. * np.power(float(energy),int(-2)) ... excluding outliers at low energy
-    c = 250. * np.power(energy,-0.4)
-    p = 9 * np.power(energy,-0.5)
-    aa = 0.4
-    ww = 11
+    a = 7.e7 * np.power(float(energy),float(-2.5)) 
+    c = 128. * np.power(energy-531,-1./3)
+    p = 10 * np.power(energy,-0.5)
+    aa = 0.499467* np.exp(-np.power(energy/45.e3,int(2)))
+    ww = 10*np.power(energy,2.e-6*energy)
     xfall = 8.24e-05 * np.power(energy,4./3)
-    wfall = 0.000373 * x
+    wfall = 0.000373 * energy 
     y=np.zeros(x.shape)
     inds = np.where(x>0)
     f = a*np.power(x[inds],int(2))+c*np.power(x[inds],p)
@@ -154,18 +154,17 @@ def fourier_shift_decay_integrate(x,t=0.,alpha=10e-3):
     return result
 
 def main():
-    span = 1e4
-    xvals = np.arange(-span//100,99*span//100,dtype=float)
-    y = diamond_cascade_params(xvals,energy=0.5)
-    y0 = diamond_cascade_params(xvals,energy=1)
-    y1 = diamond_cascade_params(xvals,energy=3)
-    y2 = diamond_cascade_params(xvals,energy=5)
-    y3 = diamond_cascade_params(xvals,energy=9)
-    y4 = diamond_cascade_params(xvals,energy=15)
-    y5 = diamond_cascade_params(xvals,energy=24)
-    y6 = diamond_cascade_params(xvals,energy=50)
-    y7 = diamond_cascade_params(xvals,energy=100)
-    y8 = diamond_cascade_params_integral(xvals,energy=100)
+    span = 10e3 # ps
+    step = .1 #fs
+    xvals = np.arange(-span//100,99*span//100,step,dtype=float)
+    y = diamond_cascade_params_improved(xvals,energy=532)
+    y0 = diamond_cascade_params_improved(xvals,energy=1000)
+    y1 = diamond_cascade_params_improved(xvals,energy=2000)
+    y2 = diamond_cascade_params_improved(xvals,energy=5000)
+    y3 = diamond_cascade_params_improved(xvals,energy=9500)
+    y4 = diamond_cascade_params_improved(xvals,energy=16000)
+    y5 = diamond_cascade_params_improved(xvals,energy=24000)
+    y6 = diamond_cascade_params_improved(xvals,energy=32000)
     sy = simple_integrate(y)
     sy0 = simple_integrate(y0)
     sy1 = simple_integrate(y1)
@@ -174,10 +173,9 @@ def main():
     sy4 = simple_integrate(y4)
     sy5 = simple_integrate(y5)
     sy6 = simple_integrate(y6)
-    sy7 = simple_integrate(y7)
-    out = np.column_stack((xvals,y,y0,y1,y2,y3,y4,y5,y6,y7,y8))
+    out = np.column_stack((xvals,y,y0,y1,y2,y3,y4,y5,y6))
     np.savetxt('cascades_function.out',out,fmt='%.4f')
-    out = np.column_stack((xvals,sy,sy0,sy1,sy2,sy3,sy4,sy5,sy6,sy7))
+    out = np.column_stack((xvals,sy,sy0,sy1,sy2,sy3,sy4,sy5,sy6))
     np.savetxt('cascades_function.integrated.out',out,fmt='%.4f')
 
     return 0
