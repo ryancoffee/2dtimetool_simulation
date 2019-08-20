@@ -65,6 +65,7 @@ int main(int argc, char* argv[])
 
 	scanparams.etalonreflectance(atof(getenv("etalon")));
 	scanparams.etalondelay(atof(getenv("etalondelay")));
+	scanparams.etalondelaymaxdelta(atof(getenv("etalondelaymaxdelta")));
 	scanparams.interferedelay((double)atof(getenv("interferedelay")));
 
 	scanparams.chirp(
@@ -91,8 +92,17 @@ int main(int argc, char* argv[])
 	masterbundle.fiberdiameter(boost::lexical_cast<float>(atof(getenv("fiberdiam"))));
 	masterbundle.laserdiameter(boost::lexical_cast<float>(atof(getenv("laserdiam"))));
 	masterbundle.xraydiameter(boost::lexical_cast<float>(atof(getenv("xraydiam"))));
+	masterbundle.thermaldiameter(boost::lexical_cast<float>(atof(getenv("thermaldiam"))));
+	masterbundle.thermalcenter(boost::lexical_cast<float>(atof(getenv("thermalcenter_x"))), boost::lexical_cast<float>(atof(getenv("thermalcenter_y"))));
+	masterbundle.ThermalEtalonDelay(boost::lexical_cast<float>(atof(getenv("etalondelaymaxdelta"))));
 	masterbundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
 	masterbundle.scalePolarCoords();
+
+/*
+ *
+ * HERE HERE HERE HERE
+ * uset the thermal center and diameter to set the etalon delay appropriately.
+ */
 
 	std::cout << "\t\tshuffle fibers?\t";
 	if (getenv("shuffle_fibers"))
@@ -252,7 +262,7 @@ int main(int argc, char* argv[])
 
 				for (size_t e=0;e<scanparams.netalon();e++){ // begin etalon loop
 					// back propagation step //
-					double etalondelay = startdelay - double(e+1) * (calibresponse.getetalondelay()); 
+					double etalondelay = startdelay - double(e+1) * (calibresponse.getetalondelay() ); 
 					// at front surface, x-rays see counter-propagating light from one full etalon delay
 
 					// reset back to calpulse for each round
@@ -497,6 +507,9 @@ int main(int argc, char* argv[])
 				parabundle.delay_angle(scanparams.dalpha()*double(n));
 				parabundle.center_Ixray(scanparams.xray_pos_rand(),scanparams.xray_pos_rand());
 				parabundle.center_Ilaser(scanparams.laser_pos_rand(),scanparams.laser_pos_rand());
+				parabundle.center_EtalonDelta();
+				parabundle.width_EtalonDelta();
+	double etalondelaymaxdelta(double in){ etdelaymaxdelta = in; return etdelaymaxdelta;}
 
 
 
@@ -560,7 +573,7 @@ int main(int argc, char* argv[])
 						//std::cerr << "tid = " << tid << "\tpulse/crosspulse.domain() = " << pulse.domain() << "/" << crosspulse.domain() << "\n" << std::flush;
 						//std::cerr << "\n\t\t ---- starting etalon at " << e << " ----\n" << std::flush;
 						// back propagation step //
-						double etalondelay = startdelay - double(e+1) * (pararesponse.getetalondelay()); 
+						double etalondelay = startdelay - double(e+1) * (pararesponse.getetalondelay() + parabundle.EtalonDelayDelta(f)); 
 						// at front surface, x-rays see counter-propagating light from one full etalon delay
 
 						etalonpulse = pulse;
@@ -613,9 +626,9 @@ int main(int argc, char* argv[])
 						//std::cerr << "etalonpulse/crossetalonpulse.domain() = " << etalonpulse.domain() << "/" << crossetalonpulse.domain() << "\n" << std::flush;
 						etalonpulse.fft_tofreq();
 						crossetalonpulse.fft_tofreq();
-						etalonpulse.delay(pararesponse.getetalondelay()); // delay and attenuate in frequency domain
+						etalonpulse.delay(pararesponse.getetalondelay() + parabundle.EtalonDelayDelta(f)); // delay and attenuate in frequency domain
 						etalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
-						crossetalonpulse.delay(pararesponse.getetalondelay()); // delay and attenuate in frequency domain
+						crossetalonpulse.delay(pararesponse.getetalondelay() + parabundle.EtalonDelayDelta(f)); // delay and attenuate in frequency domain
 						crossetalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
 						etalonpulse.fft_totime();
 						crossetalonpulse.fft_totime();

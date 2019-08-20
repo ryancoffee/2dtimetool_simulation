@@ -63,8 +63,12 @@ class ScanParams
 	double etalondelay(double in){ etdelay = in; return etdelay;}
 	inline double etalondelay(void){ return etdelay;}
 
+	double etalondelaymaxdelta(double in){ etdelaymaxdelta = in; return etdelaymaxdelta;}
+	inline double etalondelaymaxdelta(void){ return etdelaymaxdelta;}
+
 	double etalonreflectance(double in){ etreflect = in; return etreflect;}
 	inline double etalonreflectance(void){ return etreflect;}
+	
 	double interferedelay(double in){interferedly = in; return interferedly;}
 	inline double interferedelay(void){return interferedly;}
 
