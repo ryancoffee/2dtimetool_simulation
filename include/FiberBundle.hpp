@@ -21,31 +21,33 @@ class FiberBundle {
 		void scalePolarCoords(void);
 		inline void set_fsPmm(const double x = 3333){fsPmm = x;}
 
-		inline void fiberdiameter(const double x){ fiberdiam = x; for (size_t i=0;i<ovals.size();++i){ovals[i] = fiberdiam * double(i);}}
-		inline void laserdiameter(const double x){ laserdiam = x; }
-		inline void xraydiameter(const double x){ xraydiam = x; }
+		inline void fiberdiameter(const double x){ fiberdiam = x; for (size_t i=0;i<ovals.size();++i){ovals[i] = fiberdiam * double(i);} }
+		inline double laserdiameter(const double x){ laserdiam = x; return laserdiam; }
+		inline double xraydiameter(const double x){ xraydiam = x; return xraydiam; }
+		inline double thermaldiameter(const double x){ thermaldiam = x; return thermaldiam; }
 		inline double fiberdiameter(void){ return fiberdiam; }
 		inline double laserdiameter(void){ return laserdiam; }
 		inline double xraydiameter(void){ return xraydiam; }
-		inline void Ilaser(const double x){ilaser=x;}
-		inline void Ixray(const double x){ixray=x;}
+		inline double thermaldiameter(void){ return thermaldiam; }
+		inline double Ilaser(const double x){ilaser=x; return ilaser; }
+		inline double Ixray(const double x){ixray=x; return ixray; }
 		inline double Ilaser(void){return ilaser;}
 		inline double Ixray(void){return ixray;}
 		inline double Ilaser(const size_t i){return ilaser*std::exp(-std::pow(std::abs(zvals[ids[i]]-laser_center)/laserdiam,int(2)));}
-		inline double thermal(const size_t i){return thermaletalonmax*std::exp(-std::pow(std::abs(zvals[ids[i]]-thermalcenter)/laserdiam,int(2)));}
-		inline double ThermalEtalonDelay(const double x){thermaletalonmax = x; return thermaletalonmax;}
-		inline double ThermalEtalonDelay(void){return thermaletalonmax;}
+		inline double ThermalEtalonDelta(const size_t i){return thermaletalonmax*std::exp(-std::pow(std::abs(zvals[ids[i]]-thermalcenter)/thermaldiam,int(2)));}
+		inline double ThermalEtalonDelta(const double x){thermaletalonmax = x; return thermaletalonmax;}
+		inline double ThermalEtalonDelta(void){return thermaletalonmax;}
 		void print_zvals(void);
 
 		inline double Ixray(const size_t i){return std::exp(-1.0*std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
 		//inline double Ixray(const size_t i){return ixray*std::exp(-1.0*std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
-		inline void center_Ilaser(const double dx,const double dy){laser_center = std::complex<double>(dx,dy);}
-		inline void center_Ixray(const double dx,const double dy){xray_center = std::complex<double>(dx,dy);}
-		inline void center_theram(const double dx,const double dy){thermalcenter = std::complex<double>(dx,dy);}
+		inline std::complex<double> center_Ilaser(const double dx,const double dy){laser_center = std::complex<double>(dx,dy); return laser_center; }
+		inline std::complex<double> center_Ixray(const double dx,const double dy){xray_center = std::complex<double>(dx,dy); return xray_center; }
+		inline std::complex<double> center_thermal(const double dx,const double dy){thermalcenter = std::complex<double>(dx,dy); return thermal_center; }
 		inline std::complex<double> center_Ilaser(void){return laser_center;}
 		inline std::complex<double> center_Ixray(void){return xray_center;}
 		inline std::complex<double> center_thermal(void){return thermalcenter;}
-		inline void delay_angle(const double a){alpha = a;}
+		inline double delay_angle(const double a){alpha = a; return alpha; }
 		inline double delay_angle(void){return alpha;}
 		inline double delay(const size_t i){ return fsPmm * (std::cos(alpha)*x(i) + std::sin(alpha)*y(i)); }
 		inline double x(const size_t i){return zvals[ids[i]].real();}

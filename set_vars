@@ -14,8 +14,8 @@ export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_pho
 export carriersfilename='OUTPUT_BSO_Density_derivative.dat';
 export carriersdir='./data_fs/reference/fromNikita/';
 export carriersfilename='OUTPUT_YAG_Density_9500.dat';
-#export usediamond=true;
-unset usediamond;
+#unset usediamond;
+export usediamond=true;
 export carriertag='YAG9.5keV'
 export xrayphoton_energy=9.5; #40; # this is in keV
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat';

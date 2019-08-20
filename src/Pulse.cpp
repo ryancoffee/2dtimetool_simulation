@@ -1,4 +1,4 @@
-// Pulse clas implimentation
+// Pulse class implimentation
 // standard includes
 #include <cmath>
 #include <iterator>
