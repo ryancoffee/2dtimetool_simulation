@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
-#include <boost/numpy.hpp>
 #include <complex>
 #include <memory>
 #include <fftw3.h>
@@ -65,7 +64,6 @@ int main(int argc, char* argv[])
 
 	scanparams.etalonreflectance(atof(getenv("etalon")));
 	scanparams.etalondelay(atof(getenv("etalondelay")));
-	scanparams.etalondelaymaxdelta(atof(getenv("etalondelaymaxdelta")));
 	scanparams.interferedelay((double)atof(getenv("interferedelay")));
 
 	scanparams.chirp(

@@ -43,7 +43,7 @@ class FiberBundle {
 		//inline double Ixray(const size_t i){return ixray*std::exp(-1.0*std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
 		inline std::complex<double> center_Ilaser(const double dx,const double dy){laser_center = std::complex<double>(dx,dy); return laser_center; }
 		inline std::complex<double> center_Ixray(const double dx,const double dy){xray_center = std::complex<double>(dx,dy); return xray_center; }
-		inline std::complex<double> center_thermal(const double dx,const double dy){thermalcenter = std::complex<double>(dx,dy); return thermal_center; }
+		inline std::complex<double> center_thermal(const double dx,const double dy){thermalcenter = std::complex<double>(dx,dy); return thermalcenter; }
 		inline std::complex<double> center_Ilaser(void){return laser_center;}
 		inline std::complex<double> center_Ixray(void){return xray_center;}
 		inline std::complex<double> center_thermal(void){return thermalcenter;}
@@ -64,7 +64,7 @@ class FiberBundle {
 		double ilaser,ixray,alpha,thermaletalonmax;
 		std::complex<double> laser_center;
 		std::complex<double> xray_center;
-		std::complex<double> thermal_center;
+		std::complex<double> thermalcenter;
 		std::vector<size_t> ids;
 		std::vector<double> ovals;
 		std::vector<std::complex<double> > zvals;
