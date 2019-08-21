@@ -3,7 +3,7 @@
 starttime=$(date +%s);
 export HOSTNAME=$HOSTNAME:
 
-export nthreads=4;
+export nthreads=2;
 #export datadir='./data_container/raw/';
 export datadir='./data_fs/raw/';
 export calibdir='./data_fs/extern/';
@@ -72,14 +72,14 @@ export tspan=16384;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
 export backdelay=0.5; 
-export netalon=2; #2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
+export netalon=1; #2; # set to 0 for no etalon or any integer > 0 for etalon bounce roundtrips.
 export etalon=.16; #0.16; #0.08; # .017; # 0.11; #((n1-n2)/(n1+n2))**2 power for surface normal bounce so (1/3)**2 for SiN, .017 for water (0.3/2.3)**2
 # n1=1 n2 = 1.8328 for YAG --> etalon = (.8/2.8)**2 = 0.081
 # YAG index 1.8
 #export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
 #export etalondelay=240; # for YAG at 20 microns thick 20 mu / .3 [mu/fs] * n_yag * 2 for double pass = 240 fs roundtrip delay
 export etalondelay=88; # 5.5 microns of diamond, 
-export etalondelaymaxdelta=40; # really this is more like a fraction of the total etalon delay, more like 1--10 nm only... 2.4/C*l = 0.016
+export etalondelaymaxdelta=10; # really this is more like a fraction of the total etalon delay, more like 1--10 nm only... 2.4/C*l = 0.016
 # this should be n(omega)*thickness/C = 1.5*10microns/(.3micronsPfs) = 15/.3 in femtoseconds
 # try delays again... etalon delay is the round trip of the light, .3microns/fs is C, so 1fs in .3 microns, double passed means 6fs in a SiN of 1 micron thick... N=2, C=.3microns/fs, thickness = 2 microns, double pass gives 4 microns of delay... so 2/.3*2*2 = 8/.3 
 # 1.3/.3*10microns*2 double pass for liquid water sheet = 86.6 fs.
@@ -102,7 +102,7 @@ export nu_high=0.769; # 390nm
 ## 1 + sum_{n=1,nrows} n * 6
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
-export nfibers=19; #109; #61; #61; #109;
+export nfibers=61; #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 #export shuffle_fibers=1;
