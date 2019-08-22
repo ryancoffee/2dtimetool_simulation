@@ -110,6 +110,7 @@ int main(int argc, char* argv[])
 		std::cout << "no\n";
 	}
 
+	std::cerr << "HERE HERE HERE HERE\n\t\tWHy can't we shuffle fibers on the home machines? (pavoni)\n" << std::flush;
 	masterbundle.Ixray(float(1.));
 	masterbundle.Ilaser(float(1.));
 	std::string filename = scanparams.filebase() + "fibermap.out";
