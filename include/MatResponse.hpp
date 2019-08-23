@@ -46,7 +46,16 @@ public:
 		beta=fsPau<double>()*betain;
 	}
 
-	inline double bandgap(double in=4.47){bandgap_eV = in; return bandgap_eV;}
+	inline double n_refractive(void){return n_refractive;}
+	inline double n_refractive(const double TinK, const double n0, const double n_a, const double n_b){
+		//export n_0=2.38;
+		//export n_a=1.5;
+		//export n_b=-13.9931;
+		n_refractive = std::exp( (std::log(TinK) - n_b ) / n_a ) + n_0;
+		return n_refractive;
+	}
+	
+ 	inline double bandgap(double in=4.47){bandgap_eV = in; return bandgap_eV;}
 	inline double bandgap(void){return bandgap_eV;}
 
 	void setstepvec_amp(PulseFreq & pulse,double delay_in = 0.);
@@ -97,6 +106,7 @@ private:
 	double t0,twidth,attenuation,phase,a,alpha,b,beta,scale;
 	double etalondelay, reflectance;
 	double bandgap_eV;
+	double n_refractive;
         std::vector<double> carriers;
 };
 

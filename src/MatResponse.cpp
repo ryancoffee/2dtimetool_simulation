@@ -20,6 +20,7 @@ MatResponse::MatResponse(MatResponse & rhs) // copy constructor
 , etalondelay(rhs.etalondelay)
 , reflectance(rhs.reflectance)
 , bandgap_eV(rhs.bandgap_eV)
+, n_refractive(2.4)
 {
 		carriers.resize(rhs.carriers.size(),0.);
 		std::copy(rhs.carriers.begin(),rhs.carriers.end(),carriers.begin());
@@ -31,6 +32,7 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
 , attenuation(atten_in)
 , phase(phase_in)
 , carriers_set(false)
+, n_refractive(2.4)
 {     
 	carriers.resize(10,0.);
 	std::cerr << "In constructor MatRespons() " << std::endl;

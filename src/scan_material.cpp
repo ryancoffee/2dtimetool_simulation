@@ -141,6 +141,10 @@ int main(int argc, char* argv[])
 
 	masterresponse.setreflectance(scanparams.etalonreflectance());
 	masterresponse.setetalondelay(scanparams.etalondelay());
+	masterresponse.n_refractive(double(atof(getenv()))
+				double(atof(getenv("n_0"))),
+				double(atof(getenv("n_a"))),
+				double(atof(getenv("n_b"))))
 
 	std::cout << "initializing masterpulse and masterplans" << std::endl << std::flush;
 	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());

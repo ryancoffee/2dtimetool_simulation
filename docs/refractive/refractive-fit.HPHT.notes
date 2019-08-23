@@ -1,0 +1,42 @@
+gnuplot> fit f(x) file u (log($1)):(log($2-2.38)) via b   
+iter      chisq       delta/lim  lambda   b            
+   0 3.8245285818e+00   0.00e+00  1.38e+01   -1.383858e+01
+   1 6.8509663041e-01  -4.58e+05  1.38e+00   -1.416760e+01
+   2 6.8108713932e-01  -5.89e+02  1.38e-01   -1.417978e+01
+   3 6.8108713877e-01  -8.07e-05  1.38e-02   -1.417979e+01
+iter      chisq       delta/lim  lambda   b            
+
+After 3 iterations the fit converged.
+final sum of squares of residuals : 0.681087
+rel. change during last iteration : -8.06933e-10
+
+degrees of freedom    (FIT_NDF)                        : 26
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 0.161851
+variance of residuals (reduced chisquare) = WSSR/ndf   : 0.0261957
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+b               = -14.1798         +/- 0.03115      (0.2197%)
+gnuplot> rep
+gnuplot> fit f(x) file u (log($1)):(log($2-2.376)) via b  
+iter      chisq       delta/lim  lambda   b            
+   0 1.7707080995e+00   0.00e+00  1.42e+01   -1.417979e+01
+   1 2.0195759477e-01  -7.77e+05  1.42e+00   -1.394720e+01
+   2 1.9995408227e-01  -1.00e+03  1.42e-01   -1.393859e+01
+   3 1.9995408199e-01  -1.37e-04  1.42e-02   -1.393859e+01
+iter      chisq       delta/lim  lambda   b            
+
+After 3 iterations the fit converged.
+final sum of squares of residuals : 0.199954
+rel. change during last iteration : -1.37345e-09
+
+degrees of freedom    (FIT_NDF)                        : 26
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 0.0876957
+variance of residuals (reduced chisquare) = WSSR/ndf   : 0.00769054
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+b               = -13.9386         +/- 0.01688      (0.1211%)
+
+
+holding power to 3/2 (1.5)
