@@ -46,14 +46,14 @@ public:
 		beta=fsPau<double>()*betain;
 	}
 
-	inline double n_refractive(void){return n_refractive;}
-	inline double n_refractive(const double TinK, const double n0, const double n_a, const double n_b){
-		//export n_0=2.38;
-		//export n_a=1.5;
-		//export n_b=-13.9931;
-		n_refractive = std::exp( (std::log(TinK) - n_b ) / n_a ) + n_0;
-		return n_refractive;
+	inline double thermaletalondelay(const double TinK = 300.){
+		return n_refractive(TinK)/C_umPfs<double>()*l_thickness_um * 2;
 	}
+	inline double n_refractive(const double TinK = 300.){
+		return std::exp( (std::log(TinK) - n_b ) / n_a ) + n_0;
+	}
+	void set_n_refractive(const double n_0in, const double n_ain, const double n_bin);
+	void set_thickness(const double lin);
 	
  	inline double bandgap(double in=4.47){bandgap_eV = in; return bandgap_eV;}
 	inline double bandgap(void){return bandgap_eV;}
@@ -106,7 +106,7 @@ private:
 	double t0,twidth,attenuation,phase,a,alpha,b,beta,scale;
 	double etalondelay, reflectance;
 	double bandgap_eV;
-	double n_refractive;
+	double n_0,n_a,n_b,l_thickness_um;
         std::vector<double> carriers;
 };
 

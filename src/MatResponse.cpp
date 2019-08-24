@@ -20,7 +20,10 @@ MatResponse::MatResponse(MatResponse & rhs) // copy constructor
 , etalondelay(rhs.etalondelay)
 , reflectance(rhs.reflectance)
 , bandgap_eV(rhs.bandgap_eV)
-, n_refractive(2.4)
+, n_0(2.38)
+, n_a(1.5)
+, n_b(-13.9931)
+, l_thickness_um(5.5)
 {
 		carriers.resize(rhs.carriers.size(),0.);
 		std::copy(rhs.carriers.begin(),rhs.carriers.end(),carriers.begin());
@@ -32,7 +35,10 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
 , attenuation(atten_in)
 , phase(phase_in)
 , carriers_set(false)
-, n_refractive(2.4)
+, n_0(2.38)
+, n_a(1.5)
+, n_b(-13.9931)
+, l_thickness_um(5.5)
 {     
 	carriers.resize(10,0.);
 	std::cerr << "In constructor MatRespons() " << std::endl;
@@ -85,6 +91,16 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
     return y
 
 */
+
+void MatResponse::set_n_refractive(const double n_0in = 2.38, const double n_ain = 1.5, const double n_bin = -13.9931){
+	n_0 = n_0in;
+	n_a = n_ain;
+	n_b = n_bin;
+}
+void MatResponse::set_thickness(const double lin){
+	l_thickness_um = lin;
+}
+
 bool MatResponse::fill_carriersvec(PulseFreq * pulse,std::ifstream * instream){return fill_carriersvec(*pulse,*instream);}
 bool MatResponse::fill_carriersvec(PulseFreq & pulse,std::ifstream & instream)
 {

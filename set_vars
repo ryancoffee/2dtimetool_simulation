@@ -82,7 +82,9 @@ export n_b=-13.9931;
 #export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
 #export etalondelay=240; # for YAG at 20 microns thick 20 mu / .3 [mu/fs] * n_yag * 2 for double pass = 240 fs roundtrip delay
 export etalondelay=800; # 800=50 microns diamond  88; # 5.5 microns of diamond, 
-export etalondelaymaxdelta=.002; # really this is a fraction since it multiplies the bulk etalon by (1 + etalondelaymaxdelta)
+export l_thickness=5.5 # used for etalon calculation
+export TmaxK=500;
+export TbaseK=300;
 # of the total etalon delay, more like 1--10 nm only... 2.4/C*l = 0.016
 # this should be n(omega)*thickness/C = 1.5*10microns/(.3micronsPfs) = 15/.3 in femtoseconds
 # try delays again... etalon delay is the round trip of the light, .3microns/fs is C, so 1fs in .3 microns, double passed means 6fs in a SiN of 1 micron thick... N=2, C=.3microns/fs, thickness = 2 microns, double pass gives 4 microns of delay... so 2/.3*2*2 = 8/.3 
@@ -176,7 +178,7 @@ export FODnoise=0;
 export fifthODnoise=0;
 
 export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
-export interferephase=1.1;
+export interferephase=1.25;
 export gain=200000000000; #20000000;
 export saturate=40960;
 export lamsamples=4096; #1024;

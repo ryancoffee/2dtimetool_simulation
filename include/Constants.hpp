@@ -38,6 +38,8 @@ namespace Constants {
 	template <typename T>
 	inline T C_nmPfs(void) { return T(2.99792458e2); } //2.99792458e2 // nm/fs
 	template <typename T>
+	inline T C_umPfs(void) { return T(0.299792458); } //2.99792458e2 // nm/fs
+	template <typename T>
 	inline T MC2(void) { return T(931.494028e6); } // eV [u of atomic mass in eV]
 	template <typename T>
 	inline T mc2inau(void) { return MC2<T>()/Eh<T>(); }

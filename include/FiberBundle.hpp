@@ -34,9 +34,9 @@ class FiberBundle {
 		inline double Ilaser(void){return ilaser;}
 		inline double Ixray(void){return ixray;}
 		inline double Ilaser(const size_t i){return ilaser*std::exp(-std::pow(std::abs(zvals[ids[i]]-laser_center)/laserdiam,int(2)));}
-		inline double ThermalEtalonDelta(const size_t i){return thermaletalonmax*std::exp(-std::pow(std::abs(zvals[ids[i]]-thermalcenter)/thermaldiam,int(2)));}
-		inline double ThermalEtalonDelta(const double x){thermaletalonmax = x; return thermaletalonmax;}
-		inline double ThermalEtalonDelta(void){return thermaletalonmax;}
+		void setTmax_Tbase(const double Tmax,const double Tbase){Tmax_K = Tmax; Tbase_K = Tbase; }
+		inline double TinK(const size_t i){Tmax_K*std::exp(-std::pow(std::abs(zvals[ids[i]]-thermalcenter)/thermaldiam,int(2)));}
+
 		void print_zvals(void);
 
 		inline double Ixray(const size_t i){return std::exp(-1.0*std::pow(std::abs(zvals[ids[i]]-xray_center)/xraydiam,int(2)));}
@@ -61,7 +61,7 @@ class FiberBundle {
 	private:
 		size_t nfibers;
 		double fsPmm,fiberdiam,laserdiam,xraydiam,thermaldiam;
-		double ilaser,ixray,alpha,thermaletalonmax;
+		double ilaser,ixray,alpha,Tmax_K,Tbase_K;
 		std::complex<double> laser_center;
 		std::complex<double> xray_center;
 		std::complex<double> thermalcenter;

@@ -39,7 +39,9 @@ int main(int argc, char* argv[])
 	}
 	std::cout << std::flush;
 
+
 	ScanParams scanparams;
+	std::cerr << "\n\t\tHERE HERE HERE HERE\n\n" << std::flush;
 	scanparams.nimages(size_t(atoi(getenv("nimages"))));
 	scanparams.filebase(std::string(getenv("filebase")));
 	scanparams.calfilebase(std::string(getenv("calfilebase")));
@@ -47,6 +49,7 @@ int main(int argc, char* argv[])
 	std::vector<float> imagetimes(scanparams.nimages(),0); // for benchmarking the processors
 
 	scanparams.dalpha((atof(getenv("drifting_alpha")))*pi<double>()/scanparams.nimages());
+
 
 	if (scanparams.doublepulse(atoi(getenv("doublepulse")) > 0 )){
 		scanparams.doublepulsedelay(atof( getenv("doublepulsedelay") ) ) ; // this one gets used directly in atomic units
@@ -56,14 +59,17 @@ int main(int argc, char* argv[])
 	scanparams.lambda_onoff( atof( getenv("lambda_onoff") ));
 	scanparams.tspan((atof( getenv("tspan") ) )/fsPau<double>());
 
+
 	scanparams.ngroupsteps(atoi( getenv("ngroupsteps") ));
 	scanparams.groupdelay(atof(getenv("groupdelay")));
 	scanparams.backdelay(atof(getenv("backdelay")));
 	scanparams.netalon(atoi(getenv("netalon")));
 
 
+
 	scanparams.etalonreflectance(atof(getenv("etalon")));
-	scanparams.etalondelay(atof(getenv("etalondelay")));
+	scanparams.etalondelay(double(atof(getenv("etalondelay"))));
+	std::cerr << "\n\t\tHERE HERE before FiberBundle HERE HERE\n\n" << std::flush;
 	scanparams.interferedelay((double)atof(getenv("interferedelay")));
 
 	scanparams.chirp(
@@ -92,15 +98,10 @@ int main(int argc, char* argv[])
 	masterbundle.xraydiameter(boost::lexical_cast<float>(atof(getenv("xraydiam"))));
 	masterbundle.thermaldiameter(boost::lexical_cast<float>(atof(getenv("thermaldiam"))));
 	masterbundle.center_thermal(boost::lexical_cast<float>(atof(getenv("thermalcenter_x"))), boost::lexical_cast<float>(atof(getenv("thermalcenter_y"))));
-	masterbundle.ThermalEtalonDelta(boost::lexical_cast<float>(atof(getenv("etalondelaymaxdelta"))));
+
+	masterbundle.setTmax_Tbase(boost::lexical_cast<float>(atof(getenv("TmaxK"))),boost::lexical_cast<float>(atof(getenv("TbaseK"))));
 	masterbundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
 	masterbundle.scalePolarCoords();
-
-/*
- * HERE HERE HERE HERE
- * uset the thermal center and diameter to set the etalon delay appropriately.
- * Maybe now done --082019--
- */
 
 	std::cout << "\t\tshuffle fibers?\t";
 	if (getenv("shuffle_fibers"))
@@ -141,10 +142,12 @@ int main(int argc, char* argv[])
 
 	masterresponse.setreflectance(scanparams.etalonreflectance());
 	masterresponse.setetalondelay(scanparams.etalondelay());
-	masterresponse.n_refractive(double(atof(getenv()))
-				double(atof(getenv("n_0"))),
+	masterresponse.set_thickness(double(atof(getenv("l_thickness"))));
+	masterresponse.set_n_refractive(double(atof(getenv("n_0"))),
 				double(atof(getenv("n_a"))),
-				double(atof(getenv("n_b"))))
+				double(atof(getenv("n_b")))
+				);
+
 
 	std::cout << "initializing masterpulse and masterplans" << std::endl << std::flush;
 	PulseFreq masterpulse(scanparams.omega0(),scanparams.omega_width(),scanparams.omega_onoff(),scanparams.tspan());
@@ -573,7 +576,7 @@ int main(int argc, char* argv[])
 						//std::cerr << "tid = " << tid << "\tpulse/crosspulse.domain() = " << pulse.domain() << "/" << crosspulse.domain() << "\n" << std::flush;
 						//std::cerr << "\n\t\t ---- starting etalon at " << e << " ----\n" << std::flush;
 						// back propagation step //
-						double etalondelay = startdelay - double(e+1) * pararesponse.getetalondelay() * ( 1. + parabundle.ThermalEtalonDelta(f) ); 
+						double etalondelay = startdelay - double(e+1) * pararesponse.thermaletalondelay(parabundle.TinK(f)); 
 						// at front surface, x-rays see counter-propagating light from one full etalon delay
 
 						etalonpulse = pulse;
@@ -626,9 +629,11 @@ int main(int argc, char* argv[])
 						//std::cerr << "etalonpulse/crossetalonpulse.domain() = " << etalonpulse.domain() << "/" << crossetalonpulse.domain() << "\n" << std::flush;
 						etalonpulse.fft_tofreq();
 						crossetalonpulse.fft_tofreq();
-						etalonpulse.delay(pararesponse.getetalondelay() * ( 1. + parabundle.ThermalEtalonDelta(f)) ); // delay and attenuate in frequency domain
+						//etalonpulse.delay(pararesponse.getetalondelay() * ( 1. + parabundle.ThermalEtalonDelta(f)) ); // delay and attenuate in frequency domain
+						etalonpulse.delay(pararesponse.thermaletalondelay(parabundle.TinK(f))) ; // delay and attenuate in frequency domain
 						etalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
-						crossetalonpulse.delay(pararesponse.getetalondelay() * (1. + parabundle.ThermalEtalonDelta(f)) ); // delay and attenuate in frequency domain
+						crossetalonpulse.delay(pararesponse.thermaletalondelay(parabundle.TinK(f)));
+								//pararesponse.getetalondelay() * (1. + parabundle.ThermalEtalonDelta(f)) ); // delay and attenuate in frequency domain
 						crossetalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
 						etalonpulse.fft_totime();
 						crossetalonpulse.fft_totime();
