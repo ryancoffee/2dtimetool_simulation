@@ -38,6 +38,7 @@ public:
 	MatResponse(MatResponse & rhs);
 	~MatResponse(void){}
 	
+	MatResponse & operator=(const MatResponse & rhs);
 	
 	void aalphabbeta(double ain,double alphain,double bin,double betain){
 		a=ain/(ain+bin);

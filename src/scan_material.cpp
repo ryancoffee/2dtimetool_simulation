@@ -41,7 +41,6 @@ int main(int argc, char* argv[])
 
 
 	ScanParams scanparams;
-	std::cerr << "\n\t\tHERE HERE HERE HERE\n\n" << std::flush;
 	scanparams.nimages(size_t(atoi(getenv("nimages"))));
 	scanparams.filebase(std::string(getenv("filebase")));
 	scanparams.calfilebase(std::string(getenv("calfilebase")));
@@ -69,7 +68,6 @@ int main(int argc, char* argv[])
 
 	scanparams.etalonreflectance(atof(getenv("etalon")));
 	scanparams.etalondelay(double(atof(getenv("etalondelay"))));
-	std::cerr << "\n\t\tHERE HERE before FiberBundle HERE HERE\n\n" << std::flush;
 	scanparams.interferedelay((double)atof(getenv("interferedelay")));
 
 	scanparams.chirp(
@@ -106,26 +104,29 @@ int main(int argc, char* argv[])
 	std::cout << "\t\tshuffle fibers?\t";
 	if (getenv("shuffle_fibers"))
 	{
-		std::cout << "yes\n";masterbundle.shuffle_output();
+		std::cout << "yes\n";
+		if (!masterbundle.shuffle_output())
+			std::cerr << "The rerturn from masterbundle.shuffle_output() was false\t-- something failed\n" << std::flush;
 	} else {
 		std::cout << "no\n";
 	}
 
-	std::cerr << "HERE HERE HERE HERE\n\t\tWHy can't we shuffle fibers on the home machines? (pavoni)\n" << std::flush;
 	masterbundle.Ixray(float(1.));
 	masterbundle.Ilaser(float(1.));
 	std::string filename = scanparams.filebase() + "fibermap.out";
 	std::cout << "fibermap file = " << filename << std::endl << std::flush;
 	std::ofstream mapfile(filename.c_str(),std::ios::out);
-	//masterbundle.print_mapping(mapfile,double(0.0));
+	masterbundle.print_mapping(mapfile,double(0.0));
 	mapfile.close();
 
 	// file for delay bins
-	ofstream outbins(std::string(scanparams.filebase() + "delaybins.out").c_str(),ios::out); 
-	for (size_t f=0;f<masterbundle.get_nfibers();++f){
-		outbins << masterbundle.delay(f) << "\n";
+	if (!getenv("skipcalibration")){
+		ofstream outbins(std::string(scanparams.filebase() + "delaybins.out").c_str(),ios::out); 
+		for (size_t f=0;f<masterbundle.get_nfibers();++f){
+			outbins << masterbundle.delay(f) << "\n";
+			outbins.close();
+		}
 	}
-	outbins.close();
 
 	MatResponse masterresponse(
 			0,															// stepdelay
@@ -446,7 +447,7 @@ int main(int argc, char* argv[])
 
 	//############## Images section ##############
 
-#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse)
+#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams)
 		{
 	if (!getenv("skipimages"))
 	{
@@ -454,8 +455,10 @@ int main(int argc, char* argv[])
 			size_t tid = omp_get_thread_num();
 			size_t nfibers = masterbundle.get_nfibers();
 
+
 			FiberBundle parabundle(masterbundle);
 			MatResponse pararesponse(masterresponse);
+
 
 			PulseFreq pulse(masterpulse);
 			PulseFreq crosspulse(masterpulse);
@@ -488,11 +491,12 @@ int main(int argc, char* argv[])
 	produces a time-ordered series of images who are comprised of the most recent n_overlay images that
 	are superimposed with a 1x row-shift
 */
+			//std::cerr << "Entering parallel for loop with nimages = "  << scanparams.nimages() << "\n" << std::flush;
 #pragma omp for schedule(dynamic)
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //
 				//std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
-				if (n==0 & tid==0) {
+				if (n<nthreads & tid==0) {
 					std::cout << "========================================================================="
 						<<   "\n\t\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
 						<<   "\n\t\t ====         use this for defining multiple fibers as         ===="
@@ -520,7 +524,8 @@ int main(int argc, char* argv[])
 				std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
 				//std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
 				std::ofstream mapfile(mapfilename.c_str(),std::ios::out);
-				parabundle.print_mapping(mapfile,t0);
+				if (!parabundle.print_mapping(mapfile,t0))
+					std::cerr << "Something failed in printing this fibermapping out\n" << std::flush;
 				mapfile.close();
 
 
@@ -573,8 +578,8 @@ int main(int argc, char* argv[])
 
 
 					for (size_t e=0;e<scanparams.netalon();e++){ // begin etalon loop
-						//std::cerr << "tid = " << tid << "\tpulse/crosspulse.domain() = " << pulse.domain() << "/" << crosspulse.domain() << "\n" << std::flush;
 						//std::cerr << "\n\t\t ---- starting etalon at " << e << " ----\n" << std::flush;
+						//std::cerr << "parabundle.TinK( " << f << " ) is " << parabundle.TinK(f) << "\n" << std::flush;
 						// back propagation step //
 						double etalondelay = startdelay - double(e+1) * pararesponse.thermaletalondelay(parabundle.TinK(f)); 
 						// at front surface, x-rays see counter-propagating light from one full etalon delay
@@ -646,7 +651,7 @@ int main(int argc, char* argv[])
 					crosspulse.fft_tofreq();
 					pulse.delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 					pulse -= crosspulse;
-					// std::cerr << "\n\n\t\t\t\t============== testing... just before the push_back() ==============\n\n" << std::flush;
+					//std::cerr << "\n\n\t\t\t\t============== testing... just before the push_back() ==============\n\n" << std::flush;
 					pulsearray[f] = pulse;
 				} // end nfibers loop
 

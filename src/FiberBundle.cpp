@@ -10,7 +10,7 @@ FiberBundle::FiberBundle(size_t n = 109)
 , ilaser(1.0)
 , alpha(0.0)
 {
-	std::cerr << "In constructor FiberBundle() " << std::endl;
+	//std::cerr << "In constructor FiberBundle() " << std::endl;
 
 	if (!set_polarcoords(n)) {
 		std::cerr << "\n\n\t\t=========================" 
@@ -47,6 +47,7 @@ bool FiberBundle::shuffle_output(void)
 	std::seed_seq seed{rng(), rng(), rng(), rng(), rng(), rng(), rng(), rng()};
 	std::mt19937 e(seed);
 	std::shuffle(ids.begin(),ids.end(),e);
+	return true;
 }
 
 bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
@@ -54,7 +55,7 @@ bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
 	if (!out.is_open() )
 		return false;
 	out << "#delay = " << t0 << "\n"; 
-	out << "#i\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\n"; 
+	out << "#i\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\tTinK\n"; 
 	for (size_t i=0;i<zvals.size();++i){
 		out << ids[i] << "\t"
 			<< std::abs(zvals[ids[i]]) << "\t" 
@@ -64,7 +65,8 @@ bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
 			<< ovals[ids[i]] << "\t" 
 			<< (t0+delay(ids[i])) << "\t" 
 			<< Ilaser(ids[i]) << "\t" 
-			<< Ixray(ids[i]) << "\n";
+			<< Ixray(ids[i]) << "\t"
+			<< TinK(ids[i]) << "\n";
 	}
 	out << std::flush;
 	return true;

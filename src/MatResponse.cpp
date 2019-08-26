@@ -20,13 +20,13 @@ MatResponse::MatResponse(MatResponse & rhs) // copy constructor
 , etalondelay(rhs.etalondelay)
 , reflectance(rhs.reflectance)
 , bandgap_eV(rhs.bandgap_eV)
-, n_0(2.38)
-, n_a(1.5)
-, n_b(-13.9931)
-, l_thickness_um(5.5)
+, n_0(rhs.n_0)
+, n_a(rhs.n_a)
+, n_b(rhs.n_b)
+, l_thickness_um(rhs.l_thickness_um)
 {
-		carriers.resize(rhs.carriers.size(),0.);
-		std::copy(rhs.carriers.begin(),rhs.carriers.end(),carriers.begin());
+	carriers.resize(rhs.carriers.size(),0.);
+	std::copy(rhs.carriers.begin(),rhs.carriers.end(),carriers.begin());
 }        
 
 MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in = 0.05,double phase_in = 0.03)
@@ -49,6 +49,31 @@ MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in =
 	scale=1.0;
 	bandgap_eV = 5.47; // this is 5.47 for diamond.
 }        
+
+MatResponse & MatResponse::operator=(const MatResponse & rhs)
+{
+	carriers_set = rhs.carriers_set;
+	t0 = rhs.t0;
+	twidth = rhs.twidth;
+	scale = rhs.scale;
+	attenuation = rhs.attenuation;
+ 	phase = rhs.phase;
+	a = rhs.a;
+	b = rhs.b;
+	alpha = rhs.alpha;
+	beta = rhs.beta;
+	etalondelay = rhs.etalondelay;
+	reflectance = rhs.reflectance;
+	bandgap_eV = rhs.bandgap_eV;
+	n_0 = rhs.n_0;
+	n_a = rhs.n_a;
+	n_b = rhs.n_b;
+	l_thickness_um = rhs.l_thickness_um;
+	carriers.resize(rhs.carriers.size(),0.);
+	std::copy(rhs.carriers.begin(),rhs.carriers.end(),carriers.begin());
+	return *this;
+}
+
 /*
  * total(x)=f(x)*fall(x)+e(x)*rise(x)+y0
  * f(x)=a*x**2+c*x**p

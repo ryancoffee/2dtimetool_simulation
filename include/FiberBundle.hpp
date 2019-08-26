@@ -35,7 +35,7 @@ class FiberBundle {
 		inline double Ixray(void){return ixray;}
 		inline double Ilaser(const size_t i){return ilaser*std::exp(-std::pow(std::abs(zvals[ids[i]]-laser_center)/laserdiam,int(2)));}
 		void setTmax_Tbase(const double Tmax,const double Tbase){Tmax_K = Tmax; Tbase_K = Tbase; }
-		inline double TinK(const size_t i){Tmax_K*std::exp(-std::pow(std::abs(zvals[ids[i]]-thermalcenter)/thermaldiam,int(2)));}
+		inline double TinK(const size_t i){return Tbase_K + (Tmax_K-Tbase_K)*std::exp(-std::pow(std::abs(zvals[ids[i]]-thermalcenter)/thermaldiam,int(2)));}
 
 		void print_zvals(void);
 

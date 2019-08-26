@@ -111,7 +111,7 @@ export nu_high=0.769; # 390nm
 export nfibers=109; #61; # 61 is for the personal laptop since only 8GB memory #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
-#export shuffle_fibers=1;
+export shuffle_fibers=1;
 export scale_fibers=1;
 export fiberdiam=0.11;
 #export laserdiam=5.5; ## this behaves properly
