@@ -15,6 +15,8 @@
 #include <fftw3.h>
 #include <memory>
 
+#include <cstdint> // for sake of writing out the data at lamsamples into a mamory block of uint16_t
+
 
 // my headers
 #include <MatResponse.hpp>
@@ -117,6 +119,8 @@ class PulseFreq
 
 		bool addrandomphase();
 
+		bool fillrow_uint16(uint16_t * outarray,const size_t nsamples);
+
 		inline void scale(const double in){
 			DataOps::mul(cvec,in,samples);
 			cvec2rhophi();
@@ -126,6 +130,8 @@ class PulseFreq
 		}
 		inline unsigned get_samples(void) {return getsamples();}
 		inline unsigned getsamples(void) {return samples;}
+		inline unsigned get_lamsamples(void){return m_lamsamples;}
+
 		inline unsigned getdt(void) {return dtime;}
 		void fft_totime(void) {
 			if (intime)

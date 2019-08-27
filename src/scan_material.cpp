@@ -6,6 +6,12 @@
 #include <memory>
 #include <fftw3.h>
 
+#include <cstdint> // for sake of defining uint16_t for the OpenCV mat to be filled.
+// OpenCV includes
+#include "opencv4/opencv2/core.hpp"
+#include "opencv4/opencv2/highgui.hpp"
+
+
 #include <vector>
 #include <random>
 #include <chrono>
@@ -661,6 +667,26 @@ int main(int argc, char* argv[])
 					//std::cerr << "\n\n\t\t\t\t============== testing... just before the push_back() ==============\n\n" << std::flush;
 					pulsearray[f] = pulse;
 				} // end nfibers loop
+
+				size_t img_nsamples(256);
+				//std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * pulsearray[0].get_lamsamples());
+				std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_nsamples);
+				for (size_t f=0;f<pulsearray.size();++f){
+					pulsearray[f].fillrow_uint16(imdata.first + f * img_nsamples,img_nsamples);
+				}
+				cv::Mat imageMat(pulsearray.size(),img_nsamples,CV_16UC1, imdata.first );
+				cv::Mat imageMatout(pulsearray.size(),img_nsamples,CV_8UC1);
+				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(10)))/float(std::pow(int(2),int(13))));
+				char FrameStr[15];
+				sprintf(FrameStr,"Frame_%i",int(tid));
+				//cv::namedWindow(FrameStr,cv::WINDOW_AUTOSIZE);
+				cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
+				cv::resizeWindow(FrameStr,img_nsamples*10,pulsearray.size()*10);
+				cv::imshow(FrameStr, imageMatout);
+				cv::waitKey(0);
+				cv::destroyAllWindows();
+				std::return_temporary_buffer (imdata.first);
+
 
 
 				std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);// + ".tid" + std::to_string(tid);

@@ -392,6 +392,23 @@ void PulseFreq::printwavelengthbins(std::ofstream * outfile)
 	(*outfile) << "\n";
 	return;
 }
+
+
+bool PulseFreq::fillrow_uint16(uint16_t * outarray,const size_t nsamples = 256)
+{
+	std::vector<double> x(i_high-i_low);
+	std::vector<double> y(i_high-i_low);	
+	for (size_t i=0;i<y.size();++i){
+		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
+		y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
+	}
+	double dlam = (x.front()-x.back())/double(nsamples);
+	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
+	for (size_t i=0;i<nsamples;++i){
+		*(outarray+i) = uint16_t(interpolant(x.back()+i*dlam));
+	}
+	return true;
+}
 void PulseFreq::appendwavelength(std::ofstream * outfile)
 {
 	std::vector<double> x(i_high-i_low);
