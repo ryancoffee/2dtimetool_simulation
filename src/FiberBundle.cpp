@@ -9,10 +9,11 @@ FiberBundle::FiberBundle(size_t n = 109)
 : ixray(1.0)
 , ilaser(1.0)
 , alpha(0.0)
+, nfibers(n)
 {
 	//std::cerr << "In constructor FiberBundle() " << std::endl;
 
-	if (!set_polarcoords(n)) {
+	if (!set_polarcoords(nfibers)) {
 		std::cerr << "\n\n\t\t=========================" 
 			<< "\n\t\t========================="
 			<< "\n\t\t=========AAAAHHH========="
@@ -26,9 +27,9 @@ FiberBundle::FiberBundle(size_t n = 109)
 
         alpha = (double)atof(getenv("alpha"));
 
-	ids.resize(nfibers);
 	ovals.resize(nfibers);
 	zvals.resize(nfibers,std::complex<double>(0));
+	ixray_vec.resize(nfibers);
 	fiberdiam = 0.11;
 	laserdiam = 0.7;
 	xraydiam = 0.5;
@@ -38,16 +39,97 @@ FiberBundle::FiberBundle(size_t n = 109)
 	thermalcenter = std::complex<double>(0.,0.);
 	for (size_t i=0;i<ovals.size();++i){
 		ovals[i] = fiberdiam * double(i);
-		ids[i] = i;
 	}
+	fillIxray();
 }
+
+FiberBundle::FiberBundle(const FiberBundle & rhs)
+: ixray(rhs.ixray)
+, ilaser(rhs.ilaser)
+, alpha(rhs.alpha)
+, nfibers(rhs.nfibers)
+, fiberdiam(rhs.fiberdiam)
+, laserdiam(rhs.laserdiam)
+, xraydiam(rhs.xraydiam)
+, thermaldiam(rhs.thermaldiam)
+, xray_center(rhs.xray_center)
+, laser_center(rhs.laser_center)
+, thermalcenter(rhs.thermalcenter)
+{
+	//std::cerr << "In copy constructor FiberBundle() " << std::endl;
+
+	if (!set_polarcoords(nfibers)) {
+		std::cerr << "\n\n\t\t=========================" 
+			<< "\n\t\t========================="
+			<< "\n\t\t=========AAAAHHH========="
+			<< "\n\t\t===alles ist scheisse===="
+			<< "\n\t\t======check nfibers======"
+			<< "\n\t\t========================="
+			<< "\n\t\t========================="
+			<< "\n\t\t========================="
+			<< std::endl;
+	}
+
+	ovals.resize(nfibers);
+	std::copy(rhs.ovals.begin(),rhs.ovals.end(),ovals.begin());
+	zvals.resize(nfibers);
+	std::copy(rhs.zvals.begin(),rhs.zvals.end(),zvals.begin());
+	ixray_vec.resize(nfibers);
+	std::copy(rhs.ixray_vec.begin(),rhs.ixray_vec.end(),ixray_vec.begin());
+	fillIxray();
+}
+
+FiberBundle & FiberBundle::operator=(const FiberBundle & rhs)
+{
+	ixray=rhs.ixray;
+	ilaser=rhs.ilaser;
+	alpha=rhs.alpha;
+	nfibers=rhs.nfibers;
+	fiberdiam=rhs.fiberdiam;
+	laserdiam=rhs.laserdiam;
+	xraydiam=rhs.xraydiam;
+	thermaldiam=rhs.thermaldiam;
+	xray_center=rhs.xray_center;
+	laser_center=rhs.laser_center;
+	thermalcenter = rhs.thermalcenter;
+	if (ovals.size() != nfibers)
+		ovals.resize(nfibers);
+	std::copy(rhs.ovals.begin(),rhs.ovals.end(),ovals.begin());
+	if (zvals.size() != nfibers)
+		zvals.resize(nfibers);
+	std::copy(rhs.zvals.begin(),rhs.zvals.end(),zvals.begin());
+	if (ixray_vec.size() != nfibers)
+		ixray_vec.resize(nfibers);
+	std::copy(rhs.ixray_vec.begin(),rhs.ixray_vec.end(),ixray_vec.begin());
+	return *this;
+}
+
 bool FiberBundle::shuffle_output(void)
 {
 	std::random_device rng;
 	std::seed_seq seed{rng(), rng(), rng(), rng(), rng(), rng(), rng(), rng()};
 	std::mt19937 e(seed);
-	std::shuffle(ids.begin(),ids.end(),e);
+	std::shuffle(ovals.begin(),ovals.end(),e);
 	return true;
+}
+
+bool FiberBundle::shadow_xrays(const double xin, const double yin)
+{
+	fillIxray();
+	for (size_t i = 0;i<ixray_vec.size(); ++i){ 
+		if (zvals[i].real() > xin && zvals[i].imag() > yin)
+			ixray_vec[i] = 0.;
+	}
+	return true;
+}
+double FiberBundle::fillIxray(void)
+{
+	if (ixray_vec.size() != zvals.size())
+		ixray_vec.resize(zvals.size(),double(0.0));
+	for (size_t i = 0;i<ixray_vec.size(); ++i){ 
+		ixray_vec[i] = ixray * double(std::exp(-1.0*std::pow(std::abs(zvals[i]-xray_center)/xraydiam,int(2))));
+	}
+	return ixray;
 }
 
 bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
@@ -57,16 +139,16 @@ bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
 	out << "#delay = " << t0 << "\n"; 
 	out << "#i\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\tTinK\n"; 
 	for (size_t i=0;i<zvals.size();++i){
-		out << ids[i] << "\t"
-			<< std::abs(zvals[ids[i]]) << "\t" 
-			<< std::arg(zvals[ids[i]]) << "\t" 
-			<< zvals[ids[i]].real() << "\t" 
-			<< zvals[ids[i]].imag() << "\t" 
-			<< ovals[ids[i]] << "\t" 
-			<< (t0+delay(ids[i])) << "\t" 
-			<< Ilaser(ids[i]) << "\t" 
-			<< Ixray(ids[i]) << "\t"
-			<< TinK(ids[i]) << "\n";
+			out << i << "\t"
+			<< std::abs(zvals[i]) << "\t" 
+			<< std::arg(zvals[i]) << "\t" 
+			<< zvals[i].real() << "\t" 
+			<< zvals[i].imag() << "\t" 
+			<< ovals[i] << "\t" 
+			<< (t0+delay(i)) << "\t" 
+			<< Ilaser(i) << "\t" 
+			<< ixray_vec[i] << "\t"
+			<< TinK(i) << "\n";
 	}
 	out << std::flush;
 	return true;

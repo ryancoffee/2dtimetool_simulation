@@ -22,6 +22,13 @@
 namespace DataOps 
 {
 	template <typename T>
+		std::vector<T> & logramp(std::vector<T>& lhs)
+		{
+			std::generate(lhs.begin(), lhs.end(), [n = 1] () mutable { return std::log(n++); });
+			return lhs;
+		}
+
+	template <typename T>
 		std::vector<T>& sample_every(std::vector<T>& lhs, const std::vector<T>& rhs, const size_t nskip = 10, const size_t offset = 0)
 		{
 			if (lhs.size() < 1){

@@ -42,7 +42,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 export nimages=10;
-export delays_mean=0 #-2250;off to right side of screen #1250; off to left side
+export delays_mean=-2250; #0; centered #-2250;off to right side of screen #1250; off to left side
 #export delays_std=1000;
 export delays_std=1000;
 
@@ -116,8 +116,12 @@ export scale_fibers=1;
 export fiberdiam=0.11;
 #export laserdiam=5.5; ## this behaves properly
 #export xraydiam=0.125;
-export laserdiam=55.; ## this behaves properly
-export xraydiam=12.5;
+export laserdiam=5.5.; ## this behaves properly
+export xraydiam=1.25;
+export xrayshadowcorner_x=.2;
+export xrayshadowcorner_y=.2;
+export xrayshadowcorner_xjitter=.3; 
+export xrayshadowcorner_yjitter=.05; 
 export thermaldiam=1.;
 export thermalcenter_x=0.;
 export thermalcenter_y=0.;

@@ -451,6 +451,11 @@ int main(int argc, char* argv[])
 		{
 	if (!getenv("skipimages"))
 	{
+		std::random_device rd{};
+		std::mt19937 rng{rd()};
+		std::normal_distribution<> xrayshadow_x{double(atof(getenv("xrayshadowcorner_x"))),double(atof(getenv("xrayshadowcorner_xjitter")))};
+		std::normal_distribution<> xrayshadow_y{double(atof(getenv("xrayshadowcorner_y"))),double(atof(getenv("xrayshadowcorner_yjitter")))};
+
 		std::cout << "\t\t############ entering parallel/images ###########\n" << std::flush;
 			size_t tid = omp_get_thread_num();
 			size_t nfibers = masterbundle.get_nfibers();
@@ -518,6 +523,8 @@ int main(int argc, char* argv[])
 				parabundle.center_Ixray(scanparams.xray_pos_rand(),scanparams.xray_pos_rand());
 				parabundle.center_Ilaser(scanparams.laser_pos_rand(),scanparams.laser_pos_rand());
 
+				parabundle.fillIxray();
+				parabundle.shadow_xrays(xrayshadow_x(rng) , xrayshadow_y(rng));
 
 
 				//DebugOps::pushout(std::string("Running image " + std::to_string(n) + " for t0 = " + std::to_string(t0) + " in threaded for loop, thread " + std::to_string(tid)));
