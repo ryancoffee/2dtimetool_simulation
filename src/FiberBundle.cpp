@@ -30,6 +30,8 @@ FiberBundle::FiberBundle(size_t n = 109)
 	ovals.resize(nfibers);
 	zvals.resize(nfibers,std::complex<double>(0));
 	ixray_vec.resize(nfibers);
+	inds.resize(nfibers);
+	DataOps::ramp(inds);
 	fiberdiam = 0.11;
 	laserdiam = 0.7;
 	xraydiam = 0.5;
@@ -43,7 +45,7 @@ FiberBundle::FiberBundle(size_t n = 109)
 	fillIxray();
 }
 
-FiberBundle::FiberBundle(const FiberBundle & rhs)
+FiberBundle::FiberBundle(FiberBundle & rhs)
 : ixray(rhs.ixray)
 , ilaser(rhs.ilaser)
 , alpha(rhs.alpha)
@@ -55,31 +57,19 @@ FiberBundle::FiberBundle(const FiberBundle & rhs)
 , xray_center(rhs.xray_center)
 , laser_center(rhs.laser_center)
 , thermalcenter(rhs.thermalcenter)
+, fsPmm(rhs.fsPmm)
 {
-	//std::cerr << "In copy constructor FiberBundle() " << std::endl;
-
-	if (!set_polarcoords(nfibers)) {
-		std::cerr << "\n\n\t\t=========================" 
-			<< "\n\t\t========================="
-			<< "\n\t\t=========AAAAHHH========="
-			<< "\n\t\t===alles ist scheisse===="
-			<< "\n\t\t======check nfibers======"
-			<< "\n\t\t========================="
-			<< "\n\t\t========================="
-			<< "\n\t\t========================="
-			<< std::endl;
-	}
-
 	ovals.resize(nfibers);
-	std::copy(rhs.ovals.begin(),rhs.ovals.end(),ovals.begin());
 	zvals.resize(nfibers);
-	std::copy(rhs.zvals.begin(),rhs.zvals.end(),zvals.begin());
 	ixray_vec.resize(nfibers);
+	inds.resize(nfibers);
+	std::copy(rhs.ovals.begin(),rhs.ovals.end(),ovals.begin());
+	std::copy(rhs.zvals.begin(),rhs.zvals.end(),zvals.begin());
 	std::copy(rhs.ixray_vec.begin(),rhs.ixray_vec.end(),ixray_vec.begin());
-	fillIxray();
+	std::copy(rhs.inds.begin(),rhs.inds.end(),inds.begin());
 }
 
-FiberBundle & FiberBundle::operator=(const FiberBundle & rhs)
+FiberBundle & FiberBundle::operator=(FiberBundle & rhs)
 {
 	ixray=rhs.ixray;
 	ilaser=rhs.ilaser;
@@ -92,24 +82,37 @@ FiberBundle & FiberBundle::operator=(const FiberBundle & rhs)
 	xray_center=rhs.xray_center;
 	laser_center=rhs.laser_center;
 	thermalcenter = rhs.thermalcenter;
+	fsPmm = rhs.fsPmm;
 	if (ovals.size() != nfibers)
 		ovals.resize(nfibers);
-	std::copy(rhs.ovals.begin(),rhs.ovals.end(),ovals.begin());
 	if (zvals.size() != nfibers)
 		zvals.resize(nfibers);
-	std::copy(rhs.zvals.begin(),rhs.zvals.end(),zvals.begin());
 	if (ixray_vec.size() != nfibers)
 		ixray_vec.resize(nfibers);
+	if (inds.size() != nfibers)
+		inds.resize(nfibers);
+	std::copy(rhs.ovals.begin(),rhs.ovals.end(),ovals.begin());
+	std::copy(rhs.zvals.begin(),rhs.zvals.end(),zvals.begin());
 	std::copy(rhs.ixray_vec.begin(),rhs.ixray_vec.end(),ixray_vec.begin());
+	std::copy(rhs.inds.begin(),rhs.inds.end(),inds.begin());
 	return *this;
 }
 
-bool FiberBundle::shuffle_output(void)
+bool FiberBundle::set_inds(std::vector<uint16_t> in)
+{
+	if (in.size() != inds.size()){
+		std::cerr << "setting FiberBundle inds with not the same length vector of uint8_t\n" << std::flush;
+		return false;
+	}
+	std::copy(in.begin(),in.end(),inds.begin());
+	return true;
+}
+bool FiberBundle::shuffle_inds(void)
 {
 	std::random_device rng;
 	std::seed_seq seed{rng(), rng(), rng(), rng(), rng(), rng(), rng(), rng()};
 	std::mt19937 e(seed);
-	std::shuffle(ovals.begin(),ovals.end(),e);
+	std::shuffle(inds.begin(),inds.end(),e);
 	return true;
 }
 
@@ -137,9 +140,9 @@ bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
 	if (!out.is_open() )
 		return false;
 	out << "#delay = " << t0 << "\n"; 
-	out << "#i\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\tTinK\n"; 
+	out << "#key\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\tTinK\n"; 
 	for (size_t i=0;i<zvals.size();++i){
-			out << i << "\t"
+			out << inds[i] << "\t"
 			<< std::abs(zvals[i]) << "\t" 
 			<< std::arg(zvals[i]) << "\t" 
 			<< zvals[i].real() << "\t" 

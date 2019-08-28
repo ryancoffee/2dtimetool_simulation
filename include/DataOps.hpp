@@ -22,10 +22,16 @@
 namespace DataOps 
 {
 	template <typename T>
-		std::vector<T> & logramp(std::vector<T>& lhs)
+		std::vector<T> & ramp(std::vector<T>& vec)
 		{
-			std::generate(lhs.begin(), lhs.end(), [n = 1] () mutable { return std::log(n++); });
-			return lhs;
+			std::generate(vec.begin(), vec.end(), [n = 0] () mutable { return n++; });
+			return vec;
+		}
+	template <typename T>
+		std::vector<T> & logramp(std::vector<T>& vec)
+		{
+			std::generate(vec.begin(), vec.end(), [n = 1] () mutable { return std::log(n++); });
+			return vec;
 		}
 
 	template <typename T>

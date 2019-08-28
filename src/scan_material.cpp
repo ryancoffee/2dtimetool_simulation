@@ -107,15 +107,37 @@ int main(int argc, char* argv[])
 	masterbundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
 	masterbundle.scalePolarCoords();
 
+	std::vector<uint16_t>keyinds(masterbundle.get_nfibers());
+	DataOps::ramp(keyinds);
+	for (size_t f=0;f<keyinds.size();++f)
+		std::cout << keyinds[f] << "\t";
+	std::cout << "\n" << std::flush;
+
 	std::cout << "\t\tshuffle fibers?\t";
 	if (getenv("shuffle_fibers"))
 	{
 		std::cout << "yes\n";
-		if (!masterbundle.shuffle_output())
+		std::random_device rng;
+		std::seed_seq seed{rng(), rng(), rng(), rng(), rng(), rng(), rng(), rng()};
+		std::mt19937 e(seed);
+		std::shuffle(keyinds.begin(),keyinds.end(),e);
+		/*
+		if (!masterbundle.shuffle_inds())
 			std::cerr << "The rerturn from masterbundle.shuffle_output() was false\t-- something failed\n" << std::flush;
+		*/
 	} else {
 		std::cout << "no\n";
 	}
+	for (size_t f=0;f<keyinds.size();++f)
+		std::cout << keyinds[f] << "\t";
+	std::cout << "\n" << std::flush;
+	ofstream outkey(std::string(scanparams.filebase() + "fiberkey.out").c_str(),ios::out);
+	for (size_t f=0;f<masterbundle.get_nfibers();++f){
+		outkey << f << "\t" << keyinds[f] << "\n";
+	}
+	outkey << std::flush;
+	outkey.close();
+	masterbundle.set_inds(keyinds);
 
 	masterbundle.Ixray(float(1.));
 	masterbundle.Ilaser(float(1.));
@@ -470,7 +492,6 @@ int main(int argc, char* argv[])
 			FiberBundle parabundle(masterbundle);
 			MatResponse pararesponse(masterresponse);
 
-
 			PulseFreq pulse(masterpulse);
 			PulseFreq crosspulse(masterpulse);
 			PulseFreq etalonpulse(masterpulse);
@@ -669,21 +690,36 @@ int main(int argc, char* argv[])
 				size_t img_nsamples(256);
 				//std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * pulsearray[0].get_lamsamples());
 				std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_nsamples);
+				std::pair <uint16_t*,std::ptrdiff_t> schleirendata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_nsamples);
+				std::pair <uint16_t*,std::ptrdiff_t> etalondata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_nsamples);
+				/*
+				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
+				 * Base that output on the result of the various python work you've done lately
+				 * Use a temporary buffer, if that seems better than a fixed malloc.
+				 * instead of 3 single channels, use 1 3channel temporary buffer and fill it in the pulsearray[f].fillrow_uint8c3 call
+				 * Then we need to come up with an optical scheme for doing the schleiren thing spectrally
+				 */
 				for (size_t f=0;f<pulsearray.size();++f){
-					pulsearray[f].fillrow_uint16(imdata.first + f * img_nsamples,img_nsamples);
+					pulsearray[f].fillrow_uint16(imdata.first + parabundle.get_key(f) * img_nsamples,img_nsamples);
+					pulsearray[f].fillschleiren_uint16(schleiredata.first + parabundle.get_key(f) * img_nsamples,img_nsamples);
+					pulsearray[f].filletalon_uint16(etalondata.first + parabundle.get_key(f) * img_nsamples,img_nsamples);
 				}
 				cv::Mat imageMat(pulsearray.size(),img_nsamples,CV_16UC1, imdata.first );
 				cv::Mat imageMatout(pulsearray.size(),img_nsamples,CV_8UC1);
 				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))));
-				char FrameStr[15];
-				sprintf(FrameStr,"Frame_%i",int(tid));
-				//cv::namedWindow(FrameStr,cv::WINDOW_AUTOSIZE);
-				cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
-				cv::resizeWindow(FrameStr,img_nsamples*5,pulsearray.size()*5);
-				cv::imshow(FrameStr, imageMatout);
-				cv::waitKey(0);
-				cv::destroyAllWindows();
+				if ( !bool(getenv(skipdisplayframes)) and tid==0 ) {
+					char FrameStr[15];
+					sprintf(FrameStr,"Frame_%i",int(tid));
+					//cv::namedWindow(FrameStr,cv::WINDOW_AUTOSIZE);
+					cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
+					cv::resizeWindow(FrameStr,img_nsamples*5,pulsearray.size()*5);
+					cv::imshow(FrameStr, imageMatout);
+					cv::waitKey(0);
+					cv::destroyAllWindows();
+				}
 				std::return_temporary_buffer (imdata.first);
+				std::return_temporary_buffer (schleirendata.first);
+				std::return_temporary_buffer (etalondata.first);
 
 
 

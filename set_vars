@@ -1,27 +1,28 @@
 #!/bin/bash
 
-starttime=$(date +%s);
-export HOSTNAME=$HOSTNAME:
+starttime=$(date +%s)
+export HOSTNAME=$HOSTNAME
+export skipdisplayframes
 
-export nthreads=2;
-#export datadir='./data_container/raw/';
-export datadir='./data_fs/raw/';
-export calibdir='./data_fs/extern/';
+export nthreads=2
+#export datadir='./data_container/raw/'
+export datadir='./data_fs/raw/'
+export calibdir='./data_fs/extern/'
 export carriercolumn=5; # this tells the code which of Nikita's columns to use
 #export carriersdir='./data_fs/reference/fromNikita/OUTPUT_LYSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
 #export carriersfilename='OUTPUT_LYSO_Density_derivative.dat';
-export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
-export carriersfilename='OUTPUT_BSO_Density_derivative.dat';
-export carriersdir='./data_fs/reference/fromNikita/';
-export carriersfilename='OUTPUT_YAG_Density_9500.dat';
-#unset usediamond;
-export usediamond=true;
+export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/'
+export carriersfilename='OUTPUT_BSO_Density_derivative.dat'
+export carriersdir='./data_fs/reference/fromNikita/'
+export carriersfilename='OUTPUT_YAG_Density_9500.dat'
+#unset usediamond
+export usediamond=true
 export carriertag='diamond9.5keV'
 export xrayphoton_energy=9.5; #40; # this is in keV
-#export carriersfilename='OUTPUT_YAG_Density_9500.dat';
-#export carriersfilename='OUTPUT_Diamond_Density_9500.dat';
-export bandgap_eV=5.47;
-mkdir -p $datadir;
+#export carriersfilename='OUTPUT_YAG_Density_9500.dat'
+#export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
+export bandgap_eV=5.47
+mkdir -p $datadir
 
 #unsetting to clear previous export commands
 set skipcalibration
@@ -43,7 +44,6 @@ export randphase_std=5; # in units of pi
 
 export nimages=10;
 export delays_mean=0; centered #-2250;off to right side of screen #1250; off to left side
-#export delays_std=1000;
 export delays_std=1000;
 
 export drifting_alpha=0.001; #0.1;
