@@ -647,11 +647,9 @@ int main(int argc, char* argv[])
 						//std::cerr << "etalonpulse/crossetalonpulse.domain() = " << etalonpulse.domain() << "/" << crossetalonpulse.domain() << "\n" << std::flush;
 						etalonpulse.fft_tofreq();
 						crossetalonpulse.fft_tofreq();
-						//etalonpulse.delay(pararesponse.getetalondelay() * ( 1. + parabundle.ThermalEtalonDelta(f)) ); // delay and attenuate in frequency domain
 						etalonpulse.delay(pararesponse.thermaletalondelay(parabundle.TinK(f))) ; // delay and attenuate in frequency domain
 						etalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
 						crossetalonpulse.delay(pararesponse.thermaletalondelay(parabundle.TinK(f)));
-								//pararesponse.getetalondelay() * (1. + parabundle.ThermalEtalonDelta(f)) ); // delay and attenuate in frequency domain
 						crossetalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
 						etalonpulse.fft_totime();
 						crossetalonpulse.fft_totime();
@@ -676,12 +674,12 @@ int main(int argc, char* argv[])
 				}
 				cv::Mat imageMat(pulsearray.size(),img_nsamples,CV_16UC1, imdata.first );
 				cv::Mat imageMatout(pulsearray.size(),img_nsamples,CV_8UC1);
-				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(10)))/float(std::pow(int(2),int(13))));
+				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))));
 				char FrameStr[15];
 				sprintf(FrameStr,"Frame_%i",int(tid));
 				//cv::namedWindow(FrameStr,cv::WINDOW_AUTOSIZE);
 				cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
-				cv::resizeWindow(FrameStr,img_nsamples*10,pulsearray.size()*10);
+				cv::resizeWindow(FrameStr,img_nsamples*5,pulsearray.size()*5);
 				cv::imshow(FrameStr, imageMatout);
 				cv::waitKey(0);
 				cv::destroyAllWindows();
@@ -689,11 +687,11 @@ int main(int argc, char* argv[])
 
 
 
-				std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);// + ".tid" + std::to_string(tid);
-				//std::cerr << "testing: filename = " << filename << "\n" << std::flush;
+				std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);
+				std::string jpgfilename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".jpg";
+				cv::imwrite(jpgfilename.c_str(),imageMatout);
 				ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
 
-				//std::cout << "tid = " << tid << ": interfere filename out = " << filename << std::endl;
 				std::complex<double> z_laser = parabundle.center_Ilaser();
 				std::complex<double> z_xray = parabundle.center_Ixray();
 				interferestream << "#delay for image = \t" << t0 
