@@ -693,6 +693,7 @@ int main(int argc, char* argv[])
 				cv::Mat imageMat(pulsearray.size(),img_nsamples,CV_16UC1, imdata.first );
 				cv::Mat imageMatout(pulsearray.size(),img_nsamples,CV_8UC1);
 				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))));
+				cv::flip(imageMatout,imageMatout,0);
 				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
 					char FrameStr[15];
 					sprintf(FrameStr,"Frame_%i",int(tid));
@@ -706,6 +707,9 @@ int main(int argc, char* argv[])
 
 
 
+					/* Oh damn... the jpg image save as an inverted, the first row shows up on the bottom... 
+					 * this is opposite as when we are saving an ascii file of stacked rows.
+					 */
 				std::string jpgfilename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".jpg";
 				cv::imwrite(jpgfilename.c_str(),imageMatout);
 				std::return_temporary_buffer (imdata.first);
@@ -724,9 +728,9 @@ int main(int argc, char* argv[])
 					<< std::endl;
 				interferestream << "#";
 				pulsearray[0].printwavelengthbins(&interferestream);
-				for (size_t r=0;r<imageMat.rows();++r){
-					for (size_t c=0; c<imageMat.cols();++c)
-						interferestream << imageMat.at<>(r,c) << "\t";	
+				for (size_t r=0;r<imageMat.rows;++r){
+					for (size_t c=0; c<imageMat.cols;++c)
+						interferestream << imageMat.at<uint16_t>(r,c) << "\t";	
 					interferestream << "\n";
 				}
 				/*
