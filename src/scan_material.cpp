@@ -687,6 +687,7 @@ int main(int argc, char* argv[])
 				 * Then we need to come up with an optical scheme for doing the schleiren thing spectrally
 				 */
 				for (size_t f=0;f<pulsearray.size();++f){
+					pulsearray[f].scale(parabundle.Ilaser(f)); 
 					pulsearray[f].fillrow_uint16(imdata.first + parabundle.get_key(f) * img_nsamples,img_nsamples);
 				}
 				cv::Mat imageMat(pulsearray.size(),img_nsamples,CV_16UC1, imdata.first );
@@ -723,10 +724,17 @@ int main(int argc, char* argv[])
 					<< std::endl;
 				interferestream << "#";
 				pulsearray[0].printwavelengthbins(&interferestream);
+				for (size_t r=0;r<imageMat.rows();++r){
+					for (size_t c=0; c<imageMat.cols();++c)
+						interferestream << imageMat.at<>(r,c) << "\t";	
+					interferestream << "\n";
+				}
+				/*
 				for (size_t f=0;f<pulsearray.size();f++){
 					pulsearray[f].scale(parabundle.Ilaser(f)); 
 					pulsearray[f].appendwavelength(&interferestream);
 				}
+				*/
 /*
 	HERE HERE HERE HERE
 	Here we need to figure out how to run a rolling TDI style image superposition so that each thread 
