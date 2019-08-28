@@ -109,10 +109,6 @@ int main(int argc, char* argv[])
 
 	std::vector<uint16_t>keyinds(masterbundle.get_nfibers());
 	DataOps::ramp(keyinds);
-	for (size_t f=0;f<keyinds.size();++f)
-		std::cout << keyinds[f] << "\t";
-	std::cout << "\n" << std::flush;
-
 	std::cout << "\t\tshuffle fibers?\t";
 	if (getenv("shuffle_fibers"))
 	{
@@ -128,13 +124,7 @@ int main(int argc, char* argv[])
 	} else {
 		std::cout << "no\n";
 	}
-	for (size_t f=0;f<keyinds.size();++f)
-		std::cout << keyinds[f] << "\t";
-	std::cout << "\n" << std::flush;
 	ofstream outkey(std::string(scanparams.filebase() + "fiberkey.out").c_str(),ios::out);
-	for (size_t f=0;f<masterbundle.get_nfibers();++f){
-		outkey << f << "\t" << keyinds[f] << "\n";
-	}
 	outkey << std::flush;
 	outkey.close();
 	masterbundle.set_inds(keyinds);
@@ -687,11 +677,8 @@ int main(int argc, char* argv[])
 					pulsearray[f] = pulse;
 				} // end nfibers loop
 
-				size_t img_nsamples(256);
-				//std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * pulsearray[0].get_lamsamples());
+				size_t img_nsamples(1024);
 				std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_nsamples);
-				std::pair <uint16_t*,std::ptrdiff_t> schleirendata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_nsamples);
-				std::pair <uint16_t*,std::ptrdiff_t> etalondata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_nsamples);
 				/*
 				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
 				 * Base that output on the result of the various python work you've done lately
@@ -701,13 +688,11 @@ int main(int argc, char* argv[])
 				 */
 				for (size_t f=0;f<pulsearray.size();++f){
 					pulsearray[f].fillrow_uint16(imdata.first + parabundle.get_key(f) * img_nsamples,img_nsamples);
-					pulsearray[f].fillschleiren_uint16(schleiredata.first + parabundle.get_key(f) * img_nsamples,img_nsamples);
-					pulsearray[f].filletalon_uint16(etalondata.first + parabundle.get_key(f) * img_nsamples,img_nsamples);
 				}
 				cv::Mat imageMat(pulsearray.size(),img_nsamples,CV_16UC1, imdata.first );
 				cv::Mat imageMatout(pulsearray.size(),img_nsamples,CV_8UC1);
 				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))));
-				if ( !bool(getenv(skipdisplayframes)) and tid==0 ) {
+				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
 					char FrameStr[15];
 					sprintf(FrameStr,"Frame_%i",int(tid));
 					//cv::namedWindow(FrameStr,cv::WINDOW_AUTOSIZE);
@@ -717,15 +702,14 @@ int main(int argc, char* argv[])
 					cv::waitKey(0);
 					cv::destroyAllWindows();
 				}
-				std::return_temporary_buffer (imdata.first);
-				std::return_temporary_buffer (schleirendata.first);
-				std::return_temporary_buffer (etalondata.first);
 
 
 
-				std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);
 				std::string jpgfilename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".jpg";
 				cv::imwrite(jpgfilename.c_str(),imageMatout);
+				std::return_temporary_buffer (imdata.first);
+
+				std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);
 				ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
 
 				std::complex<double> z_laser = parabundle.center_Ilaser();

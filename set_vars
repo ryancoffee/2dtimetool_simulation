@@ -2,7 +2,7 @@
 
 starttime=$(date +%s)
 export HOSTNAME=$HOSTNAME
-export skipdisplayframes
+export skipdisplayframes=1
 
 export nthreads=2
 #export datadir='./data_container/raw/'
@@ -43,7 +43,7 @@ export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
 export nimages=10;
-export delays_mean=0; centered #-2250;off to right side of screen #1250; off to left side
+export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
 export delays_std=1000;
 
 export drifting_alpha=0.001; #0.1;
