@@ -10,7 +10,7 @@
 // OpenCV includes
 #include "opencv4/opencv2/core.hpp"
 #include "opencv4/opencv2/highgui.hpp"
-
+#include "opencv4/opencv2/imgproc/imgproc.hpp"
 
 #include <vector>
 #include <random>
@@ -678,7 +678,35 @@ int main(int argc, char* argv[])
 				} // end nfibers loop
 
 				size_t img_nsamples(1024);
-				std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_nsamples);
+				size_t img_stride(10);
+				//std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_stride * img_nsamples);
+				uint16_t * imdata = (uint16_t*)std::calloc(pulsearray.size() * img_stride * img_nsamples,sizeof(uint16_t));
+				int kr(10);
+				int kv(3);
+				cv::Mat kernel(cv::Mat::zeros(kr,kv,CV_32F));
+				cv::Mat kc0 = kernel.col(0);
+				cv::Mat kc1 = kernel.col(1);
+				cv::Mat kc2 = kernel.col(2);
+				std::vector<float> kgauss(kr);
+				DataOps::gauss(kgauss);
+				std::copy( kgauss.begin(),kgauss.end(),kc0.data );
+				DataOps::scale(kgauss,  float(-1.));
+				std::copy( kgauss.begin(),kgauss.end(),kc2.data );
+				if (tid==0){
+					for (size_t r=0;r<kernel.rows;++r){
+						for (size_t c=0;c<kernel.cols;++c){
+							std::cout << kernel.at<float>(r,c) << "\t";
+						}
+						std::cout << "\n";
+					}
+				}
+				
+				//int ddepth(-1);
+  				//cv::Point anchor;
+				//filter2D(InputArray src, OutputArray dst, ddepth, InputArray kernel, Point anchor=Point(-1,-1), double delta=0, int borderType=BORDER_DEFAULT )
+  				//int kernel_size(10);
+				//kernel = Mat::ones( kernel_size, kernel_size, CV_32F )/ (float)(kernel_size*kernel_size);
+
 				/*
 				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
 				 * Base that output on the result of the various python work you've done lately
@@ -688,10 +716,12 @@ int main(int argc, char* argv[])
 				 */
 				for (size_t f=0;f<pulsearray.size();++f){
 					pulsearray[f].scale(parabundle.Ilaser(f)); 
-					pulsearray[f].fillrow_uint16(imdata.first + parabundle.get_key(f) * img_nsamples,img_nsamples);
+					//pulsearray[f].fillrow_uint16(imdata.first + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
+					pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
 				}
-				cv::Mat imageMat(pulsearray.size(),img_nsamples,CV_16UC1, imdata.first );
-				cv::Mat imageMatout(pulsearray.size(),img_nsamples,CV_8UC1);
+				//cv::Mat imageMat(pulsearray.size() * img_stride, img_nsamples, CV_16UC1, imdata.first );
+				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );
+				cv::Mat imageMatout(imageMat.rows, imageMat.cols, CV_8UC1);
 				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))));
 				cv::flip(imageMatout,imageMatout,0);
 				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
@@ -712,7 +742,7 @@ int main(int argc, char* argv[])
 					 */
 				std::string jpgfilename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".jpg";
 				cv::imwrite(jpgfilename.c_str(),imageMatout);
-				std::return_temporary_buffer (imdata.first);
+				//std::return_temporary_buffer (imdata.first);
 
 				std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);
 				ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
@@ -733,6 +763,8 @@ int main(int argc, char* argv[])
 						interferestream << imageMat.at<uint16_t>(r,c) << "\t";	
 					interferestream << "\n";
 				}
+
+				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
 				/*
 				for (size_t f=0;f<pulsearray.size();f++){
 					pulsearray[f].scale(parabundle.Ilaser(f)); 

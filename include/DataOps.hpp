@@ -22,6 +22,15 @@
 namespace DataOps 
 {
 	template <typename T>
+		std::vector<T> & gauss(std::vector<T>& vec)
+		{
+			T sz(vec.size());
+			for (size_t i=0; i<vec.size(); ++i){
+				vec[i] = T( std::exp(- std::pow(T(i)/sz,int(2))) );
+			}
+			return vec;
+		}
+	template <typename T>
 		std::vector<T> & ramp(std::vector<T>& vec)
 		{
 			std::generate(vec.begin(), vec.end(), [n = 0] () mutable { return n++; });
@@ -298,6 +307,12 @@ namespace DataOps
 			return lhs;
 		}
 
+	template <typename T>
+		std::vector<T> scale(std::vector<T> vec, T scale = T(1))
+		{
+			std::transform(vec.begin(), vec.end(), vec.begin(), std::bind2nd(std::multiplies<T>(),scale));
+			return vec;
+		}
 	template <typename T>
 		std::complex<T>* mul(std::complex<T>*& lhs,std::complex<T>* const & rhs,const size_t n)
 		{
