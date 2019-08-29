@@ -18,15 +18,43 @@
 #include <boost/multi_array.hpp>
 #include <boost/math/tools/polynomial.hpp>
 #include <typeinfo>
+#include <Constants.hpp>
 
 namespace DataOps 
 {
+	template <typename T>
+		std::vector<T> & sinsin3(std::vector<T>& vec)
+		{
+			size_t sz(vec.size());
+			for (size_t i=0; i<sz; ++i){
+				vec[i] = T( std::sin(T(i)/T(sz-1) * Constants::pi<T>()) * -1* std::sin(T(i)/T(sz-1) * 3 * Constants::pi<T>()));
+			}
+			return vec;
+		}
+	template <typename T>
+		std::vector<T> & negcos(std::vector<T>& vec)
+		{
+			size_t sz(vec.size());
+			for (size_t i=0; i<sz; ++i){
+				vec[i] = T( std::cos(T(i)/T(sz-1) * Constants::pi<T>()) );
+			}
+			return vec;
+		}
+	template <typename T>
+		std::vector<T> & sinsqr(std::vector<T>& vec)
+		{
+			size_t sz(vec.size());
+			for (size_t i=0; i<sz; ++i){
+				vec[i] = T( std::pow(std::sin(T(i)/T(sz-1) * Constants::pi<T>()),int(2)) );
+			}
+			return vec;
+		}
 	template <typename T>
 		std::vector<T> & gauss(std::vector<T>& vec)
 		{
 			T sz(vec.size());
 			for (size_t i=0; i<vec.size(); ++i){
-				vec[i] = T( std::exp(- std::pow(T(i)/sz,int(2))) );
+				vec[i] = T( std::exp(- std::pow(T(i-sz/2)/sz/2,int(2))) );
 			}
 			return vec;
 		}
@@ -308,7 +336,7 @@ namespace DataOps
 		}
 
 	template <typename T>
-		std::vector<T> scale(std::vector<T> vec, T scale = T(1))
+		std::vector<T> & scale(std::vector<T> & vec, T scale = T(1))
 		{
 			std::transform(vec.begin(), vec.end(), vec.begin(), std::bind2nd(std::multiplies<T>(),scale));
 			return vec;

@@ -681,31 +681,62 @@ int main(int argc, char* argv[])
 				size_t img_stride(10);
 				//std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_stride * img_nsamples);
 				uint16_t * imdata = (uint16_t*)std::calloc(pulsearray.size() * img_stride * img_nsamples,sizeof(uint16_t));
-				int kr(10);
-				int kv(3);
-				cv::Mat kernel(cv::Mat::zeros(kr,kv,CV_32F));
-				cv::Mat kc0 = kernel.col(0);
-				cv::Mat kc1 = kernel.col(1);
-				cv::Mat kc2 = kernel.col(2);
-				std::vector<float> kgauss(kr);
-				DataOps::gauss(kgauss);
-				std::copy( kgauss.begin(),kgauss.end(),kc0.data );
-				DataOps::scale(kgauss,  float(-1.));
-				std::copy( kgauss.begin(),kgauss.end(),kc2.data );
-				if (tid==0){
-					for (size_t r=0;r<kernel.rows;++r){
-						for (size_t c=0;c<kernel.cols;++c){
-							std::cout << kernel.at<float>(r,c) << "\t";
-						}
-						std::cout << "\n";
-					}
-				}
+				int kr(2*4 + 1);
+				int kc(2*20 + 1);
+				cv::Mat kernel0(cv::Mat::zeros(kr,kc,CV_32F));
+				cv::Mat kernel1(cv::Mat::zeros(kr,kc,CV_32F));
+				cv::Mat kernel2(cv::Mat::zeros(kr,kc,CV_32F));
 				
-				//int ddepth(-1);
-  				//cv::Point anchor;
-				//filter2D(InputArray src, OutputArray dst, ddepth, InputArray kernel, Point anchor=Point(-1,-1), double delta=0, int borderType=BORDER_DEFAULT )
-  				//int kernel_size(10);
-				//kernel = Mat::ones( kernel_size, kernel_size, CV_32F )/ (float)(kernel_size*kernel_size);
+				// kernel0 (vert blur only)
+				std::vector<float> kblur(kr);
+				DataOps::sinsqr(kblur);
+				cv::Mat cblur(kr,1,CV_32F,kblur.data());
+				cv::flip( cblur * cv::Mat::ones(1,kc,CV_32F) ,kernel0 , -1);
+
+				// kernel1 (vert blur horiz deriv)
+				std::vector<float> kdiff(kc);
+				DataOps::negcos(kdiff);
+				cv::Mat cdiff(1,kc,CV_32F,kdiff.data());
+				cv::flip(cblur*cdiff,kernel1,-1);
+
+				
+				// kernel2 (vert blur horiz 2ndderiv)
+				std::vector<float> kddiff(kc);
+				DataOps::sinsin3(kddiff);
+				cv::Mat cddiff(1,kc,CV_32F,kddiff.data());
+				cv::flip(cblur*cddiff,kernel2,-1);
+
+				if (tid==0 and n<nthreads){
+					std::string kfilename;
+					ofstream kernelstream;
+					kfilename = scanparams.filebase() + "interference.kernel0";
+					kernelstream.open(kfilename.c_str(),ios::out); 
+					for (size_t r=0;r<kernel0.rows;++r){
+						for (size_t c=0;c<kernel0.cols;++c){
+							kernelstream << kernel0.at<float>(r,c) << "\t";
+						}
+						kernelstream << "\n";
+					}
+					kernelstream.close();
+					kfilename = scanparams.filebase() + "interference.kernel1";
+					kernelstream.open(kfilename.c_str(),ios::out); 
+					for (size_t r=0;r<kernel1.rows;++r){
+						for (size_t c=0;c<kernel1.cols;++c){
+							kernelstream << kernel1.at<float>(r,c) << "\t";
+						}
+						kernelstream << "\n";
+					}
+					kernelstream.close();
+					kfilename = scanparams.filebase() + "interference.kernel2";
+					kernelstream.open(kfilename.c_str(),ios::out); 
+					for (size_t r=0;r<kernel2.rows;++r){
+						for (size_t c=0;c<kernel2.cols;++c){
+							kernelstream << kernel2.at<float>(r,c) << "\t";
+						}
+						kernelstream << "\n";
+					}
+					kernelstream.close();
+				}
 
 				/*
 				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
@@ -716,12 +747,42 @@ int main(int argc, char* argv[])
 				 */
 				for (size_t f=0;f<pulsearray.size();++f){
 					pulsearray[f].scale(parabundle.Ilaser(f)); 
-					//pulsearray[f].fillrow_uint16(imdata.first + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
 					pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
 				}
-				//cv::Mat imageMat(pulsearray.size() * img_stride, img_nsamples, CV_16UC1, imdata.first );
-				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );
-				cv::Mat imageMatout(imageMat.rows, imageMat.cols, CV_8UC1);
+				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1, imdata );
+
+				std::complex<double> z_laser = parabundle.center_Ilaser();
+				std::complex<double> z_xray = parabundle.center_Ixray();
+
+				ofstream interferestream;
+				std::string filename;
+
+				// direct image
+				filename = scanparams.filebase() + "interference.out." + std::to_string(n);
+				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+				interferestream << "#delay for image = \t" << t0 
+					<< "\n#Ilaser = \t" << parabundle.Ilaser()
+					<< "\n#Ixray = \t" << parabundle.Ixray()
+					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+					<< "\n#alpha = \t" << parabundle.delay_angle() 
+					<< std::endl;
+				interferestream << "#";
+				pulsearray[0].printwavelengthbins(&interferestream);
+				for (size_t r=0;r<imageMat.rows;++r){
+					for (size_t c=0; c<imageMat.cols;++c)
+						interferestream << imageMat.at<float>(r,c) << "\t";	
+					interferestream << "\n";
+				}
+				interferestream.close();
+
+				cv::Mat imageMatK0(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
+				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
+				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
+				cv::Mat imageMatout(imageMat.rows, imageMat.cols, CV_8SC1);
+				cv::filter2D(imageMat, imageMatK0, -1, kernel0);
+				cv::filter2D(imageMat, imageMatK1, -1, kernel1);
+				cv::filter2D(imageMat, imageMatK2, -1, kernel2);
 				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))));
 				cv::flip(imageMatout,imageMatout,0);
 				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
@@ -744,11 +805,9 @@ int main(int argc, char* argv[])
 				cv::imwrite(jpgfilename.c_str(),imageMatout);
 				//std::return_temporary_buffer (imdata.first);
 
-				std::string filename = scanparams.filebase() + "interference.out." + std::to_string(n);
-				ofstream interferestream(filename.c_str(),ios::out); // use app to append delays to same file.
-
-				std::complex<double> z_laser = parabundle.center_Ilaser();
-				std::complex<double> z_xray = parabundle.center_Ixray();
+				// kernel0
+				filename = scanparams.filebase() + "interference.out.K0." + std::to_string(n);
+				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
 				interferestream << "#delay for image = \t" << t0 
 					<< "\n#Ilaser = \t" << parabundle.Ilaser()
 					<< "\n#Ixray = \t" << parabundle.Ixray()
@@ -758,11 +817,50 @@ int main(int argc, char* argv[])
 					<< std::endl;
 				interferestream << "#";
 				pulsearray[0].printwavelengthbins(&interferestream);
-				for (size_t r=0;r<imageMat.rows;++r){
-					for (size_t c=0; c<imageMat.cols;++c)
-						interferestream << imageMat.at<uint16_t>(r,c) << "\t";	
+				for (size_t r=0;r<imageMatK0.rows;++r){
+					for (size_t c=0; c<imageMatK0.cols;++c)
+						interferestream << imageMatK0.at<float>(r,c) << "\t";	
 					interferestream << "\n";
 				}
+				interferestream.close();
+				// kernel1
+				filename = scanparams.filebase() + "interference.out.K1." + std::to_string(n);
+				interferestream.open(filename.c_str(),ios::out); 
+				interferestream << "#delay for image = \t" << t0 
+					<< "\n#Ilaser = \t" << parabundle.Ilaser()
+					<< "\n#Ixray = \t" << parabundle.Ixray()
+					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+					<< "\n#alpha = \t" << parabundle.delay_angle() 
+					<< std::endl;
+				interferestream << "#";
+				pulsearray[0].printwavelengthbins(&interferestream);
+				for (size_t r=0;r<imageMatK1.rows;++r){
+					for (size_t c=0; c<imageMatK1.cols;++c)
+						interferestream << imageMatK1.at<float>(r,c) << "\t";	
+					interferestream << "\n";
+				}
+				interferestream.close();
+				// kernel2
+				filename = scanparams.filebase() + "interference.out.K2." + std::to_string(n);
+				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+				interferestream << "#delay for image = \t" << t0 
+					<< "\n#Ilaser = \t" << parabundle.Ilaser()
+					<< "\n#Ixray = \t" << parabundle.Ixray()
+					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+					<< "\n#alpha = \t" << parabundle.delay_angle() 
+					<< std::endl;
+				interferestream << "#";
+				pulsearray[0].printwavelengthbins(&interferestream);
+				for (size_t r=0;r<imageMatK2.rows;++r){
+					for (size_t c=0; c<imageMatK2.cols;++c)
+						interferestream << imageMatK2.at<float>(r,c) << "\t";	
+					interferestream << "\n";
+				}
+				interferestream.close();
+
+
 
 				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
 				/*
@@ -788,7 +886,6 @@ int main(int argc, char* argv[])
 					}
 					std::cout << "\timg = " << n << " in tid = " << tid << "\n" << std::flush;
 				}
-				interferestream.close();
 
 				std::time_t imgstop = std::time(nullptr);
 				imagetimes[n] = float(imgstop - imgstart);

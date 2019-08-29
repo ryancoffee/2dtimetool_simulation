@@ -119,7 +119,7 @@ class PulseFreq
 
 		bool addrandomphase();
 
-		bool fillrow_uint16(uint16_t * outarray,const size_t nsamples);
+		bool fillrow_uint16(uint16_t * outarray,const size_t nsamples );
 
 		inline void scale(const double in){
 			DataOps::mul(cvec,in,samples);

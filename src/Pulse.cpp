@@ -394,7 +394,7 @@ void PulseFreq::printwavelengthbins(std::ofstream * outfile)
 }
 
 
-bool PulseFreq::fillrow_uint16(uint16_t * outarray,const size_t nsamples = 256)
+bool PulseFreq::fillrow_uint16(uint16_t * outarray,const size_t nsamples = 256 )
 {
 	std::vector<double> x(i_high-i_low);
 	std::vector<double> y(i_high-i_low);	
