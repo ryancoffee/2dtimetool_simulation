@@ -17,19 +17,19 @@ export carriersdir='./data_fs/reference/fromNikita/'
 export carriersfilename='OUTPUT_YAG_Density_9500.dat'
 #unset usediamond
 export usediamond=true
-export carriertag='diamond9.5keV'
-export xrayphoton_energy=9.5; #40; # this is in keV
+export carriertag='diamond6.0keV'
+export xrayphoton_energy=6.0; #40; # this is in keV
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat'
 #export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 export bandgap_eV=5.47
 mkdir -p $datadir
 
 #unsetting to clear previous export commands
-set skipcalibration
+unset skipcalibration
 unset skipimages
 #comment out the export definition to get this env var to act like a strict bool (e.g. true if defined, only false if unset)
 #but to be defined, we have to set it to some value
-export skipcalibration=true;
+#export skipcalibration=true;
 #export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
@@ -81,7 +81,7 @@ export n_b=-13.9931;
 # YAG index 1.8
 #export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
 #export etalondelay=240; # for YAG at 20 microns thick 20 mu / .3 [mu/fs] * n_yag * 2 for double pass = 240 fs roundtrip delay
-export etalondelay=800; # 800=50 microns diamond  88; # 5.5 microns of diamond, 
+export etalondelay=1607; # 1607 for 100 microns diamond # 800=50 microns diamond  88; # 5.5 microns of diamond, = 2.41 * 2 /(.3mu/fs) * l [in mu]= 48.2/3*l 
 export l_thickness=5.5 # used for etalon calculation
 export TmaxK=500;
 export TbaseK=300;
@@ -111,7 +111,7 @@ export nu_high=0.769; # 390nm
 export nfibers=61; # 61 is for the personal laptop since only 8GB memory #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
-export shuffle_fibers=1;
+#export shuffle_fibers=1;
 export scale_fibers=1;
 export fiberdiam=0.11;
 #export laserdiam=5.5; ## this behaves properly
@@ -182,7 +182,7 @@ export FODnoise=0;
 export fifthODnoise=0;
 
 export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
-export interferephase=1.25;
+export interferephase=1.000;
 export gain=800000000000; #20000000;
 export saturate=65535;
 export lamsamples=1024;

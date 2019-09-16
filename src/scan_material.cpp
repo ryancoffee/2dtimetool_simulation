@@ -860,15 +860,22 @@ int main(int argc, char* argv[])
 				}
 				interferestream.close();
 
-
-
-				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
-				/*
+				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+				interferestream << "#delay for image = \t" << t0 
+					<< "\n#Ilaser = \t" << parabundle.Ilaser()
+					<< "\n#Ixray = \t" << parabundle.Ixray()
+					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+					<< "\n#alpha = \t" << parabundle.delay_angle() 
+					<< std::endl;
+				interferestream << "#";
+				pulsearray[0].printwavelengthbins(&interferestream);
 				for (size_t f=0;f<pulsearray.size();f++){
 					pulsearray[f].scale(parabundle.Ilaser(f)); 
 					pulsearray[f].appendwavelength(&interferestream);
 				}
-				*/
+				interferestream.close();
+				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
 /*
 	HERE HERE HERE HERE
 	Here we need to figure out how to run a rolling TDI style image superposition so that each thread 
