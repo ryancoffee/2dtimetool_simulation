@@ -75,6 +75,7 @@ int main(int argc, char* argv[])
 	scanparams.etalonreflectance(atof(getenv("etalon")));
 	scanparams.etalondelay(double(atof(getenv("etalondelay"))));
 	scanparams.interferedelay((double)atof(getenv("interferedelay")));
+	scanparams.interferephase((double)atof(getenv("interferephase")));
 
 	scanparams.chirp(
 			( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),int(2)), // the difference in slopes at omega_low versus omega_high must equal tspan
@@ -558,8 +559,8 @@ int main(int argc, char* argv[])
 					pulse = masterpulse;
 					crosspulse = masterpulse;
 					startdelay = t0 + parabundle.delay(f);
-					pulse.scale(parabundle.Ilaser(f));
-					crosspulse.scale(parabundle.Ilaser(f));
+					pulse.scale(parabundle.Ixray(f));
+					crosspulse.scale(parabundle.Ixray(f));
 
 					pararesponse = masterresponse;
 
@@ -580,15 +581,11 @@ int main(int argc, char* argv[])
 
 					for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 						pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-						pararesponse.setstepvec_amp(pulse);
-						pararesponse.setstepvec_phase(pulse);
-						pararesponse.setstepvec_amp(crosspulse);
-						pararesponse.setstepvec_phase(crosspulse);
+						pararesponse.setstepvec_both(pulse,0.,parabundle.Ixray(f));
+						pararesponse.setstepvec_both(crosspulse,0.,parabundle.Ixray(f));
 						if (scanparams.doublepulse()){
-							pararesponse.addstepvec_amp(pulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_phase(pulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_amp(crosspulse,scanparams.doublepulsedelay());
-							pararesponse.addstepvec_phase(crosspulse,scanparams.doublepulsedelay());
+							pararesponse.addstepvec_both(pulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
+							pararesponse.addstepvec_both(crosspulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
 						}
 						// this pulls down the tail of the response so vector is periodic on nsamples	
 						pararesponse.buffervectors(pulse); 
@@ -672,10 +669,43 @@ int main(int argc, char* argv[])
 					pulse.fft_tofreq();
 					crosspulse.fft_tofreq();
 					pulse.delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
+					//crosspulse.scale(0.9);
 					pulse -= crosspulse;
+					//pulse.interfere(crosspulse,scanparams.interferephase());
 					//std::cerr << "\n\n\t\t\t\t============== testing... just before the push_back() ==============\n\n" << std::flush;
 					pulsearray[f] = pulse;
 				} // end nfibers loop
+				//
+
+				for (size_t f=0;f<pulsearray.size();++f){
+					pulsearray[f].scale(parabundle.Ilaser(f)); 
+				//	pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
+				}
+				std::complex<double> z_laser = parabundle.center_Ilaser();
+				std::complex<double> z_xray = parabundle.center_Ixray();
+
+				// direct image
+
+				ofstream interferestream;
+				std::string filename;
+
+				filename = scanparams.filebase() + "interference.out." + std::to_string(n);
+				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+				interferestream << "#delay for image = \t" << t0 
+					<< "\n#Ilaser = \t" << parabundle.Ilaser()
+					<< "\n#Ixray = \t" << parabundle.Ixray()
+					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+					<< "\n#alpha = \t" << parabundle.delay_angle() 
+					<< std::endl;
+				interferestream << "#";
+				pulsearray[0].printwavelengthbins(&interferestream);
+				for (size_t f=0;f<pulsearray.size();f++){
+                                        pulsearray[f].scale(parabundle.Ilaser(f));
+                                        pulsearray[f].appendwavelength(&interferestream);
+                                }
+				interferestream.close();
+
 
 				size_t img_nsamples(1024);
 				size_t img_stride(10);
@@ -745,31 +775,9 @@ int main(int argc, char* argv[])
 				 * instead of 3 single channels, use 1 3channel temporary buffer and fill it in the pulsearray[f].fillrow_uint8c3 call
 				 * Then we need to come up with an optical scheme for doing the schleiren thing spectrally
 				 */
-				for (size_t f=0;f<pulsearray.size();++f){
-					pulsearray[f].scale(parabundle.Ilaser(f)); 
-					pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
-				}
-				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1, imdata );
+				//cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1, imdata );
 
-				std::complex<double> z_laser = parabundle.center_Ilaser();
-				std::complex<double> z_xray = parabundle.center_Ixray();
 
-				ofstream interferestream;
-				std::string filename;
-
-				// direct image
-				filename = scanparams.filebase() + "interference.out." + std::to_string(n);
-				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-				interferestream << "#delay for image = \t" << t0 
-					<< "\n#Ilaser = \t" << parabundle.Ilaser()
-					<< "\n#Ixray = \t" << parabundle.Ixray()
-					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-					<< "\n#alpha = \t" << parabundle.delay_angle() 
-					<< std::endl;
-				interferestream << "#";
-				pulsearray[0].printwavelengthbins(&interferestream);
-				for HERE HERE HERE HERE
 				/*
 				for (size_t r=0;r<imageMat.rows;++r){
 					for (size_t c=0; c<imageMat.cols;++c)
@@ -777,8 +785,9 @@ int main(int argc, char* argv[])
 					interferestream << "\n";
 				}
 				*/
-				interferestream.close();
 
+
+				/*
 				cv::Mat imageMatK0(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
@@ -799,11 +808,14 @@ int main(int argc, char* argv[])
 					cv::destroyAllWindows();
 				}
 
+				*/
+
 
 
 					/* Oh damn... the jpg image save as an inverted, the first row shows up on the bottom... 
 					 * this is opposite as when we are saving an ascii file of stacked rows.
 					 */
+				/*
 				std::string jpgfilename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".jpg";
 				cv::imwrite(jpgfilename.c_str(),imageMatout);
 				//std::return_temporary_buffer (imdata.first);
@@ -862,22 +874,8 @@ int main(int argc, char* argv[])
 					interferestream << "\n";
 				}
 				interferestream.close();
+				*/
 
-				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-				interferestream << "#delay for image = \t" << t0 
-					<< "\n#Ilaser = \t" << parabundle.Ilaser()
-					<< "\n#Ixray = \t" << parabundle.Ixray()
-					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-					<< "\n#alpha = \t" << parabundle.delay_angle() 
-					<< std::endl;
-				interferestream << "#";
-				pulsearray[0].printwavelengthbins(&interferestream);
-				for (size_t f=0;f<pulsearray.size();f++){
-					pulsearray[f].scale(parabundle.Ilaser(f)); 
-					pulsearray[f].appendwavelength(&interferestream);
-				}
-				interferestream.close();
 				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
 /*
 	HERE HERE HERE HERE

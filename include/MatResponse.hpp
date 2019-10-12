@@ -59,24 +59,28 @@ public:
  	inline double bandgap(double in=4.47){bandgap_eV = in; return bandgap_eV;}
 	inline double bandgap(void){return bandgap_eV;}
 
-	void setstepvec_amp(PulseFreq & pulse,double delay_in = 0.);
-	void setstepvec_amp(PulseFreq * pulse,double delay_in = 0.);
-	void setstepvec_phase(PulseFreq & pulse,double delay_in = 0.);
-        void setstepvec_phase(PulseFreq * pulse,double delay_in = 0.);
-        void addstepvec_amp(PulseFreq & pulse,double delay_in = 0.);
-        void addstepvec_amp(PulseFreq * pulse,double delay_in = 0.);
-	void addstepvec_phase(PulseFreq & pulse,double delay_in = 0.);
-	void addstepvec_phase(PulseFreq * pulse,double delay_in = 0.);
+	void setstepvec_amp(PulseFreq & pulse,double delay_in = 0.,double scale_in = 1.);
+	void setstepvec_amp(PulseFreq * pulse,double delay_in = 0.,double scale_in = 1.);
+	void setstepvec_phase(PulseFreq & pulse,double delay_in = 0.,double scale_in = 1.);
+        void setstepvec_phase(PulseFreq * pulse,double delay_in = 0.,double scale_in = 1.);
+        void addstepvec_amp(PulseFreq & pulse,double delay_in = 0.,double scale_in = 1.);
+        void addstepvec_amp(PulseFreq * pulse,double delay_in = 0.,double scale_in = 1.);
+	void addstepvec_phase(PulseFreq & pulse,double delay_in = 0.,double scale_in = 1.);
+	void addstepvec_phase(PulseFreq * pulse,double delay_in = 0.,double scale_in = 1.);
+	void setstepvec_both(PulseFreq * pulse,double delay_in = 0.,double scale_in = 1.);
+	void setstepvec_both(PulseFreq & pulse,double delay_in = 0.,double scale_in = 1.);
+	void addstepvec_both(PulseFreq * pulse,double delay_in = 0.,double scale_in = 1.);
+	void addstepvec_both(PulseFreq & pulse,double delay_in = 0.,double scale_in = 1.);
 
 
 	bool fill_carriersvec(PulseFreq * pulse,std::ifstream * instream);
 	bool fill_carriersvec(PulseFreq & pulse,std::ifstream & instream);
 	bool fill_carriersvec(PulseFreq * pulse,double energy_keV);
 	bool fill_carriersvec(PulseFreq & pulse,double energy_keV);
-	bool setstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
-	bool setstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
-	bool addstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.);
-	bool addstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.);
+	bool setstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.,double scale_in = 1.);
+	bool setstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.,double scale_in = 1.);
+	bool addstepvec_both_carriers(PulseFreq * pulse,double delay_in = 0.,double scale_in = 1.);
+	bool addstepvec_both_carriers(PulseFreq & pulse,double delay_in = 0.,double scale_in = 1.);
 	
 	void buffervectors(PulseFreq & pulse);
 	void buffervectors(PulseFreq * pulse);

@@ -121,7 +121,7 @@ bool FiberBundle::shadow_xrays(const double xin, const double yin)
 	fillIxray();
 	for (size_t i = 0;i<ixray_vec.size(); ++i){ 
 		if (zvals[i].real() > xin && zvals[i].imag() > yin)
-			ixray_vec[i] = 0.;
+			ixray_vec[i] *= 0.5;
 	}
 	return true;
 }

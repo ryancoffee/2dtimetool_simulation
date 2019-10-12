@@ -232,17 +232,17 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	return carriers_set;
 }
 
-bool MatResponse::setstepvec_both_carriers(PulseFreq * pulse,double delay_in){ return setstepvec_both_carriers(*pulse,delay_in); }
-bool MatResponse::setstepvec_both_carriers(PulseFreq & pulse,double delay_in)
+bool MatResponse::setstepvec_both_carriers(PulseFreq * pulse,double delay_in,double scale_in){ return setstepvec_both_carriers(*pulse,delay_in,scale_in); }
+bool MatResponse::setstepvec_both_carriers(PulseFreq & pulse,double delay_in, double scale_in)
 { 
 	int arg(0);
 	//std::cerr << "HERE HERE in setstepvec_both_carriers() method\n" << std::flush;
 	std::fill(pulse.modamp.begin(),pulse.modamp.end(),1.);
 	std::fill(pulse.modphase.begin(),pulse.modphase.end(),0.);
-	return addstepvec_both_carriers(pulse,delay_in);
+	return addstepvec_both_carriers(pulse,delay_in,scale_in);
 }
-bool MatResponse::addstepvec_both_carriers(PulseFreq * pulse,double delay_in){ return addstepvec_both_carriers(*pulse,delay_in); }
-bool MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in)
+bool MatResponse::addstepvec_both_carriers(PulseFreq * pulse,double delay_in,double scale_in){ return addstepvec_both_carriers(*pulse,delay_in,scale_in); }
+bool MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in,double scale_in)
 {
 	int arg(0);
 	double thisamp(0);
@@ -260,8 +260,8 @@ bool MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in)
 			arg = std::min(int(i) - int((t0-delay_in)/pulse.getdt()) , int(carriers.size()) - 1);
 	//std::cerr << i << "," << arg << " " << std::flush;
 			if (arg>0){
-				thisamp = -attenuation * carriers[arg]; 
-				thisphase = phase * carriers[arg];
+				thisamp = -attenuation * carriers[arg] * scale_in; 
+				thisphase = phase * carriers[arg] * scale_in;
 			}
 			pulse.modamp[i] *= (1.+ thisamp);
 			pulse.modphase[i] += thisphase;
@@ -273,8 +273,8 @@ bool MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in)
 			arg = std::min(int(i)-int(pulse.getsamples()) - int((t0-delay_in)/pulse.getdt()) , int(carriers.size()) - 1);
 	//std::cerr << i << "," << arg << " " << std::flush;
 			if (arg>0){
-				thisamp = -attenuation * carriers[arg];
-				thisphase = phase * carriers[arg];
+				thisamp = -attenuation * carriers[arg] * scale_in;
+				thisphase = phase * carriers[arg] * scale_in;
 			}
 			pulse.modamp[i] *= (1.+ thisamp);
 			pulse.modphase[i] += thisphase;
@@ -282,15 +282,27 @@ bool MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in)
 
 	} catch(exception& e) {
 		std::cerr << "Error in setstepvec_both_carriers() method: " << e.what() << std::endl << std::flush;
-		addstepvec_amp(pulse,delay_in);
-		addstepvec_phase(pulse,delay_in);
+		addstepvec_amp(pulse,delay_in,scale_in);
+		addstepvec_phase(pulse,delay_in,scale_in);
 		return false;
 	}
 	return true;
 }
 
-void MatResponse::setstepvec_amp(PulseFreq * pulse,double delay_in){ setstepvec_amp(*pulse,delay_in); }
-void MatResponse::setstepvec_amp(PulseFreq & pulse,double delay_in){
+void MatResponse::setstepvec_both(PulseFreq * pulse,double delay_in,double scale_in){ setstepvec_both(*pulse,delay_in,scale_in); }
+void MatResponse::setstepvec_both(PulseFreq & pulse,double delay_in,double scale_in){
+	setstepvec_amp(pulse,delay_in,scale_in);
+	setstepvec_phase(pulse,delay_in,scale_in);
+}
+
+void MatResponse::addstepvec_both(PulseFreq * pulse,double delay_in,double scale_in){ addstepvec_both(*pulse,delay_in,scale_in); }
+void MatResponse::addstepvec_both(PulseFreq & pulse,double delay_in,double scale_in){
+	addstepvec_amp(pulse,delay_in,scale_in);
+	addstepvec_phase(pulse,delay_in,scale_in);
+}
+
+void MatResponse::setstepvec_amp(PulseFreq * pulse,double delay_in,double scale_in){ setstepvec_amp(*pulse,delay_in,scale_in); }
+void MatResponse::setstepvec_amp(PulseFreq & pulse,double delay_in,double scale_in){
 	double arg(0);
 	for (unsigned i = 0 ; i < pulse.getsamples(); i++){
 		pulse.modamp[i] = 0.;
@@ -300,7 +312,7 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse,double delay_in){
 		}
 		if (arg > 0.0) {
 			pulse.modamp[i] = -attenuation * (a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta)));
-			pulse.modamp[i] *= scale;
+			pulse.modamp[i] *= scale * scale_in;
 			if (arg < twidth) {
 				pulse.modamp[i] *= std::pow( sin(M_PI_2*arg/twidth ) , int(2));
 			}
@@ -309,8 +321,8 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse,double delay_in){
 	}
 }
 
-void MatResponse::setstepvec_phase(PulseFreq * pulse, double delay_in){ setstepvec_phase(*pulse,delay_in); }
-void MatResponse::setstepvec_phase(PulseFreq & pulse,double delay_in){
+void MatResponse::setstepvec_phase(PulseFreq * pulse, double delay_in,double scale_in){ setstepvec_phase(*pulse,delay_in,scale_in); }
+void MatResponse::setstepvec_phase(PulseFreq & pulse,double delay_in,double scale_in){
 	double arg(0);
 	for (unsigned i = 0 ; i < pulse.getsamples(); i++){
 		pulse.modphase[i] = 0.0;
@@ -320,7 +332,7 @@ void MatResponse::setstepvec_phase(PulseFreq & pulse,double delay_in){
 		}
 		if (arg > 0.0) {
 			pulse.modphase[i] = phase * (a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta)));
-			pulse.modphase[i] *= scale;
+			pulse.modphase[i] *= scale * scale_in;
 			if( arg < twidth){
 				pulse.modphase[i] *= std::pow( sin(M_PI_2*arg/twidth ) ,int(2) ) ;
 			}
@@ -328,28 +340,8 @@ void MatResponse::setstepvec_phase(PulseFreq & pulse,double delay_in){
 	}
 }
 
-void MatResponse::buffervectors(PulseFreq * pulse){ buffervectors(*pulse); }
-void MatResponse::buffervectors(PulseFreq & pulse){
-	// nominally setting this to 10 times the fastest twidth to minimize its effect on spectral broadening
-	unsigned bufferwidth = static_cast<unsigned>(10.0*twidth/pulse.getdt());
-	double bufferscale;
-	double arg(0);
-
-	pulse.modphase[pulse.getsamples()/2] *= 0.0;
-	pulse.modamp[pulse.getsamples()/2] = 1.0;
-	for (unsigned i=0; i < bufferwidth ; i++) {
-		arg = ((double)i)/((double)bufferwidth);
-		bufferscale = std::pow( sin(M_PI_2*(arg) ) , int(2)) ; // buffering the vector back to 0.0 so it can be periodic.
-		pulse.modphase[pulse.getsamples()/2-i] *= bufferscale;
-		pulse.modamp[pulse.getsamples()/2-i] -= 1.0;
-		pulse.modamp[pulse.getsamples()/2-i] *= bufferscale;
-		pulse.modamp[pulse.getsamples()/2-i] += 1.0;
-	}
-}
-
-
-void MatResponse::addstepvec_amp(PulseFreq * pulse,double delay_in){ addstepvec_amp(*pulse,delay_in); }
-void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay_in){
+void MatResponse::addstepvec_amp(PulseFreq * pulse,double delay_in,double scale_in){ addstepvec_amp(*pulse,delay_in,scale_in); }
+void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay_in,double scale_in){
 	double arg(0);
 	double thisamp(0);
 	for (unsigned i = 0 ; i < pulse.getsamples(); i++){
@@ -371,8 +363,8 @@ void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay_in){
 }
 
 
-void MatResponse::addstepvec_phase(PulseFreq * pulse,double delay_in){ addstepvec_phase(*pulse,delay_in); }
-void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay_in){
+void MatResponse::addstepvec_phase(PulseFreq * pulse,double delay_in,double scale_in){ addstepvec_phase(*pulse,delay_in,scale_in); }
+void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay_in,double scale_in){
 	double arg(0.);
 	double thisphase(0.);
 	for (unsigned i = 0 ; i < pulse.getsamples(); i++){
@@ -391,5 +383,25 @@ void MatResponse::addstepvec_phase(PulseFreq & pulse,double delay_in){
 		pulse.modphase[i] += thisphase;
 	}
 
+}
+
+
+void MatResponse::buffervectors(PulseFreq * pulse){ buffervectors(*pulse); }
+void MatResponse::buffervectors(PulseFreq & pulse){
+	// nominally setting this to 10 times the fastest twidth to minimize its effect on spectral broadening
+	unsigned bufferwidth = static_cast<unsigned>(10.0*twidth/pulse.getdt());
+	double bufferscale;
+	double arg(0);
+
+	pulse.modphase[pulse.getsamples()/2] *= 0.0;
+	pulse.modamp[pulse.getsamples()/2] = 1.0;
+	for (unsigned i=0; i < bufferwidth ; i++) {
+		arg = ((double)i)/((double)bufferwidth);
+		bufferscale = std::pow( sin(M_PI_2*(arg) ) , int(2)) ; // buffering the vector back to 0.0 so it can be periodic.
+		pulse.modphase[pulse.getsamples()/2-i] *= bufferscale;
+		pulse.modamp[pulse.getsamples()/2-i] -= 1.0;
+		pulse.modamp[pulse.getsamples()/2-i] *= bufferscale;
+		pulse.modamp[pulse.getsamples()/2-i] += 1.0;
+	}
 }
 

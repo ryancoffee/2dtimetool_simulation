@@ -105,7 +105,7 @@ class PulseFreq
 		PulseFreq & operator*=(const double s);
 		PulseFreq & diffamps(const PulseFreq &rhs);
 		PulseFreq & normamps(const PulseFreq &rhs);
-		PulseFreq & interfere(const PulseFreq &rhs);
+		PulseFreq & interfere(const PulseFreq &rhs,const double phase);
 
 		void setplans(const PulseFreq & rhs);
 		void setmasterplans(fftw_plan * const forward,fftw_plan * const backward);

@@ -114,17 +114,15 @@ export nu_high=0.769; # 390nm
 export nfibers=61; # 61 is for the personal laptop since only 8GB memory #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
-#export shuffle_fibers=1;
+export shuffle_fibers=1;
 export scale_fibers=1;
 export fiberdiam=0.11;
-#export laserdiam=5.5; ## this behaves properly
-#export xraydiam=0.125;
 export laserdiam=5.5.; ## this behaves properly
-export xraydiam=1.25;
-export xrayshadowcorner_x=-1.;
-export xrayshadowcorner_y=.05;
-export xrayshadowcorner_xjitter=.003; 
-export xrayshadowcorner_yjitter=.003; 
+export xraydiam=0.75;
+export xrayshadowcorner_x=0.00;
+export xrayshadowcorner_y=0.00;
+export xrayshadowcorner_xjitter=.25; 
+export xrayshadowcorner_yjitter=.25; 
 export thermaldiam=1.;
 export thermalcenter_x=0.;
 export thermalcenter_y=0.;
@@ -185,13 +183,13 @@ export FODnoise=0;
 export fifthODnoise=0;
 
 export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
-export interferephase=1.000;
+#export interferephase=1.100; this doesn't work it seems.
 export gain=800000000000; #20000000;
 export saturate=65535;
 export lamsamples=1024;
 
 export carriersfile=$carriersdir$carriersfilename;
-export filebase=$datadir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_carriertag"$carriertag"_nfibers"$nfibers"_netalon"$netalon"_";
+export filebase=$datadir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_carriertag"$carriertag"_nfibers"$nfibers"_netalon"$netalon"_"$xrayshadowcorner_x"_"$xrayshadowcorner_y"_";
 export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_"$carriertag"_ncalibdelays"$ncalibdelays"_netalon"$netalon"_";
 echo "---	Environment variables exported";
 echo "---	filebase = "$filebase;

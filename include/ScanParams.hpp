@@ -69,6 +69,9 @@ class ScanParams
 	double interferedelay(double in){interferedly = in; return interferedly;}
 	inline double interferedelay(void){return interferedly;}
 
+	double interferephase(double in){interferephs = in; return interferephs;}
+	inline double interferephase(void){return interferephs;}
+
 	/* =========== chirp interfaces ============= */
 	void chirp(double second, double third, double fourth, double fifth);
 	std::vector<double> & getchirp(void){return chirpvec;}
@@ -102,7 +105,7 @@ class ScanParams
 	private:
 
 	size_t nimgs,ngrpsteps,netln;
-	double interferedly;
+	double interferedly,interferephs;
 	double grpdelay,bkdelay,etdelay,etreflect;
 	double dalph;
 	double tspn;

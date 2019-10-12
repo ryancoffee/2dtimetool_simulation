@@ -208,8 +208,11 @@ PulseFreq & PulseFreq::operator/=(const PulseFreq &rhs){
         return *this;
 }
 
-PulseFreq & PulseFreq::interfere(const PulseFreq &rhs){
-	*this += rhs;
+PulseFreq & PulseFreq::interfere(const PulseFreq &rhs,const double phase){
+	for (size_t i=0;i<samples;++i){
+		cvec[i] += std::polar(rhs.rhovec[i], rhs.phivec[i] + Constants::pi<double>() * phase); 
+	}
+	cvec2rhophi();
         return *this;
 }
 
