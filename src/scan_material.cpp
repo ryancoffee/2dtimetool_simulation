@@ -769,11 +769,14 @@ int main(int argc, char* argv[])
 					<< std::endl;
 				interferestream << "#";
 				pulsearray[0].printwavelengthbins(&interferestream);
+				for HERE HERE HERE HERE
+				/*
 				for (size_t r=0;r<imageMat.rows;++r){
 					for (size_t c=0; c<imageMat.cols;++c)
 						interferestream << imageMat.at<float>(r,c) << "\t";	
 					interferestream << "\n";
 				}
+				*/
 				interferestream.close();
 
 				cv::Mat imageMatK0(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );

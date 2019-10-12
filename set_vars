@@ -16,11 +16,12 @@ export carriercolumn=5; # this tells the code which of Nikita's columns to use
 export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/'
 export carriersfilename='OUTPUT_BSO_Density_derivative.dat'
 export carriersdir='./data_fs/reference/fromNikita/'
-export carriersfilename='OUTPUT_YAG_Density_9500.dat'
+#export carriersfilename='OUTPUT_YAG_Density_9500.dat'
+export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 #unset usediamond
 export usediamond=true
 export carriertag='diamond'
-export xrayphoton_energy=400.0; #40; # this is in keV
+export xrayphoton_energy=6.0; #40; # this is in keV
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat'
 #export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 export bandgap_eV=5.47
@@ -32,7 +33,7 @@ unset skipimages
 #comment out the export definition to get this env var to act like a strict bool (e.g. true if defined, only false if unset)
 #but to be defined, we have to set it to some value
 #export skipcalibration=true;
-export skipimages=true;
+#export skipimages=true;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
 export ncalibdelays=32; #8192; #256; # 128;
@@ -120,8 +121,8 @@ export fiberdiam=0.11;
 #export xraydiam=0.125;
 export laserdiam=5.5.; ## this behaves properly
 export xraydiam=1.25;
-export xrayshadowcorner_x=-0.2;
-export xrayshadowcorner_y=.2;
+export xrayshadowcorner_x=-1.;
+export xrayshadowcorner_y=.05;
 export xrayshadowcorner_xjitter=.003; 
 export xrayshadowcorner_yjitter=.003; 
 export thermaldiam=1.;
