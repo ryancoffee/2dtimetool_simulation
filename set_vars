@@ -4,7 +4,7 @@ starttime=$(date +%s)
 export HOSTNAME=$HOSTNAME
 export skipdisplayframes=1
 
-export nthreads=2
+export nthreads=40
 #export datadir='./data_container/raw/'
 export datadir='./data_fs/raw/'
 export calibdir='./data_fs/extern/'
@@ -45,7 +45,7 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-export nimages=10;
+export nimages=100000;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
 export delays_std=1000;
 
@@ -111,16 +111,16 @@ export nu_high=0.769; # 390nm
 ## 1 + sum_{n=1,nrows} n * 6
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
-export nfibers=61; # 61 is for the personal laptop since only 8GB memory #109; #61; #61; #109;
+export nfibers=109; #61; # 61 is for the personal laptop since only 8GB memory #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 export shuffle_fibers=1;
 export scale_fibers=1;
 export fiberdiam=0.11;
-export laserdiam=5.5.; ## this behaves properly
+export laserdiam=2.5.; ## this behaves properly
 export xraydiam=0.75;
-export xrayshadowcorner_x=0.00;
-export xrayshadowcorner_y=0.00;
+export xrayshadowcorner_x=1.00;
+export xrayshadowcorner_y=1.00;
 export xrayshadowcorner_xjitter=.25; 
 export xrayshadowcorner_yjitter=.25; 
 export thermaldiam=1.;
@@ -183,7 +183,7 @@ export FODnoise=0;
 export fifthODnoise=0;
 
 export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
-#export interferephase=1.100; this doesn't work it seems.
+export interferephase=1.000; #this doesn't work it seems.
 export gain=800000000000; #20000000;
 export saturate=65535;
 export lamsamples=1024;

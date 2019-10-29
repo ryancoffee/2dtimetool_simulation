@@ -11,9 +11,9 @@
 //#include "opencv4/opencv2/core.hpp"
 //#include "opencv4/opencv2/highgui.hpp"
 //#include "opencv4/opencv2/imgproc/imgproc.hpp"
-#include "opencv2/core.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+//#include "opencv2/core.hpp"
+//#include "opencv2/highgui.hpp"
+//#include "opencv2/imgproc/imgproc.hpp"
 
 #include <vector>
 #include <random>
@@ -79,6 +79,9 @@ int main(int argc, char* argv[])
 	scanparams.etalondelay(double(atof(getenv("etalondelay"))));
 	scanparams.interferedelay((double)atof(getenv("interferedelay")));
 	scanparams.interferephase((double)atof(getenv("interferephase")));
+	std::cerr << "made it also HERE HERE HERE HERE\n" << std::endl;
+
+	std::cerr << "HER EHERE HERE HERE\n" << std::flush;
 
 	scanparams.chirp(
 			( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),int(2)), // the difference in slopes at omega_low versus omega_high must equal tspan
@@ -710,6 +713,7 @@ int main(int argc, char* argv[])
 				interferestream.close();
 
 
+				/*
 				size_t img_nsamples(1024);
 				size_t img_stride(10);
 				//std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_stride * img_nsamples);
@@ -770,6 +774,7 @@ int main(int argc, char* argv[])
 					}
 					kernelstream.close();
 				}
+				*/
 
 				/*
 				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
@@ -877,9 +882,9 @@ int main(int argc, char* argv[])
 					interferestream << "\n";
 				}
 				interferestream.close();
-				*/
 
 				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
+				*/
 /*
 	HERE HERE HERE HERE
 	Here we need to figure out how to run a rolling TDI style image superposition so that each thread 

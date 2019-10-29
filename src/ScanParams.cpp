@@ -6,7 +6,8 @@ ScanParams::ScanParams(void)
 , userandphase(false)
 {
 
-	std::cerr << "Constructor ScanPrams()" << std::endl;
+	std::cerr << "Constructor ScanParams()" << std::endl;
+
 
 	chirpvec.resize(4,double(0));
 	std::string filebase = std::string(getenv("filebase"));
