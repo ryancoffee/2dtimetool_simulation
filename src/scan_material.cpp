@@ -8,9 +8,12 @@
 
 #include <cstdint> // for sake of defining uint16_t for the OpenCV mat to be filled.
 // OpenCV includes
-#include "opencv4/opencv2/core.hpp"
-#include "opencv4/opencv2/highgui.hpp"
-#include "opencv4/opencv2/imgproc/imgproc.hpp"
+//#include "opencv4/opencv2/core.hpp"
+//#include "opencv4/opencv2/highgui.hpp"
+//#include "opencv4/opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 #include <vector>
 #include <random>
