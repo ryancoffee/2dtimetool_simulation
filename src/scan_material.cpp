@@ -8,9 +8,6 @@
 
 #include <cstdint> // for sake of defining uint16_t for the OpenCV mat to be filled.
 // OpenCV includes
-//#include "opencv4/opencv2/core.hpp"
-//#include "opencv4/opencv2/highgui.hpp"
-//#include "opencv4/opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -723,7 +720,6 @@ int main(int argc, char* argv[])
 				cv::Mat kernel1(cv::Mat::zeros(kr,kc,CV_32F));
 				cv::Mat kernel2(cv::Mat::zeros(kr,kc,CV_32F));
 
-				/*
 				
 				// kernel0 (vert blur only)
 				std::vector<float> kblur(kr);
@@ -775,7 +771,6 @@ int main(int argc, char* argv[])
 					}
 					kernelstream.close();
 				}
-				*/
 
 				/*
 				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
@@ -784,7 +779,7 @@ int main(int argc, char* argv[])
 				 * instead of 3 single channels, use 1 3channel temporary buffer and fill it in the pulsearray[f].fillrow_uint8c3 call
 				 * Then we need to come up with an optical scheme for doing the schleiren thing spectrally
 				 */
-				//cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1, imdata );
+				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1, imdata );
 
 
 				/*
@@ -796,7 +791,6 @@ int main(int argc, char* argv[])
 				*/
 
 
-				/*
 				cv::Mat imageMatK0(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
@@ -806,6 +800,7 @@ int main(int argc, char* argv[])
 				cv::filter2D(imageMat, imageMatK2, -1, kernel2);
 				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))));
 				cv::flip(imageMatout,imageMatout,0);
+
 				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
 					char FrameStr[15];
 					sprintf(FrameStr,"Frame_%i",int(tid));
@@ -816,15 +811,9 @@ int main(int argc, char* argv[])
 					cv::waitKey(0);
 					cv::destroyAllWindows();
 				}
-
-				*/
-
-
-
 					/* Oh damn... the jpg image save as an inverted, the first row shows up on the bottom... 
 					 * this is opposite as when we are saving an ascii file of stacked rows.
 					 */
-				/*
 				std::string jpgfilename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".jpg";
 				cv::imwrite(jpgfilename.c_str(),imageMatout);
 				//std::return_temporary_buffer (imdata.first);
@@ -885,14 +874,7 @@ int main(int argc, char* argv[])
 				interferestream.close();
 
 				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
-				*/
-/*
-	HERE HERE HERE HERE
-	Here we need to figure out how to run a rolling TDI style image superposition so that each thread 
-	produces a time-ordered series of images who are comprised of the most recent n_overlay images that
-	are superimposed with a 1x row-shift
-	Looks like maybe we need to write another Pulse.accumwavelength(&interferestream,nshift)
-*/
+
 				if (tid % 10 < 2){
 					for (size_t f=0;f<parabundle.get_nfibers();f++){
 						int max = boost::lexical_cast<double>(getenv("gain")) * pulsearray[f].maxsignal();
