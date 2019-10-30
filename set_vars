@@ -5,10 +5,10 @@ export HOSTNAME=$HOSTNAME
 export skipdisplayframes=1
 
 export nthreads=4
-export datadir='./data_container/raw/'
-#export datadir='./data_fs/raw/'
-#export calibdir='./data_fs/extern/'
-export calibdir='./data_container/extern/'
+#export datadir='./data_container/raw/'
+export datadir='./data_fs/raw/'
+export calibdir='./data_fs/extern/'
+#export calibdir='./data_container/extern/'
 #export datadir='./data_pet/raw/'
 #export calibdir='./data_pet/extern/'
 export carriercolumn=5; # this tells the code which of Nikita's columns to use

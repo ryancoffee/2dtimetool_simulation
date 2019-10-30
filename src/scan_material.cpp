@@ -11,9 +11,9 @@
 //#include "opencv4/opencv2/core.hpp"
 //#include "opencv4/opencv2/highgui.hpp"
 //#include "opencv4/opencv2/imgproc/imgproc.hpp"
-//#include "opencv2/core.hpp"
-//#include "opencv2/highgui.hpp"
-//#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 #include <vector>
 #include <random>
@@ -713,7 +713,6 @@ int main(int argc, char* argv[])
 				interferestream.close();
 
 
-				/*
 				size_t img_nsamples(1024);
 				size_t img_stride(10);
 				//std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_stride * img_nsamples);
@@ -723,6 +722,8 @@ int main(int argc, char* argv[])
 				cv::Mat kernel0(cv::Mat::zeros(kr,kc,CV_32F));
 				cv::Mat kernel1(cv::Mat::zeros(kr,kc,CV_32F));
 				cv::Mat kernel2(cv::Mat::zeros(kr,kc,CV_32F));
+
+				/*
 				
 				// kernel0 (vert blur only)
 				std::vector<float> kblur(kr);
