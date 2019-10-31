@@ -713,6 +713,9 @@ int main(int argc, char* argv[])
 
 				int kr(2*4 + 1);
 				int kc(2*20 + 1);
+				unsigned nkernels = 10; // hard coding for now since to white these I need to talk to Ruaridh
+				// HERE HERE HERE HERE //
+				std::vector<cv::Mat> kernels(nkernels)
 				cv::Mat kernel0(cv::Mat::zeros(kr,kc,CV_32F));
 				cv::Mat kernel1(cv::Mat::zeros(kr,kc,CV_32F));
 				cv::Mat kernel2(cv::Mat::zeros(kr,kc,CV_32F));
@@ -724,7 +727,12 @@ int main(int argc, char* argv[])
 				DataOps::sinsqr(kblur);
 				cv::Mat cblur(kr,1,CV_32F,kblur.data());
 
-				std::vector<float> kleg0(kc);
+				std::vector< std::vector<float> > klegs;
+				klegs.push_back(std::vector<float>(kc));
+				for (insigned k = 0 ; k<nkernels; ++k){
+					DataOps::legendre(klegs[k],k);
+					cv::flip(cblur*cv::Mat(1,kc,CV_32F,klegs[k].data()),kernel0,-1);
+				}
 				DataOps::legendre(kleg0,0);
 				cv::Mat cleg0(1,kc,CV_32F,kleg0.data());
 				cv::flip(cblur*cleg0,kernel0,-1);
@@ -814,17 +822,29 @@ int main(int argc, char* argv[])
 				*/
 
 
+				std::vector< cv::Mat > imageMat_vec;
+				for (unsigned k = 0; k < nkernels; ++k){
+					imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
+				}
 				cv::Mat imageMatK0(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK3(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
-				cv::Mat imageMatout(imageMat.rows, imageMat.cols, CV_8UC4);
-				cv::filter2D(imageMat, imageMatK0, -1, kernel0);
-				cv::filter2D(imageMat, imageMatK1, -1, kernel1);
-				cv::filter2D(imageMat, imageMatK2, -1, kernel2);
-				cv::filter2D(imageMat, imageMatK3, -1, kernel3);
+				cv::Mat imageMatout_k0(imageMat.rows, imageMat.cols, CV_8UC1);
+				cv::Mat imageMatout_k123(imageMat.rows, imageMat.cols, CV_8UC3);
+				cv::Mat imageMatout_k456(imageMat.rows, imageMat.cols, CV_8UC3);
+				cv::Mat imageMatout_k789(imageMat.rows, imageMat.cols, CV_8UC3);
 
-				std::vector<cv::Mat> imageMatout_vec(imageMatout.channels());
+				cv::filter2D(imageMat, imageMat_vec[0], -1, kernel[0]);
+				for (unsigned i=1;i<nkernels;++i){
+					cv::filter2D(imageMat, imageMat_vec[i], -1, kernel[i]);
+				}
+				cv::filter2D(imageMat, imageMat_vec[1], -1, kernel1);
+				cv::filter2D(imageMat, imageMat_vec[2], -1, kernel2);
+				cv::filter2D(imageMat, imageMat_vec[3], -1, kernel3);
+
+				//std::vector<cv::Mat> imageMatout_vec(imageMatout.channels());
+				std::vector<cv::Mat> imageMatout_vec(imageMat_vec.size());
 				cv::split(imageMatout,imageMatout_vec);
 
 				double min,max,scale,offset;
