@@ -418,7 +418,6 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 	std::vector<double> y(i_high-i_low);	
 	for (size_t i=0;i<y.size();++i){
 		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
-		//y[i] = std::pow(rhovec[i_low+i],int(2)) * 200000000000;
 		y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);

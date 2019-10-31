@@ -23,6 +23,16 @@
 namespace DataOps 
 {
 	template <typename T>
+		std::vector<T> & legendre(std::vector<T> & vec,unsigned o = 0)
+		{
+			for (size_t i = 0; i< vec.size(); ++i) {
+				T x = -1 + 2*T(i)/T(vec.size()-1);
+				vec[i] = std::legendre(o,x);
+			}
+			return vec;
+		}
+
+	template <typename T>
 		std::vector<T> & sinsin3(std::vector<T>& vec)
 		{
 			size_t sz(vec.size());

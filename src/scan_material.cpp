@@ -76,9 +76,6 @@ int main(int argc, char* argv[])
 	scanparams.etalondelay(double(atof(getenv("etalondelay"))));
 	scanparams.interferedelay((double)atof(getenv("interferedelay")));
 	scanparams.interferephase((double)atof(getenv("interferephase")));
-	std::cerr << "made it also HERE HERE HERE HERE\n" << std::endl;
-
-	std::cerr << "HER EHERE HERE HERE\n" << std::flush;
 
 	scanparams.chirp(
 			( atof( getenv("chirp") ) ) / std::pow(fsPau<float>(),int(2)), // the difference in slopes at omega_low versus omega_high must equal tspan
@@ -680,9 +677,13 @@ int main(int argc, char* argv[])
 				} // end nfibers loop
 				//
 
+				size_t img_nsamples(1024);
+				size_t img_stride(1);
+				uint16_t * imdata = (uint16_t*)std::calloc(pulsearray.size() * img_stride * img_nsamples , sizeof(uint16_t));
+
 				for (size_t f=0;f<pulsearray.size();++f){
 					pulsearray[f].scale(parabundle.Ilaser(f)); 
-				//	pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
+					pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
 				}
 				std::complex<double> z_laser = parabundle.center_Ilaser();
 				std::complex<double> z_xray = parabundle.center_Ixray();
@@ -710,10 +711,6 @@ int main(int argc, char* argv[])
 				interferestream.close();
 
 
-				size_t img_nsamples(1024);
-				size_t img_stride(10);
-				//std::pair <uint16_t*,std::ptrdiff_t> imdata = std::get_temporary_buffer<uint16_t>(pulsearray.size() * img_stride * img_nsamples);
-				uint16_t * imdata = (uint16_t*)std::calloc(pulsearray.size() * img_stride * img_nsamples,sizeof(uint16_t));
 				int kr(2*4 + 1);
 				int kc(2*20 + 1);
 				cv::Mat kernel0(cv::Mat::zeros(kr,kc,CV_32F));
@@ -721,26 +718,34 @@ int main(int argc, char* argv[])
 				cv::Mat kernel2(cv::Mat::zeros(kr,kc,CV_32F));
 
 				
-				// kernel0 (vert blur only)
+				// kernel0 (vert blur horiz sin2)
 				std::vector<float> kblur(kr);
 				DataOps::sinsqr(kblur);
 				cv::Mat cblur(kr,1,CV_32F,kblur.data());
-				cv::flip( cblur * cv::Mat::ones(1,kc,CV_32F) ,kernel0 , -1);
+
+				std::vector<float> kleg0(kc);
+				DataOps::legendre(kleg0,0);
+				cv::Mat cleg0(1,kc,CV_32F,kleg0.data());
+				cv::flip(cblur*cleg0,kernel0,-1);
 
 				// kernel1 (vert blur horiz deriv)
-				std::vector<float> kdiff(kc);
-				DataOps::negcos(kdiff);
-				cv::Mat cdiff(1,kc,CV_32F,kdiff.data());
-				cv::flip(cblur*cdiff,kernel1,-1);
+				std::vector<float> kleg1(kc);
+				DataOps::legendre(kleg1,1);
+				cv::Mat cleg1(1,kc,CV_32F,kleg1.data());
+				cv::flip(cblur*cleg1,kernel1,-1);
 
 				
 				// kernel2 (vert blur horiz 2ndderiv)
-				std::vector<float> kddiff(kc);
-				DataOps::sinsin3(kddiff);
-				cv::Mat cddiff(1,kc,CV_32F,kddiff.data());
-				cv::flip(cblur*cddiff,kernel2,-1);
+				std::vector<float> kleg2(kc);
+				DataOps::legendre(kleg2,2);
+				cv::Mat cleg2(1,kc,CV_32F,kleg2.data());
+				cv::flip(cblur*cleg2,kernel2,-1);
 
 				if (tid==0 and n<nthreads){
+					/*
+					 * OK, we should use Grahm-Schmidt to come up with orthogonal set, start with sin defined from 0..pi, then cos, then sin*cos, then sin**2, 
+					 * then cos**2 but maybe just neg of sin**2, then sin**2*cos... and so forth
+					 */
 					std::string kfilename;
 					ofstream kernelstream;
 					kfilename = scanparams.filebase() + "interference.kernel0";
@@ -775,11 +780,11 @@ int main(int argc, char* argv[])
 				/*
 				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
 				 * Base that output on the result of the various python work you've done lately
-				 * Use a temporary buffer, if that seems better than a fixed malloc.
-				 * instead of 3 single channels, use 1 3channel temporary buffer and fill it in the pulsearray[f].fillrow_uint8c3 call
 				 * Then we need to come up with an optical scheme for doing the schleiren thing spectrally
 				 */
-				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1, imdata );
+				cv::Mat imageMat_in(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );
+				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1);
+				imageMat_in.convertTo(imageMat,CV_32FC1);
 
 
 				/*
@@ -795,10 +800,11 @@ int main(int argc, char* argv[])
 				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatout(imageMat.rows, imageMat.cols, CV_8SC1);
-				cv::filter2D(imageMat, imageMatK0, -1, kernel0);
+				//cv::filter2D(imageMat, imageMatK0, -1, kernel0);
+				imageMatK0 = imageMat.clone();
 				cv::filter2D(imageMat, imageMatK1, -1, kernel1);
 				cv::filter2D(imageMat, imageMatK2, -1, kernel2);
-				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))));
+				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))+1));
 				cv::flip(imageMatout,imageMatout,0);
 
 				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
