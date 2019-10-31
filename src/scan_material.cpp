@@ -678,7 +678,7 @@ int main(int argc, char* argv[])
 				//
 
 				size_t img_nsamples(1024);
-				size_t img_stride(1);
+				size_t img_stride(10);
 				uint16_t * imdata = (uint16_t*)std::calloc(pulsearray.size() * img_stride * img_nsamples , sizeof(uint16_t));
 
 				for (size_t f=0;f<pulsearray.size();++f){
@@ -716,6 +716,7 @@ int main(int argc, char* argv[])
 				cv::Mat kernel0(cv::Mat::zeros(kr,kc,CV_32F));
 				cv::Mat kernel1(cv::Mat::zeros(kr,kc,CV_32F));
 				cv::Mat kernel2(cv::Mat::zeros(kr,kc,CV_32F));
+				cv::Mat kernel3(cv::Mat::zeros(kr,kc,CV_32F));
 
 				
 				// kernel0 (vert blur horiz sin2)
@@ -740,6 +741,14 @@ int main(int argc, char* argv[])
 				DataOps::legendre(kleg2,2);
 				cv::Mat cleg2(1,kc,CV_32F,kleg2.data());
 				cv::flip(cblur*cleg2,kernel2,-1);
+				
+
+
+				// kernel3 (vert blur horiz 3rdderiv)
+				std::vector<float> kleg3(kc);
+				DataOps::legendre(kleg3,3);
+				cv::Mat cleg3(1,kc,CV_32F,kleg3.data());
+				cv::flip(cblur*cleg3,kernel3,-1);
 
 				if (tid==0 and n<nthreads){
 					/*
@@ -775,6 +784,15 @@ int main(int argc, char* argv[])
 						kernelstream << "\n";
 					}
 					kernelstream.close();
+					kfilename = scanparams.filebase() + "interference.kernel3";
+					kernelstream.open(kfilename.c_str(),ios::out); 
+					for (size_t r=0;r<kernel3.rows;++r){
+						for (size_t c=0;c<kernel3.cols;++c){
+							kernelstream << kernel3.at<float>(r,c) << "\t";
+						}
+						kernelstream << "\n";
+					}
+					kernelstream.close();
 				}
 
 				/*
@@ -799,12 +817,39 @@ int main(int argc, char* argv[])
 				cv::Mat imageMatK0(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
-				cv::Mat imageMatout(imageMat.rows, imageMat.cols, CV_8SC1);
-				//cv::filter2D(imageMat, imageMatK0, -1, kernel0);
-				imageMatK0 = imageMat.clone();
+				cv::Mat imageMatK3(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
+				cv::Mat imageMatout(imageMat.rows, imageMat.cols, CV_8UC4);
+				cv::filter2D(imageMat, imageMatK0, -1, kernel0);
 				cv::filter2D(imageMat, imageMatK1, -1, kernel1);
 				cv::filter2D(imageMat, imageMatK2, -1, kernel2);
-				imageMat.convertTo(imageMatout,CV_8UC1,float(std::pow(int(2),int(8)))/(std::pow(int(2),int(16))+1));
+				cv::filter2D(imageMat, imageMatK3, -1, kernel3);
+
+				std::vector<cv::Mat> imageMatout_vec(imageMatout.channels());
+				cv::split(imageMatout,imageMatout_vec);
+
+				double min,max,scale,offset;
+				cv::minMaxLoc(imageMatK0,&min,&max);
+				scale = float(std::pow(int(2),int(8))-1)/(max-min);
+				offset = -min*scale;
+				imageMatK0.convertTo(imageMatout_vec[0],CV_16UC1,scale,offset);
+
+				cv::minMaxLoc(imageMatK1,&min,&max);
+				scale = float(std::pow(int(2),int(8))-1)/(max-min);
+				offset = -min*scale;
+				imageMatK1.convertTo(imageMatout_vec[1],CV_16UC1,scale,offset);
+				
+				cv::minMaxLoc(imageMatK2,&min,&max);
+				scale = float(std::pow(int(2),int(8))-1)/(max-min);
+				offset = -min*scale;
+				imageMatK2.convertTo(imageMatout_vec[2],CV_16UC1,scale,offset);
+
+				cv::minMaxLoc(imageMatK3,&min,&max);
+				scale = float(std::pow(int(2),int(8))-1)/(max-min);
+				offset = -min*scale;
+				imageMatK3.convertTo(imageMatout_vec[3],CV_16UC1,scale,offset);
+
+				cv::merge(imageMatout_vec,imageMatout);
+
 				cv::flip(imageMatout,imageMatout,0);
 
 				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
@@ -822,7 +867,6 @@ int main(int argc, char* argv[])
 					 */
 				std::string jpgfilename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".jpg";
 				cv::imwrite(jpgfilename.c_str(),imageMatout);
-				//std::return_temporary_buffer (imdata.first);
 
 				// kernel0
 				filename = scanparams.filebase() + "interference.out.K0." + std::to_string(n);
@@ -875,6 +919,24 @@ int main(int argc, char* argv[])
 				for (size_t r=0;r<imageMatK2.rows;++r){
 					for (size_t c=0; c<imageMatK2.cols;++c)
 						interferestream << imageMatK2.at<float>(r,c) << "\t";	
+					interferestream << "\n";
+				}
+				interferestream.close();
+				// kernel3
+				filename = scanparams.filebase() + "interference.out.K3." + std::to_string(n);
+				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+				interferestream << "#delay for image = \t" << t0 
+					<< "\n#Ilaser = \t" << parabundle.Ilaser()
+					<< "\n#Ixray = \t" << parabundle.Ixray()
+					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+					<< "\n#alpha = \t" << parabundle.delay_angle() 
+					<< std::endl;
+				interferestream << "#";
+				pulsearray[0].printwavelengthbins(&interferestream);
+				for (size_t r=0;r<imageMatK2.rows;++r){
+					for (size_t c=0; c<imageMatK2.cols;++c)
+						interferestream << imageMatK3.at<float>(r,c) << "\t";	
 					interferestream << "\n";
 				}
 				interferestream.close();
