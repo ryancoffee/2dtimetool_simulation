@@ -713,95 +713,45 @@ int main(int argc, char* argv[])
 
 				int kr(2*4 + 1);
 				int kc(2*20 + 1);
-				unsigned nkernels = 10; // hard coding for now since to white these I need to talk to Ruaridh
-				// HERE HERE HERE HERE //
-				std::vector<cv::Mat> kernels(nkernels)
-				cv::Mat kernel0(cv::Mat::zeros(kr,kc,CV_32F));
-				cv::Mat kernel1(cv::Mat::zeros(kr,kc,CV_32F));
-				cv::Mat kernel2(cv::Mat::zeros(kr,kc,CV_32F));
-				cv::Mat kernel3(cv::Mat::zeros(kr,kc,CV_32F));
 
-				
-				// kernel0 (vert blur horiz sin2)
+				// vertical bluring //
 				std::vector<float> kblur(kr);
 				DataOps::sinsqr(kblur);
 				cv::Mat cblur(kr,1,CV_32F,kblur.data());
 
-				std::vector< std::vector<float> > klegs;
-				klegs.push_back(std::vector<float>(kc));
-				for (insigned k = 0 ; k<nkernels; ++k){
-					DataOps::legendre(klegs[k],k);
-					cv::flip(cblur*cv::Mat(1,kc,CV_32F,klegs[k].data()),kernel0,-1);
+				// initialize kernels vector //
+				const unsigned nkernels = 10; // hard coding for now since the storage will be in 3x3channel jpg + the k0 as greyscale image
+				std::vector<cv::Mat> kernels(nkernels)
+				for (unsigned k = 0; k< nkernels; ++k){
+					kernels.push_back(cv::Mat::zeros(kr,kc,CV_32F));
 				}
-				DataOps::legendre(kleg0,0);
-				cv::Mat cleg0(1,kc,CV_32F,kleg0.data());
-				cv::flip(cblur*cleg0,kernel0,-1);
-
-				// kernel1 (vert blur horiz deriv)
-				std::vector<float> kleg1(kc);
-				DataOps::legendre(kleg1,1);
-				cv::Mat cleg1(1,kc,CV_32F,kleg1.data());
-				cv::flip(cblur*cleg1,kernel1,-1);
-
-				
-				// kernel2 (vert blur horiz 2ndderiv)
-				std::vector<float> kleg2(kc);
-				DataOps::legendre(kleg2,2);
-				cv::Mat cleg2(1,kc,CV_32F,kleg2.data());
-				cv::flip(cblur*cleg2,kernel2,-1);
 				
 
+				std::vector< float > leg(kc,0.);
+				for (unsigned k = 0 ; k<nkernels; ++k){
+					DataOps::legendre( leg, k);
+					cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[0] , -1);
+				}
 
-				// kernel3 (vert blur horiz 3rdderiv)
-				std::vector<float> kleg3(kc);
-				DataOps::legendre(kleg3,3);
-				cv::Mat cleg3(1,kc,CV_32F,kleg3.data());
-				cv::flip(cblur*cleg3,kernel3,-1);
-
-				if (tid==0 and n<nthreads){
+				if (tid==0 and n<nthreads){ // print the kernels, but only once
 					/*
 					 * OK, we should use Grahm-Schmidt to come up with orthogonal set, start with sin defined from 0..pi, then cos, then sin*cos, then sin**2, 
 					 * then cos**2 but maybe just neg of sin**2, then sin**2*cos... and so forth
 					 */
 					std::string kfilename;
 					ofstream kernelstream;
-					kfilename = scanparams.filebase() + "interference.kernel0";
-					kernelstream.open(kfilename.c_str(),ios::out); 
-					for (size_t r=0;r<kernel0.rows;++r){
-						for (size_t c=0;c<kernel0.cols;++c){
-							kernelstream << kernel0.at<float>(r,c) << "\t";
+					for (unsigned k = 0 ; k < nkernels; +=k){
+						kfilename = scanparams.filebase() + "kernel" + std::to_string(k);
+						kernelstream.open(kfilename.c_str(),ios::out); 
+						for (size_t r=0;r<kernels[k].rows;++r){
+							for (size_t c=0;c<kernels[k].cols;++c){
+								kernelstream << kernels[k].at<float>(r,c) << "\t";
+							}
+							kernelstream << "\n";
 						}
-						kernelstream << "\n";
+						kernelstream.close(); 
 					}
-					kernelstream.close();
-					kfilename = scanparams.filebase() + "interference.kernel1";
-					kernelstream.open(kfilename.c_str(),ios::out); 
-					for (size_t r=0;r<kernel1.rows;++r){
-						for (size_t c=0;c<kernel1.cols;++c){
-							kernelstream << kernel1.at<float>(r,c) << "\t";
-						}
-						kernelstream << "\n";
-					}
-					kernelstream.close();
-					kfilename = scanparams.filebase() + "interference.kernel2";
-					kernelstream.open(kfilename.c_str(),ios::out); 
-					for (size_t r=0;r<kernel2.rows;++r){
-						for (size_t c=0;c<kernel2.cols;++c){
-							kernelstream << kernel2.at<float>(r,c) << "\t";
-						}
-						kernelstream << "\n";
-					}
-					kernelstream.close();
-					kfilename = scanparams.filebase() + "interference.kernel3";
-					kernelstream.open(kfilename.c_str(),ios::out); 
-					for (size_t r=0;r<kernel3.rows;++r){
-						for (size_t c=0;c<kernel3.cols;++c){
-							kernelstream << kernel3.at<float>(r,c) << "\t";
-						}
-						kernelstream << "\n";
-					}
-					kernelstream.close();
-				}
+				} // end printing kernels
 
 				/*
 				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
@@ -813,15 +763,6 @@ int main(int argc, char* argv[])
 				imageMat_in.convertTo(imageMat,CV_32FC1);
 
 
-				/*
-				for (size_t r=0;r<imageMat.rows;++r){
-					for (size_t c=0; c<imageMat.cols;++c)
-						interferestream << imageMat.at<float>(r,c) << "\t";	
-					interferestream << "\n";
-				}
-				*/
-
-
 				std::vector< cv::Mat > imageMat_vec;
 				for (unsigned k = 0; k < nkernels; ++k){
 					imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
@@ -830,43 +771,30 @@ int main(int argc, char* argv[])
 				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK3(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
-				cv::Mat imageMatout_k0(imageMat.rows, imageMat.cols, CV_8UC1);
-				cv::Mat imageMatout_k123(imageMat.rows, imageMat.cols, CV_8UC3);
-				cv::Mat imageMatout_k456(imageMat.rows, imageMat.cols, CV_8UC3);
-				cv::Mat imageMatout_k789(imageMat.rows, imageMat.cols, CV_8UC3);
+				cv::Mat imageMatout_k0(imageMat_vec[0].rows, imageMat_vec[0].cols, CV_8UC1);
+				cv::Mat imageMatout_k123(imageMat_vec[1].rows, imageMat_vec[1].cols, CV_8UC3);
+				cv::Mat imageMatout_k456(imageMat_vec[4].rows, imageMat_vec[4].cols, CV_8UC3);
+				cv::Mat imageMatout_k789(imageMat_vec[7].rows, imageMat_vec[7].cols, CV_8UC3);
 
-				cv::filter2D(imageMat, imageMat_vec[0], -1, kernel[0]);
-				for (unsigned i=1;i<nkernels;++i){
+				for (unsigned i=0;i<nkernels;++i){
 					cv::filter2D(imageMat, imageMat_vec[i], -1, kernel[i]);
 				}
-				cv::filter2D(imageMat, imageMat_vec[1], -1, kernel1);
-				cv::filter2D(imageMat, imageMat_vec[2], -1, kernel2);
-				cv::filter2D(imageMat, imageMat_vec[3], -1, kernel3);
 
 				//std::vector<cv::Mat> imageMatout_vec(imageMatout.channels());
-				std::vector<cv::Mat> imageMatout_vec(imageMat_vec.size());
-				cv::split(imageMatout,imageMatout_vec);
+				//std::vector<cv::Mat> imageMatout_vec(imageMat_vec.size());
+				//cv::split(imageMatout,imageMatout_vec);
 
 				double min,max,scale,offset;
-				cv::minMaxLoc(imageMatK0,&min,&max);
-				scale = float(std::pow(int(2),int(8))-1)/(max-min);
-				offset = -min*scale;
-				imageMatK0.convertTo(imageMatout_vec[0],CV_16UC1,scale,offset);
+				for (unsigned k = 0 ; k < nkernels ; ++k ){
+					cv::minMaxLoc(imageMat_vec[k],&min,&max);
+					scale = float(std::pow(int(2),int(8))-1)/(max-min);
+					offset = -min*scale;
+					imageMat_vec[k].convertTo(imageMatout_vec[k],CV_16UC1,scale,offset);
+				}
 
-				cv::minMaxLoc(imageMatK1,&min,&max);
-				scale = float(std::pow(int(2),int(8))-1)/(max-min);
-				offset = -min*scale;
-				imageMatK1.convertTo(imageMatout_vec[1],CV_16UC1,scale,offset);
-				
-				cv::minMaxLoc(imageMatK2,&min,&max);
-				scale = float(std::pow(int(2),int(8))-1)/(max-min);
-				offset = -min*scale;
-				imageMatK2.convertTo(imageMatout_vec[2],CV_16UC1,scale,offset);
-
-				cv::minMaxLoc(imageMatK3,&min,&max);
-				scale = float(std::pow(int(2),int(8))-1)/(max-min);
-				offset = -min*scale;
-				imageMatK3.convertTo(imageMatout_vec[3],CV_16UC1,scale,offset);
+				// HERE HERE HERE HERE  //
+				// Think carefully how  //
+				// to merge the vectors // 
 
 				cv::merge(imageMatout_vec,imageMatout);
 
