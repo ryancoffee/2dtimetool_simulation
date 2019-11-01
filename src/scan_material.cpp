@@ -8,9 +8,10 @@
 
 #include <cstdint> // for sake of defining uint16_t for the OpenCV mat to be filled.
 // OpenCV includes
-#include "opencv2/core.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include <vector>
 #include <random>
@@ -720,8 +721,8 @@ int main(int argc, char* argv[])
 				cv::Mat cblur(kr,1,CV_32F,kblur.data());
 
 				// initialize kernels vector //
-				const unsigned nkernels = 10; // hard coding for now since the storage will be in 3x3channel jpg + the k0 as greyscale image
-				std::vector<cv::Mat> kernels(nkernels)
+				const unsigned nkernels = 9; // hard coding for now since the storage will be in 2x4channel bgra png + the k0 as greyscale image
+				std::vector<cv::Mat> kernels(nkernels);
 				for (unsigned k = 0; k< nkernels; ++k){
 					kernels.push_back(cv::Mat::zeros(kr,kc,CV_32F));
 				}
@@ -740,7 +741,7 @@ int main(int argc, char* argv[])
 					 */
 					std::string kfilename;
 					ofstream kernelstream;
-					for (unsigned k = 0 ; k < nkernels; +=k){
+					for (unsigned k = 0 ; k < nkernels; ++k){
 						kfilename = scanparams.filebase() + "kernel" + std::to_string(k);
 						kernelstream.open(kfilename.c_str(),ios::out); 
 						for (size_t r=0;r<kernels[k].rows;++r){
@@ -772,23 +773,23 @@ int main(int argc, char* argv[])
 				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK3(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatout_k0(imageMat_vec[0].rows, imageMat_vec[0].cols, CV_8UC1);
-				cv::Mat imageMatout_k123(imageMat_vec[1].rows, imageMat_vec[1].cols, CV_8UC3);
-				cv::Mat imageMatout_k456(imageMat_vec[4].rows, imageMat_vec[4].cols, CV_8UC3);
-				cv::Mat imageMatout_k789(imageMat_vec[7].rows, imageMat_vec[7].cols, CV_8UC3);
+				cv::Mat imageMatout_k1234(imageMat_vec[1].rows, imageMat_vec[1].cols, CV_8UC4);
+				cv::Mat imageMatout_k5678(imageMat_vec[5].rows, imageMat_vec[5].cols, CV_8UC4);
 
 				for (unsigned i=0;i<nkernels;++i){
-					cv::filter2D(imageMat, imageMat_vec[i], -1, kernel[i]);
+					cv::filter2D(imageMat, imageMat_vec[i], -1, kernels[i]);
 				}
 
 				//std::vector<cv::Mat> imageMatout_vec(imageMatout.channels());
-				//std::vector<cv::Mat> imageMatout_vec(imageMat_vec.size());
+				std::vector<cv::Mat> imageMatout_vec;
 				//cv::split(imageMatout,imageMatout_vec);
 
-				double min,max,scale,offset;
 				for (unsigned k = 0 ; k < nkernels ; ++k ){
+					double min,max,scale,offset;
 					cv::minMaxLoc(imageMat_vec[k],&min,&max);
 					scale = float(std::pow(int(2),int(8))-1)/(max-min);
 					offset = -min*scale;
+					imageMatout_vec.push_back(cv::Mat(imageMat_vec[k].rows,imageMat_vec[k].cols,CV_16UC1));
 					imageMat_vec[k].convertTo(imageMatout_vec[k],CV_16UC1,scale,offset);
 				}
 
@@ -796,9 +797,8 @@ int main(int argc, char* argv[])
 				// Think carefully how  //
 				// to merge the vectors // 
 
-				cv::merge(imageMatout_vec,imageMatout);
+				//cv::merge(imageMatout_vec,imageMatout);
 
-				cv::flip(imageMatout,imageMatout,0);
 
 				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
 					char FrameStr[15];
@@ -806,16 +806,40 @@ int main(int argc, char* argv[])
 					//cv::namedWindow(FrameStr,cv::WINDOW_AUTOSIZE);
 					cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
 					cv::resizeWindow(FrameStr,img_nsamples*5,pulsearray.size()*5);
-					cv::imshow(FrameStr, imageMatout);
+					cv::imshow(FrameStr, imageMatout_vec[0]);
 					cv::waitKey(0);
 					cv::destroyAllWindows();
 				}
-					/* Oh damn... the jpg image save as an inverted, the first row shows up on the bottom... 
-					 * this is opposite as when we are saving an ascii file of stacked rows.
-					 */
-				std::string jpgfilename = scanparams.filebase() + "interference.out." + std::to_string(n) + ".jpg";
-				cv::imwrite(jpgfilename.c_str(),imageMatout);
 
+
+				std::vector<int> compression_params;
+				compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
+				compression_params.push_back(0);
+				unsigned k =0;
+				cv::flip(imageMatout_vec[k],imageMatout_vec[k],0);
+				std::string pngfilename = scanparams.filebase() + "interference.out.k" + std::to_string(k) + "." + std::to_string(n) + ".png";
+				cv::imwrite(pngfilename.c_str(),imageMatout_vec[k],compression_params);
+
+				cv::Mat imageMat_4chan(imageMatout_vec[0].rows,imageMatout_vec[0].cols,CV_16UC4);
+				std::vector<cv::Mat> imageMat_4vec(4);
+				for (unsigned i=0; i<imageMat_4vec.size(); ++i){
+					imageMat_4vec[i] = imageMatout_vec[i+1];
+				}
+				cv::merge(imageMat_4vec,imageMat_4chan);
+				cv::flip(imageMat_4chan,imageMat_4chan,0);
+				pngfilename = scanparams.filebase() + "interference.out.k1234." + std::to_string(n) + ".png";
+				cv::imwrite(pngfilename.c_str(),imageMat_4chan,compression_params);
+				for (unsigned i=0; i<imageMat_4vec.size(); ++i){
+					imageMat_4vec[i] = imageMatout_vec[i+1+4];
+				}
+				cv::merge(imageMat_4vec,imageMat_4chan);
+				cv::flip(imageMat_4chan,imageMat_4chan,0);
+				pngfilename = scanparams.filebase() + "interference.out.k5678." + std::to_string(n) + ".png";
+				cv::imwrite(pngfilename.c_str(),imageMat_4chan,compression_params);
+				
+
+
+				/*
 				// kernel0
 				filename = scanparams.filebase() + "interference.out.K0." + std::to_string(n);
 				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
@@ -888,6 +912,7 @@ int main(int argc, char* argv[])
 					interferestream << "\n";
 				}
 				interferestream.close();
+				*/
 
 				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
 
