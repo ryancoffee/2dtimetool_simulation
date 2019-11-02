@@ -712,8 +712,8 @@ int main(int argc, char* argv[])
 				interferestream.close();
 
 
-				int kr(2*4 + 1);
-				int kc(2*20 + 1);
+				int kr(2*7 + 1);
+				int kc(2*10 + 1);
 
 				// vertical bluring //
 				std::vector<float> kblur(kr);
