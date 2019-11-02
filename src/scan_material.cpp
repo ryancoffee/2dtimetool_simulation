@@ -722,16 +722,16 @@ int main(int argc, char* argv[])
 
 				// initialize kernels vector //
 				const unsigned nkernels = 9; // hard coding for now since the storage will be in 2x4channel bgra png + the k0 as greyscale image
-				std::vector<cv::Mat> kernels(nkernels);
+				std::vector<cv::Mat> kernels;
 				for (unsigned k = 0; k< nkernels; ++k){
-					kernels.push_back(cv::Mat::zeros(kr,kc,CV_32F));
+					kernels.push_back(cv::Mat::zeros(kr,kc,CV_32FC1));
 				}
 				
 
 				std::vector< float > leg(kc,0.);
 				for (unsigned k = 0 ; k<nkernels; ++k){
 					DataOps::legendre( leg, k);
-					cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[0] , -1);
+					cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[k] , -1);
 				}
 
 				if (tid==0 and n<nthreads){ // print the kernels, but only once
@@ -768,10 +768,12 @@ int main(int argc, char* argv[])
 				for (unsigned k = 0; k < nkernels; ++k){
 					imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
 				}
+				/*
 				cv::Mat imageMatK0(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
 				cv::Mat imageMatK3(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
+				*/
 				cv::Mat imageMatout_k0(imageMat_vec[0].rows, imageMat_vec[0].cols, CV_8UC1);
 				cv::Mat imageMatout_k1234(imageMat_vec[1].rows, imageMat_vec[1].cols, CV_8UC4);
 				cv::Mat imageMatout_k5678(imageMat_vec[5].rows, imageMat_vec[5].cols, CV_8UC4);
@@ -779,7 +781,6 @@ int main(int argc, char* argv[])
 				for (unsigned i=0;i<nkernels;++i){
 					cv::filter2D(imageMat, imageMat_vec[i], -1, kernels[i]);
 				}
-
 				//std::vector<cv::Mat> imageMatout_vec(imageMatout.channels());
 				std::vector<cv::Mat> imageMatout_vec;
 				//cv::split(imageMatout,imageMatout_vec);
@@ -787,10 +788,13 @@ int main(int argc, char* argv[])
 				for (unsigned k = 0 ; k < nkernels ; ++k ){
 					double min,max,scale,offset;
 					cv::minMaxLoc(imageMat_vec[k],&min,&max);
-					scale = float(std::pow(int(2),int(8))-1)/(max-min);
+					scale = float(std::pow(int(2),int(16))-1)/(max-min);
 					offset = -min*scale;
+					//std::cerr << "k,min,max = " << k << "," << min << "," << max << "\n" << std::flush;
 					imageMatout_vec.push_back(cv::Mat(imageMat_vec[k].rows,imageMat_vec[k].cols,CV_16UC1));
 					imageMat_vec[k].convertTo(imageMatout_vec[k],CV_16UC1,scale,offset);
+					//cv::minMaxLoc(imageMatout_vec[k],&min,&max);
+					//std::cerr << "k,min,max = " << k << "," << min << "," << max << "\n" << std::flush;
 				}
 
 				// HERE HERE HERE HERE  //
