@@ -8,6 +8,9 @@ export nthreads=4
 #export datadir='./data_container/raw/'
 export datadir='./data_fs/raw/'
 export calibdir='./data_fs/extern/'
+#unset printASCIIimages
+export printASCIIimages=true
+
 #export calibdir='./data_container/extern/'
 #export datadir='./data_pet/raw/'
 #export calibdir='./data_pet/extern/'
@@ -46,7 +49,7 @@ export phaseNoiseLowpass=10000; # this is in units of total number of time sampl
 export randphase_mean=0;
 export randphase_std=5; # in units of pi
 
-export nimages=10;
+export nimages=4;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
 export delays_std=1000;
 

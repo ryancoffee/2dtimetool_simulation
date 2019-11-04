@@ -694,39 +694,82 @@ int main(int argc, char* argv[])
 				ofstream interferestream;
 				std::string filename;
 
-				filename = scanparams.filebase() + "interference.out." + std::to_string(n);
-				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-				interferestream << "#delay for image = \t" << t0 
-					<< "\n#Ilaser = \t" << parabundle.Ilaser()
-					<< "\n#Ixray = \t" << parabundle.Ixray()
-					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-					<< "\n#alpha = \t" << parabundle.delay_angle() 
-					<< std::endl;
-				interferestream << "#";
-				pulsearray[0].printwavelengthbins(&interferestream);
-				for (size_t f=0;f<pulsearray.size();f++){
-                                        pulsearray[f].scale(parabundle.Ilaser(f));
-                                        pulsearray[f].appendwavelength(&interferestream);
-                                }
-				interferestream.close();
-
-
 				int kr(2*7 + 1);
 				int kc(2*10 + 1);
+
+				cv::Mat imageMat_in(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );	// imageMat_in is 16bit unsigned data
+				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1);
+				imageMat_in.convertTo(imageMat,CV_32FC1);	//imageMat is 32 bit float data
+
+				cv::Mat kernel_raw(cv::Mat::zeros(kr,kc,CV_32FC1));
 
 				// vertical bluring //
 				std::vector<float> kblur(kr);
 				DataOps::sinsqr(kblur);
 				cv::Mat cblur(kr,1,CV_32F,kblur.data());
+				std::vector<float> zeros(kc,0.);
+				zeros[zeros.size()/2] = 1.;
+				cv::flip(cblur*cv::Mat(1,kc,CV_32F,zeros.data()) , kernel_raw , -1);
+
+				// constructing raw output, but blurred in the vertical //
+				cv::Mat imageMat_raw(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
+				cv::Mat rawMatout(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_16UC1));
+				cv::filter2D(imageMat,imageMat_raw,-1,kernel_raw);
+
+				std::vector<int> compression_params;
+				compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
+				compression_params.push_back(0);
+
+				if (bool(getenv("printASCIIimages"))){
+
+					filename = scanparams.filebase() + "interference.out." + std::to_string(n);
+					interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+					interferestream << "#delay for image = \t" << t0 
+						<< "\n#Ilaser = \t" << parabundle.Ilaser()
+						<< "\n#Ixray = \t" << parabundle.Ixray()
+						<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+						<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+						<< "\n#alpha = \t" << parabundle.delay_angle() 
+						<< std::endl;
+					interferestream << "#";
+					pulsearray[0].printwavelengthbins(&interferestream);
+					for (size_t f=0;f<pulsearray.size();f++){
+						pulsearray[f].scale(parabundle.Ilaser(f));
+						pulsearray[f].appendwavelength(&interferestream);
+					}
+					interferestream.close();
+				} else {
+					filename = scanparams.filebase() + "interference.params." + std::to_string(n);
+					interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+					interferestream << "#delay for image = \t" << t0 
+						<< "\n#Ilaser = \t" << parabundle.Ilaser()
+						<< "\n#Ixray = \t" << parabundle.Ixray()
+						<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+						<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+						<< "\n#alpha = \t" << parabundle.delay_angle() 
+						<< "\n#img_stride = \t" << img_stride 
+						<< std::endl;
+					interferestream << "#";
+					pulsearray[0].printwavelengthbins(&interferestream);
+					parabundle.print_mapping(interferestream,double(0.0));
+					interferestream.close();
+					double min,max,scale,offset;
+					cv::minMaxLoc(imageMat_raw,&min,&max);
+					scale = float(std::pow(int(2),int(16))-1)/(max-min);
+					offset = -min*scale;
+					imageMat_raw.convertTo(rawMatout,CV_16UC1,scale,offset);
+					filename = scanparams.filebase() + "interference.image." + std::to_string(n) + ".png";
+					cv::imwrite(filename.c_str(),rawMatout,compression_params);
+				}
+				
+				// HERE HERE HERE HERE // 
 
 				// initialize kernels vector //
-				const unsigned nkernels = 9; // hard coding for now since the storage will be in 2x4channel bgra png + the k0 as greyscale image
+				const unsigned nkernels = 16; // hard coding for now since the storage will be in 2x4channel bgra png + the k0 as greyscale image
 				std::vector<cv::Mat> kernels;
 				for (unsigned k = 0; k< nkernels; ++k){
 					kernels.push_back(cv::Mat::zeros(kr,kc,CV_32FC1));
 				}
-				
 
 				std::vector< float > leg(kc,0.);
 				for (unsigned k = 0 ; k<nkernels; ++k){
@@ -754,60 +797,35 @@ int main(int argc, char* argv[])
 					}
 				} // end printing kernels
 
-				/*
-				 * OK, let's use 3 channels to store the edgefiltered pulse simulation and the etalon enhanced simulaitons
-				 * Base that output on the result of the various python work you've done lately
-				 * Then we need to come up with an optical scheme for doing the schleiren thing spectrally
-				 */
-				cv::Mat imageMat_in(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );
-				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1);
-				imageMat_in.convertTo(imageMat,CV_32FC1);
 
 
 				std::vector< cv::Mat > imageMat_vec;
 				for (unsigned k = 0; k < nkernels; ++k){
 					imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
 				}
-				/*
-				cv::Mat imageMatK0(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
-				cv::Mat imageMatK1(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
-				cv::Mat imageMatK2(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
-				cv::Mat imageMatK3(pulsearray.size()*img_stride, img_nsamples, CV_32FC1 );
-				*/
-				cv::Mat imageMatout_k0(imageMat_vec[0].rows, imageMat_vec[0].cols, CV_8UC1);
-				cv::Mat imageMatout_k1234(imageMat_vec[1].rows, imageMat_vec[1].cols, CV_8UC4);
-				cv::Mat imageMatout_k5678(imageMat_vec[5].rows, imageMat_vec[5].cols, CV_8UC4);
+
+				cv::Mat imageMatout_batch0(imageMat_vec[0].rows, imageMat_vec[0].cols, CV_8UC4);
+				cv::Mat imageMatout_batch1(imageMat_vec[4].rows, imageMat_vec[4].cols, CV_8UC4);
+				cv::Mat imageMatout_batch2(imageMat_vec[8].rows, imageMat_vec[8].cols, CV_8UC4);
+				cv::Mat imageMatout_batch3(imageMat_vec[12].rows, imageMat_vec[12].cols, CV_8UC4);
 
 				for (unsigned i=0;i<nkernels;++i){
 					cv::filter2D(imageMat, imageMat_vec[i], -1, kernels[i]);
 				}
-				//std::vector<cv::Mat> imageMatout_vec(imageMatout.channels());
 				std::vector<cv::Mat> imageMatout_vec;
-				//cv::split(imageMatout,imageMatout_vec);
 
 				for (unsigned k = 0 ; k < nkernels ; ++k ){
 					double min,max,scale,offset;
 					cv::minMaxLoc(imageMat_vec[k],&min,&max);
 					scale = float(std::pow(int(2),int(16))-1)/(max-min);
 					offset = -min*scale;
-					//std::cerr << "k,min,max = " << k << "," << min << "," << max << "\n" << std::flush;
 					imageMatout_vec.push_back(cv::Mat(imageMat_vec[k].rows,imageMat_vec[k].cols,CV_16UC1));
 					imageMat_vec[k].convertTo(imageMatout_vec[k],CV_16UC1,scale,offset);
-					//cv::minMaxLoc(imageMatout_vec[k],&min,&max);
-					//std::cerr << "k,min,max = " << k << "," << min << "," << max << "\n" << std::flush;
 				}
-
-				// HERE HERE HERE HERE  //
-				// Think carefully how  //
-				// to merge the vectors // 
-
-				//cv::merge(imageMatout_vec,imageMatout);
-
 
 				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
 					char FrameStr[15];
 					sprintf(FrameStr,"Frame_%i",int(tid));
-					//cv::namedWindow(FrameStr,cv::WINDOW_AUTOSIZE);
 					cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
 					cv::resizeWindow(FrameStr,img_nsamples*5,pulsearray.size()*5);
 					cv::imshow(FrameStr, imageMatout_vec[0]);
@@ -816,9 +834,6 @@ int main(int argc, char* argv[])
 				}
 
 
-				std::vector<int> compression_params;
-				compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
-				compression_params.push_back(0);
 				unsigned k =0;
 				cv::flip(imageMatout_vec[k],imageMatout_vec[k],0);
 				std::string pngfilename = scanparams.filebase() + "interference.out.k" + std::to_string(k) + "." + std::to_string(n) + ".png";
