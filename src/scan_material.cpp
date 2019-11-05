@@ -808,7 +808,7 @@ int main(int argc, char* argv[])
 				const unsigned nchannels = 4;
 				std::vector< cv::Mat > imageMatout_batch;
 				for (unsigned b = 0 ; b < nkernels/nchannels; ++b){	// setting up imageMatout_batch
-					imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows, imageMat_vec[0].cols, CV_16UC4));
+					imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows/8, imageMat_vec[0].cols/8, CV_16UC4));
 				}
 
 				for (unsigned i=0;i<nkernels;++i){ // filling imageMat_vec
@@ -840,6 +840,8 @@ int main(int argc, char* argv[])
 					std::vector<cv::Mat> imageMat_4vec(nchannels);
 					for (unsigned i=0; i<imageMatout_batch[b].channels(); ++i){
 						imageMat_4vec[i] = imageMatout_vec[i + b * imageMatout_batch[b].channels()];
+						for (unsigned j=0; j<3; ++j) // three times cut both dimensions in half
+							cv::pyrDown(imageMat_4vec[i],imageMat_4vec[i],cv::Size(imageMat_4vec[i].cols/2,imageMat_4vec[i].rows/2));
 					}
 					cv::merge(imageMat_4vec,imageMatout_batch[b]);
 					cv::flip(imageMatout_batch[b],imageMatout_batch[b],0);
