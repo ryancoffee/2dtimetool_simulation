@@ -751,13 +751,14 @@ int main(int argc, char* argv[])
 						<< std::endl;
 					interferestream << "#";
 					pulsearray[0].printwavelengthbins(&interferestream);
-					parabundle.print_mapping(interferestream,double(0.0));
+					parabundle.print_mapping(interferestream,t0);
 					interferestream.close();
 					double min,max,scale,offset;
 					cv::minMaxLoc(imageMat_raw,&min,&max);
-					scale = float(std::pow(int(2),int(16))-1)/(max-min);
+					scale = float(std::pow(int(2),int(16))-1)/(max-min); // HERE HERE HERE HERE trying to get saturation to be protected
 					offset = -min*scale;
 					imageMat_raw.convertTo(rawMatout,CV_16UC1,scale,offset);
+					cv::flip(rawMatout,rawMatout,0);
 					filename = scanparams.filebase() + "interference.image." + std::to_string(n) + ".png";
 					cv::imwrite(filename.c_str(),rawMatout,compression_params);
 				}
@@ -772,9 +773,9 @@ int main(int argc, char* argv[])
 				}
 
 				std::vector< float > leg(kc,0.);
-				for (unsigned k = 0 ; k<nkernels; ++k){
+				for (unsigned k = 0 ; k<nkernels; ++k){		// filling kernels
 					DataOps::legendre( leg, k);
-					cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[k] , -1);
+					cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[k] , 1);
 				}
 
 				if (tid==0 and n<nthreads){ // print the kernels, but only once
@@ -800,16 +801,17 @@ int main(int argc, char* argv[])
 
 
 				std::vector< cv::Mat > imageMat_vec;
-				for (unsigned k = 0; k < nkernels; ++k){
+				for (unsigned k = 0; k < nkernels; ++k){	// setting up imageMat_vec
 					imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
 				}
 
-				cv::Mat imageMatout_batch0(imageMat_vec[0].rows, imageMat_vec[0].cols, CV_8UC4);
-				cv::Mat imageMatout_batch1(imageMat_vec[4].rows, imageMat_vec[4].cols, CV_8UC4);
-				cv::Mat imageMatout_batch2(imageMat_vec[8].rows, imageMat_vec[8].cols, CV_8UC4);
-				cv::Mat imageMatout_batch3(imageMat_vec[12].rows, imageMat_vec[12].cols, CV_8UC4);
+				const unsigned nchannels = 4;
+				std::vector< cv::Mat > imageMatout_batch;
+				for (unsigned b = 0 ; b < nkernels/nchannels; ++b){	// setting up imageMatout_batch
+					imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows, imageMat_vec[0].cols, CV_16UC4));
+				}
 
-				for (unsigned i=0;i<nkernels;++i){
+				for (unsigned i=0;i<nkernels;++i){ // filling imageMat_vec
 					cv::filter2D(imageMat, imageMat_vec[i], -1, kernels[i]);
 				}
 				std::vector<cv::Mat> imageMatout_vec;
@@ -833,21 +835,20 @@ int main(int argc, char* argv[])
 					cv::destroyAllWindows();
 				}
 
-
-				unsigned k =0;
-				cv::flip(imageMatout_vec[k],imageMatout_vec[k],0);
-				std::string pngfilename = scanparams.filebase() + "interference.out.k" + std::to_string(k) + "." + std::to_string(n) + ".png";
-				cv::imwrite(pngfilename.c_str(),imageMatout_vec[k],compression_params);
-
-				cv::Mat imageMat_4chan(imageMatout_vec[0].rows,imageMatout_vec[0].cols,CV_16UC4);
-				std::vector<cv::Mat> imageMat_4vec(4);
-				for (unsigned i=0; i<imageMat_4vec.size(); ++i){
-					imageMat_4vec[i] = imageMatout_vec[i+1];
+				std::string pngfilename;
+				for (unsigned b = 0; b< imageMatout_batch.size(); ++b){
+					std::vector<cv::Mat> imageMat_4vec(nchannels);
+					for (unsigned i=0; i<imageMatout_batch[b].channels(); ++i){
+						imageMat_4vec[i] = imageMatout_vec[i + b * imageMatout_batch[b].channels()];
+					}
+					cv::merge(imageMat_4vec,imageMatout_batch[b]);
+					cv::flip(imageMatout_batch[b],imageMatout_batch[b],0);
+					pngfilename = scanparams.filebase() + "interference.out.batch" + std::to_string(b) + "." + std::to_string(n) + ".png";
+					cv::imwrite(pngfilename.c_str(),imageMatout_batch[b],compression_params);
 				}
-				cv::merge(imageMat_4vec,imageMat_4chan);
-				cv::flip(imageMat_4chan,imageMat_4chan,0);
-				pngfilename = scanparams.filebase() + "interference.out.k1234." + std::to_string(n) + ".png";
-				cv::imwrite(pngfilename.c_str(),imageMat_4chan,compression_params);
+
+
+				/*
 				for (unsigned i=0; i<imageMat_4vec.size(); ++i){
 					imageMat_4vec[i] = imageMatout_vec[i+1+4];
 				}
@@ -858,7 +859,6 @@ int main(int argc, char* argv[])
 				
 
 
-				/*
 				// kernel0
 				filename = scanparams.filebase() + "interference.out.K0." + std::to_string(n);
 				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.

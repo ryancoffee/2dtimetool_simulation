@@ -8,8 +8,8 @@ export nthreads=4
 #export datadir='./data_container/raw/'
 export datadir='./data_fs/raw/'
 export calibdir='./data_fs/extern/'
-#unset printASCIIimages
-export printASCIIimages=true
+unset printASCIIimages
+#export printASCIIimages=true
 
 #export calibdir='./data_container/extern/'
 #export datadir='./data_pet/raw/'
@@ -188,7 +188,7 @@ export fifthODnoise=0;
 
 export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export interferephase=1.000; #this doesn't work it seems.
-export gain=80000000000; #20000000;
+export gain=40000000000; #20000000;
 export saturate=65535;
 export lamsamples=1024;
 
