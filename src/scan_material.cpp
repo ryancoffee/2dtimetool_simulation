@@ -755,9 +755,11 @@ int main(int argc, char* argv[])
 					interferestream.close();
 					double min,max,scale,offset;
 					cv::minMaxLoc(imageMat_raw,&min,&max);
-					scale = float(std::pow(int(2),int(16-1))-1)/(max-min); // HERE HERE HERE HERE trying to get saturation to be protected
 					offset = -min*scale;
-					imageMat_raw.convertTo(rawMatout,CV_16UC1,scale,offset);
+					imageMat_raw.convertTo(rawMatout,CV_16UC1,1.0,offset);
+					cv::minMaxLoc(imageMat_raw,&min,&max);
+					scale = float(std::pow(int(2),int(16))-2)/(max-min); // HERE HERE HERE HERE trying to get saturation to be protected
+					imageMat_raw.convertTo(rawMatout,CV_16UC1,scale,0.0);
 					cv::flip(rawMatout,rawMatout,0);
 					filename = scanparams.filebase() + "interference.image." + std::to_string(n) + ".png";
 					cv::imwrite(filename.c_str(),rawMatout,compression_params);
