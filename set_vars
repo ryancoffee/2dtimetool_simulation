@@ -4,7 +4,7 @@ starttime=$(date +%s)
 export HOSTNAME=$HOSTNAME
 export skipdisplayframes=1
 
-export nthreads=4
+export nthreads=8
 #export datadir='./data_container/raw/'
 export datadir='./data_fs/raw/'
 export calibdir='./data_fs/extern/'
@@ -44,19 +44,19 @@ export ncalibdelays=32; #8192; #256; # 128;
 export fsWindow=4000;
 
 # for Omar, testing the addition of random phase
-export addrandomphase=1;
+export addrandomphase=0;
 export phaseNoiseLowpass=10000; #10000; # this is in units of total number of time samples... and that is enormous.
 export randphase_mean=0;
 export randphase_std=2; # in units of pi
 
-export nimages=4;
+export nimages=8;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
 export delays_std=1000;
 
 export drifting_alpha=0.001; #0.1;
 
 export xray_pos_distribution_normal_mean=0;
-export xray_pos_distribution_normal_std=0.5; #0.0625; #0.1
+export xray_pos_distribution_normal_std=0.25; #0.0625; #0.1
 export laser_pos_distribution_normal_mean=0;
 export laser_pos_distribution_normal_std=0.001; #0.2
 
@@ -71,8 +71,8 @@ export lambda_onoff=10;
 #export tspan=1024;
 #export tspan=4096;
 #export tspan=8192;
-#export tspan=16384;
-export tspan=32768; ## really using this one
+export tspan=16384;
+#export tspan=32768; ## really using this one
 #export tspan=65536; ## this one when using a 40000 fs window and a chirp in the 6000-8000 range
 #export tspan=131072;
 #export tspan=1048576;
@@ -115,7 +115,7 @@ export nu_high=0.769; # 390nm
 ## 1 + sum_{n=1,nrows} n * 6
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
-export nfibers=109; # 61 is for the personal laptop since only 8GB memory #109; #61; #61; #109;
+export nfibers=61; # is for the personal laptop since only 8GB memory #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 export shuffle_fibers=1;

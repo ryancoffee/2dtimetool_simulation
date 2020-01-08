@@ -755,7 +755,7 @@ int main(int argc, char* argv[])
 					interferestream.close();
 					double min,max,scale,offset;
 					cv::minMaxLoc(imageMat_raw,&min,&max);
-					offset = -min*scale;
+					offset = -min; //*scale;
 					imageMat_raw.convertTo(rawMatout,CV_16UC1,1.0,offset);
 					cv::minMaxLoc(imageMat_raw,&min,&max);
 					scale = float(std::pow(int(2),int(16))-2)/(max-min); // HERE HERE HERE HERE trying to get saturation to be protected
