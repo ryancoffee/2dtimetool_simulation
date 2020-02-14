@@ -43,6 +43,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	i_low =  (unsigned)(double( atof( getenv("nu_low") ) )* twopi<double>()*fsPau<double>()/domega);
 	i_high =  (unsigned)(double( atof( getenv("nu_high") ) )* twopi<double>()*fsPau<double>()/domega);
 	samples = (( (unsigned)(2.0 * omega_high / domega))/sampleround + 1 ) *sampleround;// dt ~ .1fs, Dt ~ 10000fs, dom = 2*pi/1e4, omhigh = 2*pi/.1fs, samples = omhigh/dom*2
+	std::cout << "===== Total samples = " << samples << " =====\n" << std::flush;
 	dtime = tspan_in/double(samples);
 	// no longer forcing gaussian sin2
 	// omega_onwidth = omega_offwidth = omega_width/2.0; // forcing sin2 gaussian spectrum

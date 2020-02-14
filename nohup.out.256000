@@ -1,0 +1,42 @@
+		======================================
+		======= scan_material started ========
+		===== Fri Feb 14 16:49:47 2020
+		===== on host devtools-rnc-cvln
+		===== for 4 images
+		===== with 7 fibers
+		======================================
+Scaling fibers =	yes
+Constructor ScanParams()
+
+========== running 7 fibers ============
+		shuffle fibers?	yes
+fibermap file = ./data_fs/raw/chirp-128000_interferedelay256000_photonen128_carriertagdiamond_nfibers7_netalon0_1.00_1.00_fibermap.out
+In constructor MatRespons() 
+initializing masterpulse and masterplans
+In constructor PulseFreq()
+exiting constructor PulseFreq()
+0	7.25665	14.5133	21.77	29.0266	36.2833	43.5399	50.7966	58.0532	65.3099	72.5665	79.8232	87.0798	94.3365	101.593	108.85	116.106	123.363	130.62	137.876	145.133	152.39	159.646	166.903	174.16	181.416	188.673	195.93	203.186	210.443	217.7	224.956	232.213	239.47	246.726	253.983	261.24	268.496	275.753	283.009	
+
+3.32527e-05	0.00878689	0.017878	0.0271101	0.0364418	0.0458558	0.0553432	0.0648996	0.074523	0.084213	0.0939702	0.103796	0.113692	0.12366	0.133704	0.143825	0.154027	0.164313	0.174686	0.185149	0.195706	0.20636	0.217115	0.227974	0.238941	0.25002	0.261215	0.272529	0.283966	0.295529	0.307224	0.319053	0.331021	0.343131	0.355388	0.367794	0.380356	0.393075	0.405957	0.419004	
+
+	It has taken 681 s so far for initializing masterpulse and building fftw plans
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+=========================================================================
+		 ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ====
+		 ====         use this for defining multiple fibers as         ====
+		 ====         contiguous blocks for row-wise FFT as 2D         ====
+		 ==================================================================
+.......|......|......|........|........|.......|......|	img = 3 in tid = 1
+...|...|...|...|...|...|...|	img = 1 in tid = 0
+		############ ending parallel region 2 ###########
+masterresponse reflectance: 0.16
+masterbundle fiberdiameter: 0.11
+scanparams lambda_0: 550
+		======================================
+		======== scan_material stopped =======
+		===== Thu Jan  1 00:11:57 1970
+		===== in 717 s 
+		======================================
