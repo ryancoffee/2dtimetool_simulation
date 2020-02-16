@@ -186,6 +186,7 @@ int main(int argc, char* argv[])
 	double xrayphoton_energy = double(atof(getenv("xrayphoton_energy")));
 	masterresponse.bandgap(double(atof(getenv("bandgap_eV")))); //
 	if (getenv("usediamond")){
+		std::cerr << "using xrayphoton_energy to compute carriers\n" << std::flush;
 		masterresponse.fill_carriersvec(masterpulse,xrayphoton_energy);
 	} else {
 		std::string carriersfilename = getenv("carriersfile");

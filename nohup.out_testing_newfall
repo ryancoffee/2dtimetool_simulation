@@ -1,0 +1,59 @@
+		======================================
+		======= scan_material started ========
+		===== Sat Feb 15 19:30:24 2020
+		===== on host devtools-rnc-cvln
+		===== for 32 images
+		===== with 7 fibers
+		======================================
+Scaling fibers =	yes
+Constructor ScanParams()
+
+========== running 7 fibers ============
+		shuffle fibers?	yes
+fibermap file = ./data_fs/raw/chirp-64000_interferedelay32001_photonen512_carriertagdiamond_nfibers7_netalon0_1.00_1.00_fibermap.out
+In constructor MatRespons() 
+initializing masterpulse and masterplans
+In constructor PulseFreq()
+===== Total samples = 3294000 =====
+exiting constructor PulseFreq()
+0	7.25665	14.5133	21.77	29.0266	36.2833	43.5399	50.7966	58.0532	65.3099	72.5665	79.8232	87.0798	94.3365	101.593	108.85	116.106	123.363	130.62	137.876	145.133	152.39	159.646	166.903	174.16	181.416	188.673	195.93	203.186	210.443	217.7	224.956	232.213	239.47	246.726	253.983	261.24	268.496	275.753	283.009	
+
+6.74279e-06	0.0011655	0.00234516	0.00353303	0.00472632	0.0059237	0.0071244	0.00832792	0.00953391	0.0107421	0.0119523	0.0131644	0.0143782	0.0155937	0.0168108	0.0180294	0.0192495	0.0204709	0.0216938	0.0229181	0.0241437	0.0253707	0.026599	0.0278286	0.0290595	0.0302917	0.0315253	0.0327601	0.0339963	0.0352338	0.0364726	0.0377128	0.0389543	0.0401972	0.0414414	0.042687	0.043934	0.0451824	0.0464323	0.0476835	
+
+	It has taken 677 s so far for initializing masterpulse and building fftw plans
+		############ entering calibration ###########
+		====== delays =======
+-64000 -56000 -48000 -40000 -32000 -24000 -16000 -8000 0 8000 16000 24000 32000 40000 48000 56000 
+++++++++++++++++|	 done with calibration delays
+Finished with the calibration image/matrix
+		############ ending parallel region 1 ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+		############ entering parallel/images ###########
+=========================================================================
+		 ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ====
+		 ====         use this for defining multiple fibers as         ====
+		 ====         contiguous blocks for row-wise FFT as 2D         ====
+		 ==================================================================
+.......|......|.......|.......|.......|.......|......|	img = 1 in tid = 1
+........|........|........|.......|.......|........|........|	img = 5 in tid = 0
+..........|..........|..........|..........|..........|..........|..........|	img = 10 in tid = 1
+....|..|...|....|.....|....|...|	img = 15 in tid = 0
+...|..|...|....|....|...|..|	img = 18 in tid = 1
+......|.......|......|.....|.....|......|........|	img = 23 in tid = 0
+..........|.........|.........|.........|..........|..........|..........|	img = 26 in tid = 1
+...|....|....|...|..|..|...|	img = 31 in tid = 0
+		############ ending parallel region 2 ###########
+masterresponse reflectance: 0.16
+masterbundle fiberdiameter: 0.11
+scanparams lambda_0: 550
+		======================================
+		======== scan_material stopped =======
+		===== Thu Jan  1 00:13:51 1970
+		===== in 831 s 
+		======================================

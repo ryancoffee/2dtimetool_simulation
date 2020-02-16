@@ -201,6 +201,7 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 	double ww = 10.*std::pow(e,e*2e-6);
 	double xfall = 8.24e-05 * std::pow(e,float(4./3.));
 	double wfall = 0.000373 * e;
+	//double wfall = 0.000373/4. * e; // didn't help... changing the parameter here (/4) to see how it extends or not the decay tail for long chirp conditions
 	double y0 = 1e-4;
 
 	carriers[0] = 1.;
@@ -209,10 +210,10 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
 		double arg = double(i)*pulse.getdt()*Constants::fsPau<double>(); // remember, this needs to be in femtoseconds... and getdt() returns in atomic units
 		double f = a*std::pow(arg,int(2)) + c * std::pow(arg,p);
 		double fall = 0.5*(1.-erf((arg-xfall)/wfall));
-		double e = aa*std::exp(-(arg-xfall)/ww);
+		double ee = aa*std::exp(-(arg-xfall)/ww);
 		double rise = 0.5 * (1.+erf((arg-xfall)/wfall));
 		times[i] = arg;
-		carriers[i] = carriers[i-1] + (y0 + f*fall + e*rise);
+		carriers[i] = carriers[i-1] + (y0 + f*fall + ee*rise);
 		decay[i] = decay[i-1] + 0.5*erf((arg-xfall)/wfall);
 	}
 	size_t ncarriers_final = 1;// size_t(energy_keV*1e3/(3*bandgap_eV)); // this is a rule of thumb for exciton energy
