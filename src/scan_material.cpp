@@ -184,6 +184,7 @@ int main(int argc, char* argv[])
 	masterpulse.addchirp(scanparams.getchirp());							// chirp that ref pulse
 
 	double xrayphoton_energy = double(atof(getenv("xrayphoton_energy")));
+	std::cout << " xrayphoton_energy = " << xrayphoton_energy << " keV\n" << std::flush;
 	masterresponse.bandgap(double(atof(getenv("bandgap_eV")))); //
 	if (getenv("usediamond")){
 		std::cerr << "using xrayphoton_energy to compute carriers\n" << std::flush;

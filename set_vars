@@ -25,7 +25,7 @@ export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 #unset usediamond
 export usediamond=true
 export carriertag='diamond'
-export xrayphoton_energy=1; #6.0; #40; # this is in keV
+#export xrayphoton_energy=1; #6.0; #40; # this is in keV
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat'
 #export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 export bandgap_eV=5.47
@@ -192,11 +192,11 @@ export saturate=65535;
 export lamsamples=1024;
 
 export fsWindow=128000; # use 128000 for largest window with appropriate tspan, I think this is the calib scan window
-export chirp=-4000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
+export chirp=-2000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
 #export chirp=-2000; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
-export interferedelay=4000; # keeping this at about 64 ps since that gievs about 1/4 window separation between rise and fall edges.
+export interferedelay=2000; # keeping this at about 64 ps since that gievs about 1/4 window separation between rise and fall edges.
 #export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
-export xrayphoton_energy=512; #6.0; #40; # this is in keV
+export xrayphoton_energy=509; #6.0; #40; # this is in keV
 
 export carriersfile=$carriersdir$carriersfilename;
 export filebase=$datadir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_carriertag"$carriertag"_nfibers"$nfibers"_netalon"$netalon"_"$xrayshadowcorner_x"_"$xrayshadowcorner_y"_";

@@ -186,6 +186,11 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,std::ifstream & instream)
 
 bool MatResponse::fill_carriersvec(PulseFreq * pulse,double energy_keV = 9.5){return fill_carriersvec(*pulse,energy_keV);}
 bool MatResponse::fill_carriersvec(PulseFreq & pulse,double energy_keV = 9.5){
+	std::cout << "===========================================\n"
+		  << "===========================================\n"
+		  << "==          entered fill_carriersvec()   ==\n"
+		  << "===========================================\n"
+		  << "===========================================\n" << std::flush;
 	using namespace DataOps;
 	double e = energy_keV*1e3;
 	// ultimately, these were had fit with Nikita's 2015 derivative curves... those are too slow by 50% or so he says
