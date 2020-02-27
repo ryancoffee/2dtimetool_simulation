@@ -148,9 +148,9 @@ int main(int argc, char* argv[])
 	masterresponse.bandgap(double(atof(getenv("bandgap_eV")))); //
 
 	if (masterresponse.fill_carriersvec(masterpulse,xrayphoton_energy)){
-		std::cerr << "\t OK, masterresponse.fill_carriersvec(masterpulse,9.5); filled\n" << std::flush;
+		std::cout << "\t OK, masterresponse.fill_carriersvec(masterpulse,9.5); filled with xrayphoton_energy = " << xrayphoton_energy << "\n" << std::flush;
 	} else {
-		std::cerr << "\t FAILED, masterresponse.fill_carriersvec(masterpulse,9.5); did not fill\n" << std::flush;
+		std::cout << "\t FAILED, masterresponse.fill_carriersvec(masterpulse,9.5); did not fill\n" << std::flush;
 	}
 
 
