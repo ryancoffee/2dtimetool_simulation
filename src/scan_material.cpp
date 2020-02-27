@@ -262,21 +262,9 @@ int main(int argc, char* argv[])
 					calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
 					calibresponse.setstepvec_both_carriers(calpulse);
 					calibresponse.setstepvec_both_carriers(calcrosspulse);
-					/*
-					calibresponse.setstepvec_amp(calpulse);
-					calibresponse.setstepvec_phase(calpulse);
-					calibresponse.setstepvec_amp(calcrosspulse);
-					calibresponse.setstepvec_phase(calcrosspulse);
-					*/
 					if (scanparams.doublepulse()){
 						calibresponse.addstepvec_both_carriers(calpulse,scanparams.doublepulsedelay());
 						calibresponse.addstepvec_both_carriers(calcrosspulse,scanparams.doublepulsedelay());
-						/*
-						calibresponse.addstepvec_amp(calpulse,scanparams.doublepulsedelay());
-						calibresponse.addstepvec_phase(calpulse,scanparams.doublepulsedelay());
-						calibresponse.addstepvec_amp(calcrosspulse,scanparams.doublepulsedelay());
-						calibresponse.addstepvec_phase(calcrosspulse,scanparams.doublepulsedelay());
-						*/
 					}
 					// this pulls down the tail of the response so vector is periodic on nsamples	
 					calibresponse.buffervectors(calpulse); 
@@ -315,12 +303,6 @@ int main(int argc, char* argv[])
 						if (scanparams.doublepulse()){
 							calibresponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
-							/*
-							calibresponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
-							calibresponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
-							calibresponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
-							calibresponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
-							*/
 						}
 						calibresponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						calibresponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
@@ -338,22 +320,9 @@ int main(int argc, char* argv[])
 						calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
 						calibresponse.setstepvec_both_carriers(etalonpulse);
 						calibresponse.setstepvec_both_carriers(crossetalonpulse);
-						/*
-						calibresponse.setstepvec_amp(etalonpulse);
-						calibresponse.setstepvec_phase(etalonpulse);
-						calibresponse.setstepvec_amp(crossetalonpulse);
-						calibresponse.setstepvec_phase(crossetalonpulse);
-						*/
 						if (scanparams.doublepulse()){
 							calibresponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
-							/*
-							calibresponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
-							calibresponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
-							calibresponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
-							calibresponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
-							*/
-
 						}
 						calibresponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						calibresponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
@@ -587,8 +556,8 @@ int main(int argc, char* argv[])
 						pararesponse.setstepvec_both(pulse,0.,parabundle.Ixray(f));
 						pararesponse.setstepvec_both(crosspulse,0.,parabundle.Ixray(f));
 						if (scanparams.doublepulse()){
-							pararesponse.addstepvec_both(pulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
-							pararesponse.addstepvec_both(crosspulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
+							pararesponse.addstepvec_both_carriers(pulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
+							pararesponse.addstepvec_both_carriers(crosspulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
 						}
 						// this pulls down the tail of the response so vector is periodic on nsamples	
 						pararesponse.buffervectors(pulse); 
@@ -621,10 +590,8 @@ int main(int argc, char* argv[])
 							pararesponse.setstepvec_amp(crossetalonpulse);
 							pararesponse.setstepvec_phase(crossetalonpulse);
 							if (scanparams.doublepulse()){
-								pararesponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
-								pararesponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
-								pararesponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
-								pararesponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
+								pararesponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
+								pararesponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
 							}
 							pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 							pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
@@ -642,11 +609,8 @@ int main(int argc, char* argv[])
 							pararesponse.setstepvec_amp(crossetalonpulse);
 							pararesponse.setstepvec_phase(crossetalonpulse);
 							if (scanparams.doublepulse()){
-								pararesponse.addstepvec_amp(etalonpulse,scanparams.doublepulsedelay());
-								pararesponse.addstepvec_phase(etalonpulse,scanparams.doublepulsedelay());
-								pararesponse.addstepvec_amp(crossetalonpulse,scanparams.doublepulsedelay());
-								pararesponse.addstepvec_phase(crossetalonpulse,scanparams.doublepulsedelay());
-
+								pararesponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
+								pararesponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
 							}
 							pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 							pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
@@ -770,7 +734,7 @@ int main(int argc, char* argv[])
 				// HERE HERE HERE HERE // 
 
 				// initialize kernels vector //
-				const unsigned nkernels = 16; // hard coding for now since the storage will be in 2x4channel bgra png + the k0 as greyscale image
+				const unsigned nkernels = 6; // hard coding for now since the storage will be in 2x3channel bgra png + the k0 as greyscale image
 				std::vector<cv::Mat> kernels;
 				for (unsigned k = 0; k< nkernels; ++k){
 					kernels.push_back(cv::Mat::zeros(kr,kc,CV_32FC1));
@@ -809,10 +773,10 @@ int main(int argc, char* argv[])
 					imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
 				}
 
-				const unsigned nchannels = 4;
+				const unsigned nchannels = 3; // Stop using alpha channel, that is just awkward
 				std::vector< cv::Mat > imageMatout_batch;
 				for (unsigned b = 0 ; b < nkernels/nchannels; ++b){	// setting up imageMatout_batch
-					imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows/8, imageMat_vec[0].cols/8, CV_16UC4));
+					imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows/8, imageMat_vec[0].cols/8, CV_16UC3));
 				}
 
 				for (unsigned i=0;i<nkernels;++i){ // filling imageMat_vec
