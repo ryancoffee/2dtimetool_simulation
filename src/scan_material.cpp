@@ -533,7 +533,6 @@ int main(int argc, char* argv[])
 					startdelay = t0 + parabundle.delay(f);
 					pulse.scale(parabundle.Ixray(f));
 					crosspulse.scale(parabundle.Ixray(f));
-
 					pararesponse = masterresponse;
 
 					if (getenv("scale_fibers")){
@@ -553,8 +552,8 @@ int main(int argc, char* argv[])
 
 					for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 						pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-						pararesponse.setstepvec_both(pulse,0.,parabundle.Ixray(f));
-						pararesponse.setstepvec_both(crosspulse,0.,parabundle.Ixray(f));
+						pararesponse.setstepvec_both_carriers(pulse,0.,parabundle.Ixray(f));
+						pararesponse.setstepvec_both_carriers(crosspulse,0.,parabundle.Ixray(f));
 						if (scanparams.doublepulse()){
 							pararesponse.addstepvec_both_carriers(pulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
 							pararesponse.addstepvec_both_carriers(crosspulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
@@ -584,14 +583,11 @@ int main(int argc, char* argv[])
 						for(size_t g=0;g<scanparams.ngroupsteps();g++){
 							pararesponse.setdelay(etalondelay + g*scanparams.backstep()); 
 							// counterpropagating, x-rays work backwards through the optical
-
-							pararesponse.setstepvec_amp(etalonpulse);
-							pararesponse.setstepvec_phase(etalonpulse);
-							pararesponse.setstepvec_amp(crossetalonpulse);
-							pararesponse.setstepvec_phase(crossetalonpulse);
+							pararesponse.setstepvec_both_carriers(etalonpulse,0.,parabundle.Ixray(f));
+							pararesponse.setstepvec_both_carriers(crossetalonpulse,0.,parabundle.Ixray(f));
 							if (scanparams.doublepulse()){
-								pararesponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
-								pararesponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
+								pararesponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
+								pararesponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
 							}
 							pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 							pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
@@ -604,13 +600,11 @@ int main(int argc, char* argv[])
 						//std::cerr << "\t\t\t ########### // forward propagation // #############\n" << std::flush;
 						for(size_t g=0;g<scanparams.ngroupsteps();g++){
 							pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-							pararesponse.setstepvec_amp(etalonpulse);
-							pararesponse.setstepvec_phase(etalonpulse);
-							pararesponse.setstepvec_amp(crossetalonpulse);
-							pararesponse.setstepvec_phase(crossetalonpulse);
+							pararesponse.setstepvec_both_carriers(etalonpulse,0.,parabundle.Ixray(f));
+							pararesponse.setstepvec_both_carriers(crossetalonpulse,0.,parabundle.Ixray(f));
 							if (scanparams.doublepulse()){
-								pararesponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
-								pararesponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
+								pararesponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
+								pararesponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
 							}
 							pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 							pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
