@@ -1,0 +1,8 @@
+chirp	delay	Photon energy	done?
+64	4	512		Y
+64	8	512		Y
+32	8	512		Y
+16	8	512		
+8	8	512		
+64	8	256		
+32	8	256
