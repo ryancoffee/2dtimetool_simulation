@@ -4,7 +4,7 @@ starttime=$(date +%s)
 export HOSTNAME=$HOSTNAME
 export skipdisplayframes=1
 
-export nthreads=8
+export nthreads=1
 #export datadir='./data_container/raw/'
 export datadir='./data_fs/raw/'
 export calibdir='./data_fs/extern/'
@@ -73,9 +73,9 @@ export lambda_onoff=10;
 #export tspan=16384;
 #export tspan=32768; ## really using this one
 #export tspan=65536; ## this one when using a 40000 fs window and a chirp in the 6000-8000 range
-#export tspan=131072;
-export tspan=262144; ## this seems to be the max, calc stalls for anything higher, but this gives chirp up to 64000 for a total window of about 1/4 ns.
-#export tspan=524288
+export tspan=131072;
+#export tspan=262144; ## this seems to be the max, calc stalls for anything higher, but this gives chirp up to 64000 for a total window of about 1/4 ns.
+#export tspan=524288;
 #export tspan=1048576;
 export ngroupsteps=1; # figure out how to handle the group delays
 export groupdelay=2.4;
@@ -192,7 +192,7 @@ export saturate=65535;
 export lamsamples=1024;
 
 export fsWindow=128000; # use 128000 for largest window with appropriate tspan, this is the calib scan window
-export chirp=-16000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
+export chirp=-64000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
 #export chirp=-2000; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
 export interferedelay=8000; # keeping this at about 64 ps since that gievs about 1/4 window separation between rise and fall edges.
 #export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
