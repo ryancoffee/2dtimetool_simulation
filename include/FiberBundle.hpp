@@ -78,6 +78,7 @@ class FiberBundle {
 		void setnfibers(size_t n);
 		bool set_polarcoords(size_t n);
 
+
 	protected:
 		double c,s;
 };
