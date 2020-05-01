@@ -1,0 +1,62 @@
+#!/usr/bin/python3
+
+import numpy as np
+import sys
+from scipy.optimize import leastsq
+import random
+
+def gauss(params,x):
+    a = params[0]
+    c = params[1]
+    w = params[2]
+    return a*np.exp(-1.*np.power((x-c)/w,int(2)))
+
+def gaussresidual(params,x,data,eps_data):
+    model = gauss(params,x)
+    return (model - data)/eps_data
+
+def processfile(fname):
+    data = np.loadtxt(fname)
+    derivdata = np.loadtxt(sys.argv[1] + '.derivative')
+    maxderivinds = np.argmax(derivdata,axis=1)
+    minderivinds = np.argmin(derivdata,axis=1)
+    #print(np.row_stack((maxderivinds,minderivinds)))
+    outmaxfits = []
+    outminfits = []
+    highlim = derivdata.shape[0]
+    for i in range(len(maxderivinds)):
+        cenind = maxderivinds[i]
+        lowind = cenind-2
+        highind = np.min(cenind+2,highlim)
+        maxval = derivdata[i,cenind]
+        while derivdata[i,lowind] > maxval/4 and lowind>0:
+            lowind -= 1
+        while derivdata[i,highind] > maxval/4 and highind<derivdata.shape[0]-2:
+            highind += 1
+        params = (derivdata[i,maxderivinds[i]] , float(maxderivinds[i]) , (highind-lowind)/4.)
+        xvals = np.arange(lowind,highind)
+        eps_data = [1 for i in range(len(xvals))]
+        yvals = derivdata[i,xvals]
+        out,niters = leastsq(gaussresidual,params,args=(xvals,yvals,eps_data))
+        if len(outmaxfits)<1:
+            outmaxfits = out
+        else:
+            outmaxfits = np.row_stack((outmaxfits,out))
+        cenind = maxderivinds[i]
+        lowind = cenind-2
+        highind = cenind+2,
+    ofname = fname + '.maxfits'
+    np.savetxt(ofname,outmaxfits,fmt='%.1f')
+    print('Saved: %s'%(ofname))
+    return
+
+def main():
+    if len(sys.argv)<2:
+        print('SYntax: ./resVphotonen.py <filetoprocess -- list of as well>')
+        return
+    for fname in sys.argv[1:]:
+        processfile(fname)
+    return
+
+if __name__ == '__main__':
+    main()
