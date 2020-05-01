@@ -90,8 +90,9 @@ export n_b=-13.9931;
 #export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
 #export etalondelay=240; # for YAG at 20 microns thick 20 mu / .3 [mu/fs] * n_yag * 2 for double pass = 240 fs roundtrip delay
 export etalondelay=1607; # 1607 for 100 microns diamond # 800=50 microns diamond  88; # 5.5 microns of diamond, = 2.41 * 2 /(.3mu/fs) * l [in mu]= 48.2/3*l 
+export etalondelay=160700; # 1607 for 10 mmm diamond 
 export l_thickness=5.5 # used for etalon calculation
-export TmaxK=400;
+export TmaxK=300;
 export TbaseK=300;
 # of the total etalon delay, more like 1--10 nm only... 2.4/C*l = 0.016
 # this should be n(omega)*thickness/C = 1.5*10microns/(.3micronsPfs) = 15/.3 in femtoseconds
@@ -204,6 +205,8 @@ export carriersfile=$carriersdir$carriersfilename;
 export filebase=$datadir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_carriertag"$carriertag"_nfibers"$nfibers"_netalon"$netalon"_"$xrayshadowcorner_x"_"$xrayshadowcorner_y"_";
 export calfilebase=$calibdir"chirp"$chirp"_interferedelay"$interferedelay"_photonen"$xrayphoton_energy"_"$carriertag"_ncalibdelays"$ncalibdelays"_netalon"$netalon"_";
 echo "---	Environment variables exported";
+echo "---	hostname = "$HOSTNAME;
+echo "---	nthreads = "$nthreads;
 echo "---	filebase = "$filebase;
 echo "---	calfilebase = "$calfilebase;
 echo "---	carriersfilename = "$carriersfile;

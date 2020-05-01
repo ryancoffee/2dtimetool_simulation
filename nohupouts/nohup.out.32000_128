@@ -1,0 +1,44 @@
+		======================================
+		======= scan_material started ========
+		===== Fri May  1 05:19:53 2020
+		===== on host devtools-rnc-cvln
+		===== for 32 images
+		===== with 61 fibers
+		======================================
+Scaling fibers =	no
+Constructor ScanParams()
+
+========== running 61 fibers ============
+		shuffle fibers?	no
+fibermap file = ./data_fs/raw/chirp-32000_interferedelay8000_photonen128_carriertagdiamond_nfibers61_netalon0_2.00_2.00_fibermap.out
+In constructor MatRespons() 
+initializing masterpulse and masterplans
+In constructor PulseFreq()
+===== Total samples = 3294000 =====
+exiting constructor PulseFreq()
+ xrayphoton_energy = 128 keV
+using xrayphoton_energy to compute carriers
+===========================================
+===========================================
+==          entered fill_carriersvec()   ==
+===========================================
+===========================================
+0	7.25665	14.5133	21.77	29.0266	36.2833	43.5399	50.7966	58.0532	65.3099	72.5665	79.8232	87.0798	94.3365	101.593	108.85	116.106	123.363	130.62	137.876	145.133	152.39	159.646	166.903	174.16	181.416	188.673	195.93	203.186	210.443	217.7	224.956	232.213	239.47	246.726	253.983	261.24	268.496	275.753	283.009	
+
+3.32527e-05	0.00878689	0.017878	0.0271101	0.0364418	0.0458558	0.0553432	0.0648996	0.074523	0.084213	0.0939702	0.103796	0.113692	0.12366	0.133704	0.143825	0.154027	0.164313	0.174686	0.185149	0.195706	0.20636	0.217115	0.227974	0.238941	0.25002	0.261215	0.272529	0.283966	0.295529	0.307224	0.319053	0.331021	0.343131	0.355388	0.367794	0.380356	0.393075	0.405957	0.419004	
+
+	It has taken 798 s so far for initializing masterpulse and building fftw plans
+		############ entering calibration ###########
+		====== delays =======
+-64000 -60000 -56000 -52000 -48000 -44000 -40000 -36000 -32000 -28000 -24000 -20000 -16000 -12000 -8000 -4000 0 4000 8000 12000 16000 20000 24000 28000 32000 36000 40000 44000 48000 52000 56000 60000 
+++++++++++++++++++++++++++++++++|	 done with calibration delays
+Finished with the calibration image/matrix
+		############ ending parallel region 1 ###########
+masterresponse reflectance: 0.16
+masterbundle fiberdiameter: 0.11
+scanparams lambda_0: 550
+		======================================
+		======== scan_material stopped =======
+		===== Thu Jan  1 00:14:06 1970
+		===== in 846 s 
+		======================================
