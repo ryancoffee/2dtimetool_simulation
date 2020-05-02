@@ -15,17 +15,25 @@ def gaussresidual(params,x,data,eps_data):
     model = gauss(params,x)
     return (model - data)/eps_data
 
+def getcenterofmass(data):
+    sz = data.shape[1]
+    x = np.arange(sz).astype(float).reshape((1,sz))
+    num = np.inner(data,x)
+    denom = np.sum(data,axis=1)
+    return (num.reshape(denom.shape)/denom).astype(int)
+
 def processfile(fname):
     data = np.loadtxt(fname)
     derivdata = np.loadtxt(fname + '.derivative')
-    maxderivinds = np.argmax(derivdata,axis=1)
-    minderivinds = np.argmin(derivdata,axis=1)
-    #print(np.row_stack((maxderivinds,minderivinds)))
+    cominds = getcenterofmass(data)
     outmaxfits = []
     outminfits = []
-    highlim = derivdata.shape[0]
-    for i in range(len(maxderivinds)):
-        cenind = maxderivinds[i]
+    highlim = derivdata.shape[1]
+    for i in range(derivdata.shape[0]):
+        if cominds[i]<2:
+            cominds[i] = data.shape[1]//2
+        maxderivind = np.argmax(derivdata[i,:cominds[i]])
+        cenind = maxderivind
         lowind = cenind-2
         highind = cenind+2
         maxval = derivdata[i,cenind]
@@ -33,8 +41,8 @@ def processfile(fname):
             lowind -= 1
         while highind < highlim-2 and derivdata[i,highind] > maxval/4:
             highind += 1
-        params = (derivdata[i,maxderivinds[i]] , float(maxderivinds[i]) , (highind-lowind)/4.)
-        xvals = np.arange(lowind,highind)
+        params = (derivdata[i,maxderivind] , float(maxderivind) , (highind-lowind)/4.)
+        xvals = np.arange(lowind,highind-1)
         eps_data = [1 for i in range(len(xvals))]
         yvals = derivdata[i,xvals]
         out,niters = leastsq(gaussresidual,params,args=(xvals,yvals,eps_data))
@@ -42,8 +50,9 @@ def processfile(fname):
             outmaxfits = out
         else:
             outmaxfits = np.row_stack((outmaxfits,out))
-    for i in range(len(minderivinds)):
-        cenind = minderivinds[i]
+    for i in range(derivdata.shape[0]):
+        minderivind = cominds[i] + np.argmin(derivdata[i,cominds[i]:])
+        cenind = minderivind
         lowind = cenind-2
         highind = cenind+2
         minval = derivdata[i,cenind]
@@ -51,7 +60,7 @@ def processfile(fname):
             lowind -= 1
         while highind < highlim-2 and derivdata[i,highind] < maxval/4:
             highind += 1
-        params = (derivdata[i,minderivinds[i]] , float(minderivinds[i]) , (highind-lowind)/4.)
+        params = (derivdata[i,minderivind] , float(minderivind) , (highind-lowind)/4.)
         xvals = np.arange(lowind,highind-1)
         eps_data = [1 for i in range(len(xvals))]
         yvals = derivdata[i,xvals]
