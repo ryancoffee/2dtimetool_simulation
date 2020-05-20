@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 		<< "\t\t===== with " << getenv("nfibers") << " fibers\n"
 		<< "\t\t======================================\n" << std::flush;
 
-	unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
+	size_t nthreads = (size_t)atoi( getenv("nthreads") );
 	std::cout << "Scaling fibers =\t";
 	if (getenv("scale_fibers")){
 		std::cout << "yes\n";
@@ -657,7 +657,7 @@ int main(int argc, char* argv[])
 				int kr(2*7 + 1);
 				int kc(2*10 + 1);
 
-				cv::Mat imageMat_in(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );	// imageMat_in is 16bit unsigned data
+				cv::Mat imageMat_in(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );	// imageMat_in is 16bit size_t data
 				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1);
 				imageMat_in.convertTo(imageMat,CV_32FC1);	//imageMat is 32 bit float data
 
@@ -728,14 +728,14 @@ int main(int argc, char* argv[])
 				// HERE HERE HERE HERE // 
 
 				// initialize kernels vector //
-				const unsigned nkernels = 6; // hard coding for now since the storage will be in 2x3channel bgra png + the k0 as greyscale image
+				const size_t nkernels = 6; // hard coding for now since the storage will be in 2x3channel bgra png + the k0 as greyscale image
 				std::vector<cv::Mat> kernels;
-				for (unsigned k = 0; k< nkernels; ++k){
+				for (size_t k = 0; k< nkernels; ++k){
 					kernels.push_back(cv::Mat::zeros(kr,kc,CV_32FC1));
 				}
 
 				std::vector< float > leg(kc,0.);
-				for (unsigned k = 0 ; k<nkernels; ++k){		// filling kernels
+				for (size_t k = 0 ; k<nkernels; ++k){		// filling kernels
 					DataOps::legendre( leg, k);
 					cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[k] , 1);
 				}
@@ -747,7 +747,7 @@ int main(int argc, char* argv[])
 					 */
 					std::string kfilename;
 					ofstream kernelstream;
-					for (unsigned k = 0 ; k < nkernels; ++k){
+					for (size_t k = 0 ; k < nkernels; ++k){
 						kfilename = scanparams.filebase() + "kernel" + std::to_string(k);
 						kernelstream.open(kfilename.c_str(),ios::out); 
 						for (size_t r=0;r<kernels[k].rows;++r){
@@ -763,22 +763,22 @@ int main(int argc, char* argv[])
 
 
 				std::vector< cv::Mat > imageMat_vec;
-				for (unsigned k = 0; k < nkernels; ++k){	// setting up imageMat_vec
+				for (size_t k = 0; k < nkernels; ++k){	// setting up imageMat_vec
 					imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
 				}
 
-				const unsigned nchannels = 3; // Stop using alpha channel, that is just awkward
+				const size_t nchannels = 3; // Stop using alpha channel, that is just awkward
 				std::vector< cv::Mat > imageMatout_batch;
-				for (unsigned b = 0 ; b < nkernels/nchannels; ++b){	// setting up imageMatout_batch
+				for (size_t b = 0 ; b < nkernels/nchannels; ++b){	// setting up imageMatout_batch
 					imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows/8, imageMat_vec[0].cols/8, CV_16UC3));
 				}
 
-				for (unsigned i=0;i<nkernels;++i){ // filling imageMat_vec
+				for (size_t i=0;i<nkernels;++i){ // filling imageMat_vec
 					cv::filter2D(imageMat, imageMat_vec[i], -1, kernels[i]);
 				}
 				std::vector<cv::Mat> imageMatout_vec;
 
-				for (unsigned k = 0 ; k < nkernels ; ++k ){
+				for (size_t k = 0 ; k < nkernels ; ++k ){
 					double min,max,scale,offset;
 					cv::minMaxLoc(imageMat_vec[k],&min,&max);
 					scale = float(std::pow(int(2),int(16))-1)/(max-min);
@@ -798,11 +798,11 @@ int main(int argc, char* argv[])
 				}
 
 				std::string pngfilename;
-				for (unsigned b = 0; b< imageMatout_batch.size(); ++b){
+				for (size_t b = 0; b< imageMatout_batch.size(); ++b){
 					std::vector<cv::Mat> imageMat_4vec(nchannels);
-					for (unsigned i=0; i<imageMatout_batch[b].channels(); ++i){
+					for (size_t i=0; i<imageMatout_batch[b].channels(); ++i){
 						imageMat_4vec[i] = imageMatout_vec[i + b * imageMatout_batch[b].channels()];
-						for (unsigned j=0; j<3; ++j) // three times cut both dimensions in half
+						for (size_t j=0; j<3; ++j) // three times cut both dimensions in half
 							cv::pyrDown(imageMat_4vec[i],imageMat_4vec[i],cv::Size(imageMat_4vec[i].cols/2,imageMat_4vec[i].rows/2));
 					}
 					cv::merge(imageMat_4vec,imageMatout_batch[b]);
@@ -813,7 +813,7 @@ int main(int argc, char* argv[])
 
 
 				/*
-				for (unsigned i=0; i<imageMat_4vec.size(); ++i){
+				for (size_t i=0; i<imageMat_4vec.size(); ++i){
 					imageMat_4vec[i] = imageMatout_vec[i+1+4];
 				}
 				cv::merge(imageMat_4vec,imageMat_4chan);

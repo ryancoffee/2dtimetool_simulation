@@ -128,11 +128,11 @@ class PulseFreq
 		inline double maxsignal(void){
 			return std::pow(*std::max_element(rhovec.begin(),rhovec.end()),int(2));
 		}
-		inline unsigned get_samples(void) {return getsamples();}
-		inline unsigned getsamples(void) {return samples;}
-		inline unsigned get_lamsamples(void){return m_lamsamples;}
+		inline size_t get_samples(void) {return getsamples();}
+		inline size_t getsamples(void) {return samples;}
+		inline size_t get_lamsamples(void){return m_lamsamples;}
 
-		inline unsigned getdt(void) {return dtime;}
+		inline size_t getdt(void) {return dtime;}
 		void fft_totime(void) {
 			if (intime)
 				std::cerr << "died here at fft_totime():\t domain() = " << domain() << "\n" << std::flush;
@@ -163,7 +163,7 @@ class PulseFreq
 			phase_GDD = chirp_in;
 			addGDDtoindex(0,1);
 			addGDDtoindex(samples/2,-1);
-			for (unsigned i = 1; i<samples/2;i++){
+			for (size_t i = 1; i<samples/2;i++){
 				addGDDtoindex(i,1);
 				addGDDtoindex(samples-i,-1);
 			}
@@ -184,7 +184,7 @@ class PulseFreq
 			add4thtoindex(samples/2,-1);
 			add5thtoindex(0,1);
 			add5thtoindex(samples/2,-1);
-			for (unsigned i = 1; i<samples/2;i++){
+			for (size_t i = 1; i<samples/2;i++){
 				addGDDtoindex(i,1);
 				addGDDtoindex(samples-i,-1);
 				addTODtoindex(i,1);
@@ -214,7 +214,7 @@ class PulseFreq
 			add4thtoindex(samples/2,-1);
 			add5thtoindex(0,1);
 			add5thtoindex(samples/2,-1);
-			for (unsigned i = 1; i<samples/2;i++){
+			for (size_t i = 1; i<samples/2;i++){
 				addGDDtoindex(i,1);
 				addGDDtoindex(samples-i,-1);
 				addTODtoindex(i,1);
@@ -242,7 +242,7 @@ class PulseFreq
 			}
 			modampatindx(0,modulation);
 			modampatindx(samples/2,modulation);
-			for (unsigned i = 1;i<samples/2;i++){
+			for (size_t i = 1;i<samples/2;i++){
 				modampatindx(i,modulation);
 				modampatindx(samples-i,modulation);
 			}
@@ -254,7 +254,7 @@ class PulseFreq
 				return 1; }
 			modampatindx(0);
 			modampatindx(samples/2);
-			for (unsigned i = 1;i<samples/2;i++){
+			for (size_t i = 1;i<samples/2;i++){
 				modampatindx(i);
 				modampatindx(samples-i);
 			}
@@ -272,7 +272,7 @@ class PulseFreq
 			}
 			modphaseatindx(0,modulation);
 			modphaseatindx(samples/2,modulation);
-			for (unsigned i = 1;i<samples/2;i++){
+			for (size_t i = 1;i<samples/2;i++){
 				modphaseatindx(i,modulation);
 				modphaseatindx(samples-i,modulation);
 			}
@@ -285,7 +285,7 @@ class PulseFreq
 			}
 			modphaseatindx(0);
 			modphaseatindx(samples/2);
-			for (unsigned i = 1;i<samples/2;i++){
+			for (size_t i = 1;i<samples/2;i++){
 				modphaseatindx(i);
 				modphaseatindx(samples-i);
 			}
@@ -308,7 +308,7 @@ class PulseFreq
 		void printfrequencydelaychirp(std::ofstream * outfile, const double *delay,const double *chirp);
 		void printtime(std::ofstream * outfile);
 		void printwavelength(std::ofstream * outfile,const double *delay);
-		double gettime(unsigned ind){return (time[ind]*fsPau<double>());}
+		double gettime(size_t ind){return (time[ind]*fsPau<double>());}
 
 
 	private:
@@ -316,14 +316,14 @@ class PulseFreq
 		double m_noisescale;
 		size_t m_sampleinterval;
 		size_t m_lamsamples;
-		unsigned long m_gain;
-		unsigned m_saturate;
+		size_t long m_gain;
+		size_t m_saturate;
 
 		size_t sampleround;
 
 		bool intime,infreq;
-		unsigned samples;
-		unsigned startind,stopind,onwidth,offwidth;
+		size_t samples;
+		size_t startind,stopind,onwidth,offwidth;
 		double tspan;
 		double domega,lambda_center,lambda_width,omega_center,omega_width,omega_high;
 		double omega_onwidth,omega_offwidth;
@@ -355,7 +355,7 @@ class PulseFreq
 
 		double nu0;
 
-		unsigned i_low, i_high;
+		size_t i_low, i_high;
 
 		void rhophi2cvec(const size_t i){ cvec[i] = std::polar(rhovec[i],phivec[i]);}
 		void cvec2rhophi(const size_t i){ rhovec[i] = std::abs(cvec[i]); phivec[i] = std::arg(cvec[i]); }
@@ -368,28 +368,28 @@ class PulseFreq
 		void factorization(void);
 		void killvectors(void);
 
-		void addGDDtoindex(const unsigned indx,const int omega_sign) {
+		void addGDDtoindex(const size_t indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_GDD*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(2));
 			rhophi2cvec(indx);
 		}	
-		void addTODtoindex(const unsigned indx,const int omega_sign) {
+		void addTODtoindex(const size_t indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_TOD*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(3));
 			rhophi2cvec(indx);
 		}	
-		void add4thtoindex(const unsigned indx,const int omega_sign) {
+		void add4thtoindex(const size_t indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_4th*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(4));
 			rhophi2cvec(indx);
 		}	
-		void add5thtoindex(const unsigned indx,const int omega_sign) {
+		void add5thtoindex(const size_t indx,const int omega_sign) {
 			phivec[indx] += omega_sign*phase_5th*std::pow(omega[indx]-(double(omega_sign)*omega_center),int(5));
 			rhophi2cvec(indx);
 		}	
 
-		void modampatindx(const unsigned indx,const std::vector<double> & modvec) {
+		void modampatindx(const size_t indx,const std::vector<double> & modvec) {
 			rhovec[indx] *= modvec[indx];
 			rhophi2cvec(indx);
 		}
-		void modampatindx(const unsigned indx) {
+		void modampatindx(const size_t indx) {
 			rhovec[indx] *= modamp[indx];
 			rhophi2cvec(indx);
 		}
@@ -401,22 +401,22 @@ class PulseFreq
 		   = E0 exp(i w(t)*t) exp(i -w(t)*t0(t))
 		   = E(t) exp(i -(w0 + 1/GDD*t + 1/TOD*t**2 + 1/FOD*t**3)*t0(t))
 		 */
-		void modphaseatindx(const unsigned indx,const std::vector<double> & modvec) {
+		void modphaseatindx(const size_t indx,const std::vector<double> & modvec) {
 			if (modvec[indx]!=0){
 				phivec[indx] += modvec[indx];
 				rhophi2cvec(indx);
 			}
 		}
-		void modphaseatindx(const unsigned indx) {
+		void modphaseatindx(const size_t indx) {
 			if (modphase[indx] != 0){
 				phivec[indx] += modphase[indx];
 				rhophi2cvec(indx);
 			}
 		}
-		double rising(const unsigned indx) {
+		double rising(const size_t indx) {
 			return std::pow(sin(double(Constants::half_pi<double>()*(indx-startind)/onwidth)),int(2));
 		}
-		double falling(const unsigned indx) {
+		double falling(const size_t indx) {
 			return std::pow(sin(double(Constants::half_pi<double>()*(stopind-indx)/offwidth)),int(2));
 		}
 };
