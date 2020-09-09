@@ -502,7 +502,9 @@ int main(int argc, char* argv[])
 				std::time_t imgstart = std::time(nullptr);
 
 				double t0 = scanparams.delays_uniform();
+				double t1 = t0 + scanparams.rel_delays_normal();
 				double startdelay(0);
+				double startdelay1(0);
 
 				parabundle = masterbundle;
 
@@ -531,12 +533,15 @@ int main(int argc, char* argv[])
 					pulse = masterpulse;
 					crosspulse = masterpulse;
 					startdelay = t0 + parabundle.delay(f);
+					startdelay1 = t1 + parabundle.delay(f);
 					pulse.scale(parabundle.Ixray(f));
 					crosspulse.scale(parabundle.Ixray(f));
 					pararesponse = masterresponse;
+					pararesponse1 = masterresponse;
 
 					if (getenv("scale_fibers")){
 						pararesponse.setscale(parabundle.Ixray(f));
+						pararesponse1.setscale(parabundle.Ixray(f));
 						//std::cerr << "parabundle.Ixray(" << f << ") = " << parabundle.Ixray(f) << "\n" << std::flush;
 					}
 
@@ -552,15 +557,16 @@ int main(int argc, char* argv[])
 
 					for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 						pararesponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
+						pararesponse1.setdelay(startdelay1 - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
 						pararesponse.setstepvec_both_carriers(pulse,0.,parabundle.Ixray(f));
-						pararesponse.setstepvec_both_carriers(crosspulse,0.,parabundle.Ixray(f));
+						pararesponse1.setstepvec_both_carriers(crosspulse,0.,parabundle.Ixray(f));
 						if (scanparams.doublepulse()){
 							pararesponse.addstepvec_both_carriers(pulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
-							pararesponse.addstepvec_both_carriers(crosspulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
+							pararesponse1.addstepvec_both_carriers(crosspulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
 						}
 						// this pulls down the tail of the response so vector is periodic on nsamples	
 						pararesponse.buffervectors(pulse); 
-						pararesponse.buffervectors(crosspulse); 
+						pararesponse1.buffervectors(crosspulse); 
 						pulse.modulateamp_time();
 						pulse.modulatephase_time();
 						crosspulse.modulateamp_time();
@@ -574,6 +580,7 @@ int main(int argc, char* argv[])
 						//std::cerr << "parabundle.TinK( " << f << " ) is " << parabundle.TinK(f) << "\n" << std::flush;
 						// back propagation step //
 						double etalondelay = startdelay - double(e+1) * pararesponse.thermaletalondelay(parabundle.TinK(f)); 
+						double etalondelay1 = startdelay1 - double(e+1) * pararesponse1.thermaletalondelay(parabundle.TinK(f)); 
 						// at front surface, x-rays see counter-propagating light from one full etalon delay
 
 						etalonpulse = pulse;
@@ -582,15 +589,16 @@ int main(int argc, char* argv[])
 
 						for(size_t g=0;g<scanparams.ngroupsteps();g++){
 							pararesponse.setdelay(etalondelay + g*scanparams.backstep()); 
+							pararesponse1.setdelay(etalondelay1 + g*scanparams.backstep()); 
 							// counterpropagating, x-rays work backwards through the optical
 							pararesponse.setstepvec_both_carriers(etalonpulse,0.,parabundle.Ixray(f));
-							pararesponse.setstepvec_both_carriers(crossetalonpulse,0.,parabundle.Ixray(f));
+							pararesponse1.setstepvec_both_carriers(crossetalonpulse,0.,parabundle.Ixray(f));
 							if (scanparams.doublepulse()){
 								pararesponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
-								pararesponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
+								pararesponse1.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
 							}
 							pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-							pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+							pararesponse1.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 							etalonpulse.modulateamp_time();
 							etalonpulse.modulatephase_time();
 							crossetalonpulse.modulateamp_time();
@@ -604,10 +612,10 @@ int main(int argc, char* argv[])
 							pararesponse.setstepvec_both_carriers(crossetalonpulse,0.,parabundle.Ixray(f));
 							if (scanparams.doublepulse()){
 								pararesponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
-								pararesponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
+								pararesponse1.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay(),parabundle.Ixray(f));
 							}
 							pararesponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-							pararesponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
+							pararesponse1.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 							etalonpulse.modulateamp_time();
 							etalonpulse.modulatephase_time();
 							crossetalonpulse.modulateamp_time();
@@ -618,8 +626,8 @@ int main(int argc, char* argv[])
 						crossetalonpulse.fft_tofreq();
 						etalonpulse.delay(pararesponse.thermaletalondelay(parabundle.TinK(f))) ; // delay and attenuate in frequency domain
 						etalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
-						crossetalonpulse.delay(pararesponse.thermaletalondelay(parabundle.TinK(f)));
-						crossetalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
+						crossetalonpulse.delay(pararesponse1.thermaletalondelay(parabundle.TinK(f)));
+						crossetalonpulse.attenuate(pow(pararesponse1.getreflectance(),(int)2));
 						etalonpulse.fft_totime();
 						crossetalonpulse.fft_totime();
 						pulse += etalonpulse;
@@ -684,7 +692,7 @@ int main(int argc, char* argv[])
 
 					filename = scanparams.filebase() + "interference.out." + std::to_string(n);
 					interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-					interferestream << "#delay for image = \t" << t0 
+					interferestream << "#delay for image = \t" << t0 << "and\t" << t1
 						<< "\n#Ilaser = \t" << parabundle.Ilaser()
 						<< "\n#Ixray = \t" << parabundle.Ixray()
 						<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 

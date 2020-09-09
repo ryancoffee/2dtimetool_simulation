@@ -94,8 +94,9 @@ class ScanParams
 	inline bool addrandomphase(void) {return userandphase;}
 
 	/* =========== random interfaces =========== */
-	inline double delays_uniform(void){return (*delays_distributionPtr)(rng);}
-	inline double delays_normal(void){return (*delays_unidistributionPtr)(rng);}
+	inline double delays_uniform(void){return (*delays_unidistributionPtr)(rng);}
+	inline double delays_normal(void){return (*delays_distributionPtr)(rng);}
+	inline double rel_delays_normal(void){return (*reldelay_distributionPtr)(rng);}
 	inline double xray_pos_rand(void){return (*xray_pos_distributionPtr)(rng);}
 	inline double laser_pos_rand(void){return (*laser_pos_distributionPtr)(rng);}
 	inline double xray_inten_rand(void){return (*xray_distributionPtr)(rng);}
@@ -125,8 +126,9 @@ class ScanParams
 	std::random_device rng;
 
 	std::normal_distribution<double> * delays_distributionPtr;
-	std::uniform_real_distribution<double>* delays_unidistributionPtr;
-	std::normal_distribution<double> *xray_pos_distributionPtr;
+	std::uniform_real_distribution<double> * delays_unidistributionPtr;
+	std::normal_distribution<double> * reldelays_normalPtr;
+	std::normal_distribution<double> * xray_pos_distributionPtr;
 	std::normal_distribution<double>* laser_pos_distributionPtr;
 	std::lognormal_distribution<double>* xray_distributionPtr;
 	std::lognormal_distribution<double>* laser_distributionPtr; 

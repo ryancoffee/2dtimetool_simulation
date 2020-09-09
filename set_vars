@@ -51,6 +51,8 @@ export randphase_std=2; # in units of pi
 export nimages=32;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
 export delays_std=1000;
+export reldelays_mean=500; # this is for the TXI case that has two beams being evaluated by the two different polarizations.
+export reldelays_std=150;
 
 export drifting_alpha=0.001; #0.1;
 
