@@ -454,6 +454,7 @@ int main(int argc, char* argv[])
 
 			FiberBundle parabundle(masterbundle);
 			MatResponse pararesponse(masterresponse);
+			MatResponse pararesponse1(masterresponse);
 
 			PulseFreq pulse(masterpulse);
 			PulseFreq crosspulse(masterpulse);
