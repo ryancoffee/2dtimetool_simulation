@@ -18,7 +18,7 @@ ScanParams::ScanParams(void)
 	delays_unidistributionPtr = new std::uniform_real_distribution<double> (
 			double(atof(getenv("delays_mean")))-double(atof(getenv("delays_std"))),
 			double(atof(getenv("delays_mean")))+double(atof(getenv("delays_std"))));
-	reldelays_normalPtr = new std::normal_distribution<double>(
+	rel_delays_distributionPtr = new std::normal_distribution<double>(
 			double(atof(getenv("reldelays_mean"))),
 			double(atof(getenv("reldelays_std"))));
 	xray_pos_distributionPtr = new std::normal_distribution<double> (
