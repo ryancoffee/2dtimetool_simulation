@@ -4,22 +4,16 @@ starttime=$(date +%s)
 export HOSTNAME=$HOSTNAME
 export skipdisplayframes=1
 
-export nthreads=1
-#export datadir='./data_container/raw/'
-export datadir='./data_fs/raw/'
-export calibdir='./data_fs/extern/'
+export nthreads=8
+export datadir='/data/drive0/2dtimetool_simulation_data/raw/'
+export calibdir='/data/drive0/2dtimetool_simulation_data/extern/'
 unset printASCIIimages
 #export printASCIIimages=true
 
-#export calibdir='./data_container/extern/'
-#export datadir='./data_pet/raw/'
-#export calibdir='./data_pet/extern/'
 export carriercolumn=5; # this tells the code which of Nikita's columns to use
-#export carriersdir='./data_fs/reference/fromNikita/OUTPUT_LYSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/';
-#export carriersfilename='OUTPUT_LYSO_Density_derivative.dat';
-export carriersdir='./data_fs/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/'
+export carriersdir='/data/drive0/2dtimetool_simulation_data/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/'
 export carriersfilename='OUTPUT_BSO_Density_derivative.dat'
-export carriersdir='./data_fs/reference/fromNikita/'
+export carriersdir='/data/drive0/2dtimetool_simulation_data/reference/fromNikita/'
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat'
 export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 #unset usediamond
@@ -74,9 +68,9 @@ export lambda_onoff=10;
 #export tspan=8192;
 #export tspan=16384;
 #export tspan=32768; ## really using this one
-#export tspan=65536; ## this one when using a 40000 fs window and a chirp in the 6000-8000 range
+export tspan=65536; ## this one when using a 40000 fs window and a chirp in the 6000-8000 range
 #export tspan=131072;
-export tspan=262144; ## this seems to be the max, calc stalls for anything higher, but this gives chirp up to 64000 for a total window of about 1/4 ns.
+#export tspan=262144; ## this seems to be the max, calc stalls for anything higher, but this gives chirp up to 64000 for a total window of about 1/4 ns.
 #export tspan=524288;
 #export tspan=1048576;
 export ngroupsteps=1; # figure out how to handle the group delays
@@ -119,7 +113,7 @@ export nu_high=0.769; # 390nm
 ## 1 + sum_{n=1,nrows} n * 6
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
-export nfibers=61; #61; # is for the personal laptop since only 8GB memory #109; #61; #61; #109;
+export nfibers=127; #61; # is for the personal laptop since only 8GB memory #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 #export shuffle_fibers=1;
@@ -138,7 +132,7 @@ export thermalcenter_x=0.;
 export thermalcenter_y=0.;
 export bundle_fsPmm=3333.;
 
-export stepwidth=100.0;
+export stepwidth=50.0;
 export attenuation=0.0; # changed the definition of attenuation, this should then be just the difference from one now
 export phase=0.0001; #0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
 # phase should be the optical phase which is a function of optical frequency Dn(omega)*C/thickness/omega
@@ -197,10 +191,10 @@ export saturate=65535;
 export lamsamples=1024;
 
 export fsWindow=128000; # use 128000 for largest window with appropriate tspan, this is the calib scan window
-export chirp=-16000; # -64000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
-#export chirp=-2000; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
-export interferedelay=8000; # keeping this at about 64 ps since that gievs about 1/4 window separation between rise and fall edges.
-#export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+#export chirp=-16000; # -64000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
+export chirp=-4000; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
+#export interferedelay=8000; # keeping this at about 64 ps since that gives about 1/4 window separation between rise and fall edges.
+export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export xrayphoton_energy=9.5; #6.0; #40; # this is in keV
 
 export carriersfile=$carriersdir$carriersfilename;
