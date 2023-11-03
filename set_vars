@@ -42,7 +42,7 @@ export phaseNoiseLowpass=10000; #10000; # this is in units of total number of ti
 export randphase_mean=0;
 export randphase_std=2; # in units of pi
 
-export nimages=32;
+export nimages=1024; #32;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
 export delays_std=1000;
 export reldelays_mean=500; # this is for the TXI case that has two beams being evaluated by the two different polarizations.
@@ -190,7 +190,7 @@ export gain=40000000000; #20000000;
 export saturate=65535;
 export lamsamples=1024;
 
-export fsWindow=128000; # use 128000 for largest window with appropriate tspan, this is the calib scan window
+export fsWindow=12800; # use 128000 for largest window with appropriate tspan, this is the calib scan window
 #export chirp=-16000; # -64000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
 export chirp=-4000; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
 #export interferedelay=8000; # keeping this at about 64 ps since that gives about 1/4 window separation between rise and fall edges.
