@@ -25,6 +25,19 @@
 
 using namespace Constants;
 
+/*
+H5::IntType h5uint16( H5::PredType::NATIVE_USHORT );
+H5::IntType h5int16( H5::PredType::NATIVE_SHORT );
+H5::IntType h5uint32( H5::PredType::NATIVE_UINT );
+H5::IntType h5int32( H5::PredType::NATIVE_INT );
+H5::StrType h5string(0, H5T_VARIABLE);
+h5uint16.setOrder( H5T_ORDER_LE );
+h5int16.setOrder( H5T_ORDER_LE );
+h5uint32.setOrder( H5T_ORDER_LE );
+h5int32.setOrder( H5T_ORDER_LE );
+*/
+
+
 /* Here's main */
 int main(int argc, char* argv[])
 {
@@ -439,15 +452,17 @@ int main(int argc, char* argv[])
 	//############## Images section ##############
 
 #pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams)
-		{
-	if (!getenv("skipimages"))
 	{
-		std::random_device rd{};
-		std::mt19937 rng{rd()};
-		std::normal_distribution<> xrayshadow_x{double(atof(getenv("xrayshadowcorner_x"))),double(atof(getenv("xrayshadowcorner_xjitter")))};
-		std::normal_distribution<> xrayshadow_y{double(atof(getenv("xrayshadowcorner_y"))),double(atof(getenv("xrayshadowcorner_yjitter")))};
+		if (!getenv("skipimages"))
+		{
+			H5::H5File * hfilePtr = NULL;
 
-		std::cout << "\t\t############ entering parallel/images ###########\n" << std::flush;
+			std::random_device rd{};
+			std::mt19937 rng{rd()};
+			std::normal_distribution<> xrayshadow_x{double(atof(getenv("xrayshadowcorner_x"))),double(atof(getenv("xrayshadowcorner_xjitter")))};
+			std::normal_distribution<> xrayshadow_y{double(atof(getenv("xrayshadowcorner_y"))),double(atof(getenv("xrayshadowcorner_yjitter")))};
+
+			std::cout << "\t\t############ entering parallel/images ###########\n" << std::flush;
 			size_t tid = omp_get_thread_num();
 			size_t nfibers = masterbundle.get_nfibers();
 
@@ -462,6 +477,8 @@ int main(int argc, char* argv[])
 			PulseFreq crossetalonpulse(masterpulse);
 			std::vector< PulseFreq > pulsearray(nfibers,PulseFreq(masterpulse));
 #pragma omp barrier
+
+
 
 			if (scanparams.addrandomphase(atoi(getenv("addrandomphase"))>0))
 			{
@@ -480,25 +497,31 @@ int main(int argc, char* argv[])
 				outfile.close();
 			}
 
+			std::string filename(scanparams.filebase());
+			std::stringstream filetail;
+			filetail << "interference.tid" << std::setfill('0') << std::setw(3) << tid << ".h5";
+			filename += filetail.str();
+			std::cout << "saving to h5 file:\t" << filename << std::endl << std::flush;
 
-/*
-	HERE HERE HERE HERE
-	Here we need to figure out how to run a rolling TDI style image superposition so that each thread 
-	produces a time-ordered series of images who are comprised of the most recent n_overlay images that
-	are superimposed with a 1x row-shift
-*/
-			//std::cerr << "Entering parallel for loop with nimages = "  << scanparams.nimages() << "\n" << std::flush;
+			if (bool(getenv("H5OUTPUT"))){
+				H5::H5File * hfilePtr = new H5::H5File ( filename , H5F_ACC_TRUNC );
+			}
+
+			std::cerr << "Entering parallel for loop with nimages = "  << scanparams.nimages() << "\n" << std::flush;
 #pragma omp for schedule(dynamic)
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //
-				//std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
-				if (n<nthreads & tid==0) {
+			  std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
+
+				if (n<nthreads & tid==0) 
+				{
 					std::cout << "========================================================================="
 						<<   "\n\t\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
 						<<   "\n\t\t ====         use this for defining multiple fibers as         ===="
 						<<   "\n\t\t ====         contiguous blocks for row-wise FFT as 2D         ===="
 						<<   "\n\t\t ==================================================================\n" << std::flush;
 				}
+				std::cerr << "Made it to here\t" << tid << "\n" << std::flush;
 
 				std::time_t imgstart = std::time(nullptr);
 
@@ -520,7 +543,7 @@ int main(int argc, char* argv[])
 				parabundle.shadow_xrays(xrayshadow_x(rng) , xrayshadow_y(rng));
 
 
-				//DebugOps::pushout(std::string("Running image " + std::to_string(n) + " for t0 = " + std::to_string(t0) + " in threaded for loop, thread " + std::to_string(tid)));
+				DebugOps::pushout(std::string("Running image " + std::to_string(n) + " for t0 = " + std::to_string(t0) + " in threaded for loop, thread " + std::to_string(tid)));
 				std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
 				//std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
 				std::ofstream mapfile(mapfilename.c_str(),std::ios::out);
@@ -573,13 +596,13 @@ int main(int argc, char* argv[])
 						crosspulse.modulateamp_time();
 						crosspulse.modulatephase_time();
 					}// end groupsteps loop
-					//std::cerr << "tid = " << tid << "\tpulse/crosspulse.domain() = " << pulse.domain() << "/" << crosspulse.domain() << "\n" << std::flush;
+					 //std::cerr << "tid = " << tid << "\tpulse/crosspulse.domain() = " << pulse.domain() << "/" << crosspulse.domain() << "\n" << std::flush;
 
 
 					for (size_t e=0;e<scanparams.netalon();e++){ // begin etalon loop
-						//std::cerr << "\n\t\t ---- starting etalon at " << e << " ----\n" << std::flush;
-						//std::cerr << "parabundle.TinK( " << f << " ) is " << parabundle.TinK(f) << "\n" << std::flush;
-						// back propagation step //
+										     //std::cerr << "\n\t\t ---- starting etalon at " << e << " ----\n" << std::flush;
+										     //std::cerr << "parabundle.TinK( " << f << " ) is " << parabundle.TinK(f) << "\n" << std::flush;
+										     // back propagation step //
 						double etalondelay = startdelay - double(e+1) * pararesponse.thermaletalondelay(parabundle.TinK(f)); 
 						double etalondelay1 = startdelay1 - double(e+1) * pararesponse1.thermaletalondelay(parabundle.TinK(f)); 
 						// at front surface, x-rays see counter-propagating light from one full etalon delay
@@ -639,55 +662,27 @@ int main(int argc, char* argv[])
 					pulse.fft_tofreq();
 					crosspulse.fft_tofreq();
 					pulse.delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
-					//crosspulse.scale(0.9);
+										  //crosspulse.scale(0.9);
 					pulse -= crosspulse;
 					//pulse.interfere(crosspulse,scanparams.interferephase());
 					//std::cerr << "\n\n\t\t\t\t============== testing... just before the push_back() ==============\n\n" << std::flush;
 					pulsearray[f] = pulse;
 				} // end nfibers loop
-				//
+				  //
 
-				size_t img_nsamples(1024);
-				size_t img_stride(10);
-				uint16_t * imdata = (uint16_t*)std::calloc(pulsearray.size() * img_stride * img_nsamples , sizeof(uint16_t));
 
-				for (size_t f=0;f<pulsearray.size();++f){
-					pulsearray[f].scale(parabundle.Ilaser(f)); 
-					pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
-				}
 				std::complex<double> z_laser = parabundle.center_Ilaser();
 				std::complex<double> z_xray = parabundle.center_Ixray();
-
+				for (size_t f=0;f<pulsearray.size();++f){
+					pulsearray[f].scale(parabundle.Ilaser(f)); 
+				}
 				// direct image
 
 				ofstream interferestream;
-				std::string filename;
 
-				int kr(2*7 + 1);
-				int kc(2*10 + 1);
+				const size_t npoints(1<<10);
+				std::vector< uint16_t > data(size_t( pulsearray.size() * npoints ), uint16_t(0));
 
-				cv::Mat imageMat_in(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );	// imageMat_in is 16bit unsigned data
-				cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1);
-				imageMat_in.convertTo(imageMat,CV_32FC1);	//imageMat is 32 bit float data
-
-				cv::Mat kernel_raw(cv::Mat::zeros(kr,kc,CV_32FC1));
-
-				// vertical bluring //
-				std::vector<float> kblur(kr);
-				DataOps::sinsqr(kblur);
-				cv::Mat cblur(kr,1,CV_32F,kblur.data());
-				std::vector<float> zeros(kc,0.);
-				zeros[zeros.size()/2] = 1.;
-				cv::flip(cblur*cv::Mat(1,kc,CV_32F,zeros.data()) , kernel_raw , -1);
-
-				// constructing raw output, but blurred in the vertical //
-				cv::Mat imageMat_raw(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
-				cv::Mat rawMatout(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_16UC1));
-				cv::filter2D(imageMat,imageMat_raw,-1,kernel_raw);
-
-				std::vector<int> compression_params;
-				compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
-				compression_params.push_back(0);
 
 				if (bool(getenv("printASCIIimages"))){
 
@@ -708,205 +703,265 @@ int main(int argc, char* argv[])
 					}
 					interferestream.close();
 				} else {
-					filename = scanparams.filebase() + "interference.params." + std::to_string(n);
-					interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-					interferestream << "#delay for image = \t" << t0 
-						<< "\n#Ilaser = \t" << parabundle.Ilaser()
-						<< "\n#Ixray = \t" << parabundle.Ixray()
-						<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-						<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-						<< "\n#alpha = \t" << parabundle.delay_angle() 
-						<< "\n#img_stride = \t" << img_stride 
-						<< std::endl;
-					interferestream << "#";
-					pulsearray[0].printwavelengthbins(&interferestream);
-					parabundle.print_mapping(interferestream,t0);
-					interferestream.close();
-					double min,max,scale,offset;
-					cv::minMaxLoc(imageMat_raw,&min,&max);
-					offset = -min; //*scale;
-					imageMat_raw.convertTo(rawMatout,CV_16UC1,1.0,offset);
-					cv::minMaxLoc(imageMat_raw,&min,&max);
-					scale = float(std::pow(int(2),int(16))-2)/(max-min); // HERE HERE HERE HERE trying to get saturation to be protected
-					imageMat_raw.convertTo(rawMatout,CV_16UC1,scale,0.0);
-					cv::flip(rawMatout,rawMatout,0);
-					filename = scanparams.filebase() + "interference.image." + std::to_string(n) + ".png";
-					cv::imwrite(filename.c_str(),rawMatout,compression_params);
-				}
-				
-				// HERE HERE HERE HERE // 
+					if (bool(getenv("H5OUTPUT"))){
+						// HERE HERE HERE HERE //
+						// Getting a double free or corruption //
 
-				// initialize kernels vector //
-				const unsigned nkernels = 6; // hard coding for now since the storage will be in 2x3channel bgra png + the k0 as greyscale image
-				std::vector<cv::Mat> kernels;
-				for (unsigned k = 0; k< nkernels; ++k){
-					kernels.push_back(cv::Mat::zeros(kr,kc,CV_32FC1));
-				}
+						const int rank(2);
+						size_t dims[2] = {pulsearray.size(),npoints};
 
-				std::vector< float > leg(kc,0.);
-				for (unsigned k = 0 ; k<nkernels; ++k){		// filling kernels
-					DataOps::legendre( leg, k);
-					cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[k] , 1);
-				}
 
-				if (tid==0 and n<nthreads){ // print the kernels, but only once
-					/*
-					 * OK, we should use Grahm-Schmidt to come up with orthogonal set, start with sin defined from 0..pi, then cos, then sin*cos, then sin**2, 
-					 * then cos**2 but maybe just neg of sin**2, then sin**2*cos... and so forth
-					 */
-					std::string kfilename;
-					ofstream kernelstream;
-					for (unsigned k = 0 ; k < nkernels; ++k){
-						kfilename = scanparams.filebase() + "kernel" + std::to_string(k);
-						kernelstream.open(kfilename.c_str(),ios::out); 
-						for (size_t r=0;r<kernels[k].rows;++r){
-							for (size_t c=0;c<kernels[k].cols;++c){
-								kernelstream << kernels[k].at<float>(r,c) << "\t";
-							}
-							kernelstream << "\n";
+						std::string imname = "/im_" + std::to_string((int)n);
+						for (int r=0;r<pulsearray.size();r++){
+							pulsearray[r].fillrow_uint16(data.data() + (parabundle.get_key(r) * npoints) , npoints);
 						}
-						kernelstream.close(); 
-					}
-				} // end printing kernels
+						H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	//(rank , dims );
+						H5::DataSet * datasetPtr = new H5::DataSet( hfilePtr->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
+						datasetPtr->write( data.data(), H5::PredType::NATIVE_USHORT);
+						delete datasetPtr;
+						delete dataspace;
+
+
+						auto localnow = std::chrono::system_clock::now();
+						std::time_t ttime = std::chrono::system_clock::to_time_t(localnow);
+						std::cout << "chrono localtime = " << std::ctime(& ttime) << std::endl;
+						std::tm * local_time = std::localtime(& ttime);
+
+					} else { // Close H5 version and use OpenCV for png output
+						size_t img_nsamples(1024);
+						size_t img_stride(10);
+						uint16_t * imdata = (uint16_t*)std::calloc(pulsearray.size() * img_stride * img_nsamples , sizeof(uint16_t));
+						for (size_t f=0;f<pulsearray.size();++f){
+							pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
+						}
+
+						int kr(2*7 + 1);
+						int kc(2*10 + 1);
+
+						cv::Mat imageMat_in(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );	// imageMat_in is 16bit unsigned data
+						cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1);
+						imageMat_in.convertTo(imageMat,CV_32FC1);	//imageMat is 32 bit float data
+
+						cv::Mat kernel_raw(cv::Mat::zeros(kr,kc,CV_32FC1));
+
+						// vertical bluring //
+						std::vector<float> kblur(kr);
+						DataOps::sinsqr(kblur);
+						cv::Mat cblur(kr,1,CV_32F,kblur.data());
+						std::vector<float> zeros(kc,0.);
+						zeros[zeros.size()/2] = 1.;
+						cv::flip(cblur*cv::Mat(1,kc,CV_32F,zeros.data()) , kernel_raw , -1);
+
+						// constructing raw output, but blurred in the vertical //
+						cv::Mat imageMat_raw(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
+						cv::Mat rawMatout(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_16UC1));
+						cv::filter2D(imageMat,imageMat_raw,-1,kernel_raw);
+
+						std::vector<int> compression_params;
+						compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
+						compression_params.push_back(0);
+
+						filename = scanparams.filebase() + "interference.params." + std::to_string(n);
+						interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+						interferestream << "#delay for image = \t" << t0 
+							<< "\n#Ilaser = \t" << parabundle.Ilaser()
+							<< "\n#Ixray = \t" << parabundle.Ixray()
+							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+							<< "\n#alpha = \t" << parabundle.delay_angle() 
+							<< "\n#img_stride = \t" << img_stride 
+							<< std::endl;
+						interferestream << "#";
+						pulsearray[0].printwavelengthbins(&interferestream);
+						parabundle.print_mapping(interferestream,t0);
+						interferestream.close();
+						double min,max,scale,offset;
+						cv::minMaxLoc(imageMat_raw,&min,&max);
+						offset = -min; //*scale;
+						imageMat_raw.convertTo(rawMatout,CV_16UC1,1.0,offset);
+						cv::minMaxLoc(imageMat_raw,&min,&max);
+						scale = float(std::pow(int(2),int(16))-2)/(max-min); // HERE HERE HERE HERE trying to get saturation to be protected
+						imageMat_raw.convertTo(rawMatout,CV_16UC1,scale,0.0);
+						cv::flip(rawMatout,rawMatout,0);
+						filename = scanparams.filebase() + "interference.image." + std::to_string(n) + ".png";
+						std::cerr << "printing\t" << filename << std::endl << std::flush;
+						cv::imwrite(filename.c_str(),rawMatout,compression_params);
+
+						// HERE HERE HERE HERE // 
+
+						// initialize kernels vector //
+						const unsigned nkernels = 6; // hard coding for now since the storage will be in 2x3channel bgra png + the k0 as greyscale image
+						std::vector<cv::Mat> kernels;
+						for (unsigned k = 0; k< nkernels; ++k){
+							kernels.push_back(cv::Mat::zeros(kr,kc,CV_32FC1));
+						}
+
+						std::vector< float > leg(kc,0.);
+						for (unsigned k = 0 ; k<nkernels; ++k){		// filling kernels
+							DataOps::legendre( leg, k);
+							cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[k] , 1);
+						}
+
+						if (tid==0 and n<nthreads){ // print the kernels, but only once
+							/*
+							 * OK, we should use Grahm-Schmidt to come up with orthogonal set, start with sin defined from 0..pi, then cos, then sin*cos, then sin**2, 
+							 * then cos**2 but maybe just neg of sin**2, then sin**2*cos... and so forth
+							 */
+							std::string kfilename;
+							ofstream kernelstream;
+							for (unsigned k = 0 ; k < nkernels; ++k){
+								kfilename = scanparams.filebase() + "kernel" + std::to_string(k);
+								kernelstream.open(kfilename.c_str(),ios::out); 
+								for (size_t r=0;r<kernels[k].rows;++r){
+									for (size_t c=0;c<kernels[k].cols;++c){
+										kernelstream << kernels[k].at<float>(r,c) << "\t";
+									}
+									kernelstream << "\n";
+								}
+								kernelstream.close(); 
+							}
+						} // end printing kernels
 
 
 
-				std::vector< cv::Mat > imageMat_vec;
-				for (unsigned k = 0; k < nkernels; ++k){	// setting up imageMat_vec
-					imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
-				}
+						std::vector< cv::Mat > imageMat_vec;
+						for (unsigned k = 0; k < nkernels; ++k){	// setting up imageMat_vec
+							imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
+						}
 
-				const unsigned nchannels = 3; // Stop using alpha channel, that is just awkward
-				std::vector< cv::Mat > imageMatout_batch;
-				for (unsigned b = 0 ; b < nkernels/nchannels; ++b){	// setting up imageMatout_batch
-					imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows/8, imageMat_vec[0].cols/8, CV_16UC3));
-				}
+						const unsigned nchannels = 3; // Stop using alpha channel, that is just awkward
+						std::vector< cv::Mat > imageMatout_batch;
+						for (unsigned b = 0 ; b < nkernels/nchannels; ++b){	// setting up imageMatout_batch
+							imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows/8, imageMat_vec[0].cols/8, CV_16UC3));
+						}
 
-				for (unsigned i=0;i<nkernels;++i){ // filling imageMat_vec
-					cv::filter2D(imageMat, imageMat_vec[i], -1, kernels[i]);
-				}
-				std::vector<cv::Mat> imageMatout_vec;
+						for (unsigned i=0;i<nkernels;++i){ // filling imageMat_vec
+							cv::filter2D(imageMat, imageMat_vec[i], -1, kernels[i]);
+						}
+						std::vector<cv::Mat> imageMatout_vec;
 
-				for (unsigned k = 0 ; k < nkernels ; ++k ){
-					double min,max,scale,offset;
-					cv::minMaxLoc(imageMat_vec[k],&min,&max);
-					scale = float(std::pow(int(2),int(16))-1)/(max-min);
-					offset = -min*scale;
-					imageMatout_vec.push_back(cv::Mat(imageMat_vec[k].rows,imageMat_vec[k].cols,CV_16UC1));
-					imageMat_vec[k].convertTo(imageMatout_vec[k],CV_16UC1,scale,offset);
-				}
+						for (unsigned k = 0 ; k < nkernels ; ++k ){
+							double min,max,scale,offset;
+							cv::minMaxLoc(imageMat_vec[k],&min,&max);
+							scale = float(std::pow(int(2),int(16))-1)/(max-min);
+							offset = -min*scale;
+							imageMatout_vec.push_back(cv::Mat(imageMat_vec[k].rows,imageMat_vec[k].cols,CV_16UC1));
+							imageMat_vec[k].convertTo(imageMatout_vec[k],CV_16UC1,scale,offset);
+						}
 
-				if ( !(getenv("skipdisplayframes")) and tid==0 ) {
-					char FrameStr[15];
-					sprintf(FrameStr,"Frame_%i",int(tid));
-					cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
-					cv::resizeWindow(FrameStr,img_nsamples*5,pulsearray.size()*5);
-					cv::imshow(FrameStr, imageMatout_vec[0]);
-					cv::waitKey(0);
-					cv::destroyAllWindows();
-				}
+						if ( !(getenv("skipdisplayframes")) and tid==0 ) {
+							char FrameStr[15];
+							sprintf(FrameStr,"Frame_%i",int(tid));
+							cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
+							cv::resizeWindow(FrameStr,img_nsamples*5,pulsearray.size()*5);
+							cv::imshow(FrameStr, imageMatout_vec[0]);
+							cv::waitKey(0);
+							cv::destroyAllWindows();
+						}
 
-				std::string pngfilename;
-				for (unsigned b = 0; b< imageMatout_batch.size(); ++b){
-					std::vector<cv::Mat> imageMat_4vec(nchannels);
-					for (unsigned i=0; i<imageMatout_batch[b].channels(); ++i){
-						imageMat_4vec[i] = imageMatout_vec[i + b * imageMatout_batch[b].channels()];
-						for (unsigned j=0; j<3; ++j) // three times cut both dimensions in half
-							cv::pyrDown(imageMat_4vec[i],imageMat_4vec[i],cv::Size(imageMat_4vec[i].cols/2,imageMat_4vec[i].rows/2));
-					}
-					cv::merge(imageMat_4vec,imageMatout_batch[b]);
-					cv::flip(imageMatout_batch[b],imageMatout_batch[b],0);
-					pngfilename = scanparams.filebase() + "interference.out.batch" + std::to_string(b) + "." + std::to_string(n) + ".png";
-					cv::imwrite(pngfilename.c_str(),imageMatout_batch[b],compression_params);
-				}
-
-
-				/*
-				for (unsigned i=0; i<imageMat_4vec.size(); ++i){
-					imageMat_4vec[i] = imageMatout_vec[i+1+4];
-				}
-				cv::merge(imageMat_4vec,imageMat_4chan);
-				cv::flip(imageMat_4chan,imageMat_4chan,0);
-				pngfilename = scanparams.filebase() + "interference.out.k5678." + std::to_string(n) + ".png";
-				cv::imwrite(pngfilename.c_str(),imageMat_4chan,compression_params);
-				
+						std::string pngfilename;
+						for (unsigned b = 0; b< imageMatout_batch.size(); ++b){
+							std::vector<cv::Mat> imageMat_4vec(nchannels);
+							for (unsigned i=0; i<imageMatout_batch[b].channels(); ++i){
+								imageMat_4vec[i] = imageMatout_vec[i + b * imageMatout_batch[b].channels()];
+								for (unsigned j=0; j<3; ++j) // three times cut both dimensions in half
+									cv::pyrDown(imageMat_4vec[i],imageMat_4vec[i],cv::Size(imageMat_4vec[i].cols/2,imageMat_4vec[i].rows/2));
+							}
+							cv::merge(imageMat_4vec,imageMatout_batch[b]);
+							cv::flip(imageMatout_batch[b],imageMatout_batch[b],0);
+							pngfilename = scanparams.filebase() + "interference.out.batch" + std::to_string(b) + "." + std::to_string(n) + ".png";
+							cv::imwrite(pngfilename.c_str(),imageMatout_batch[b],compression_params);
+						}
 
 
-				// kernel0
-				filename = scanparams.filebase() + "interference.out.K0." + std::to_string(n);
-				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-				interferestream << "#delay for image = \t" << t0 
-					<< "\n#Ilaser = \t" << parabundle.Ilaser()
-					<< "\n#Ixray = \t" << parabundle.Ixray()
-					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-					<< "\n#alpha = \t" << parabundle.delay_angle() 
-					<< std::endl;
-				interferestream << "#";
-				pulsearray[0].printwavelengthbins(&interferestream);
-				for (size_t r=0;r<imageMatK0.rows;++r){
-					for (size_t c=0; c<imageMatK0.cols;++c)
-						interferestream << imageMatK0.at<float>(r,c) << "\t";	
-					interferestream << "\n";
-				}
-				interferestream.close();
-				// kernel1
-				filename = scanparams.filebase() + "interference.out.K1." + std::to_string(n);
-				interferestream.open(filename.c_str(),ios::out); 
-				interferestream << "#delay for image = \t" << t0 
-					<< "\n#Ilaser = \t" << parabundle.Ilaser()
-					<< "\n#Ixray = \t" << parabundle.Ixray()
-					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-					<< "\n#alpha = \t" << parabundle.delay_angle() 
-					<< std::endl;
-				interferestream << "#";
-				pulsearray[0].printwavelengthbins(&interferestream);
-				for (size_t r=0;r<imageMatK1.rows;++r){
-					for (size_t c=0; c<imageMatK1.cols;++c)
-						interferestream << imageMatK1.at<float>(r,c) << "\t";	
-					interferestream << "\n";
-				}
-				interferestream.close();
-				// kernel2
-				filename = scanparams.filebase() + "interference.out.K2." + std::to_string(n);
-				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-				interferestream << "#delay for image = \t" << t0 
-					<< "\n#Ilaser = \t" << parabundle.Ilaser()
-					<< "\n#Ixray = \t" << parabundle.Ixray()
-					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-					<< "\n#alpha = \t" << parabundle.delay_angle() 
-					<< std::endl;
-				interferestream << "#";
-				pulsearray[0].printwavelengthbins(&interferestream);
-				for (size_t r=0;r<imageMatK2.rows;++r){
-					for (size_t c=0; c<imageMatK2.cols;++c)
-						interferestream << imageMatK2.at<float>(r,c) << "\t";	
-					interferestream << "\n";
-				}
-				interferestream.close();
-				// kernel3
-				filename = scanparams.filebase() + "interference.out.K3." + std::to_string(n);
-				interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-				interferestream << "#delay for image = \t" << t0 
-					<< "\n#Ilaser = \t" << parabundle.Ilaser()
-					<< "\n#Ixray = \t" << parabundle.Ixray()
-					<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-					<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-					<< "\n#alpha = \t" << parabundle.delay_angle() 
-					<< std::endl;
-				interferestream << "#";
-				pulsearray[0].printwavelengthbins(&interferestream);
-				for (size_t r=0;r<imageMatK2.rows;++r){
-					for (size_t c=0; c<imageMatK2.cols;++c)
-						interferestream << imageMatK3.at<float>(r,c) << "\t";	
-					interferestream << "\n";
-				}
-				interferestream.close();
-				*/
+						/*
+						for (unsigned i=0; i<imageMat_4vec.size(); ++i){
+							imageMat_4vec[i] = imageMatout_vec[i+1+4];
+						}
+						cv::merge(imageMat_4vec,imageMat_4chan);
+						cv::flip(imageMat_4chan,imageMat_4chan,0);
+						pngfilename = scanparams.filebase() + "interference.out.k5678." + std::to_string(n) + ".png";
+						cv::imwrite(pngfilename.c_str(),imageMat_4chan,compression_params);
 
-				std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
+
+
+						// kernel0
+						filename = scanparams.filebase() + "interference.out.K0." + std::to_string(n);
+						interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+						interferestream << "#delay for image = \t" << t0 
+							<< "\n#Ilaser = \t" << parabundle.Ilaser()
+							<< "\n#Ixray = \t" << parabundle.Ixray()
+							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+							<< "\n#alpha = \t" << parabundle.delay_angle() 
+							<< std::endl;
+						interferestream << "#";
+						pulsearray[0].printwavelengthbins(&interferestream);
+						for (size_t r=0;r<imageMatK0.rows;++r){
+							for (size_t c=0; c<imageMatK0.cols;++c)
+								interferestream << imageMatK0.at<float>(r,c) << "\t";	
+							interferestream << "\n";
+						}
+						interferestream.close();
+						// kernel1
+						filename = scanparams.filebase() + "interference.out.K1." + std::to_string(n);
+						interferestream.open(filename.c_str(),ios::out); 
+						interferestream << "#delay for image = \t" << t0 
+							<< "\n#Ilaser = \t" << parabundle.Ilaser()
+							<< "\n#Ixray = \t" << parabundle.Ixray()
+							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+							<< "\n#alpha = \t" << parabundle.delay_angle() 
+							<< std::endl;
+						interferestream << "#";
+						pulsearray[0].printwavelengthbins(&interferestream);
+						for (size_t r=0;r<imageMatK1.rows;++r){
+							for (size_t c=0; c<imageMatK1.cols;++c)
+								interferestream << imageMatK1.at<float>(r,c) << "\t";	
+							interferestream << "\n";
+						}
+						interferestream.close();
+						// kernel2
+						filename = scanparams.filebase() + "interference.out.K2." + std::to_string(n);
+						interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+						interferestream << "#delay for image = \t" << t0 
+							<< "\n#Ilaser = \t" << parabundle.Ilaser()
+							<< "\n#Ixray = \t" << parabundle.Ixray()
+							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+							<< "\n#alpha = \t" << parabundle.delay_angle() 
+							<< std::endl;
+						interferestream << "#";
+						pulsearray[0].printwavelengthbins(&interferestream);
+						for (size_t r=0;r<imageMatK2.rows;++r){
+							for (size_t c=0; c<imageMatK2.cols;++c)
+								interferestream << imageMatK2.at<float>(r,c) << "\t";	
+							interferestream << "\n";
+						}
+						interferestream.close();
+						// kernel3
+						filename = scanparams.filebase() + "interference.out.K3." + std::to_string(n);
+						interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+						interferestream << "#delay for image = \t" << t0 
+							<< "\n#Ilaser = \t" << parabundle.Ilaser()
+							<< "\n#Ixray = \t" << parabundle.Ixray()
+							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+							<< "\n#alpha = \t" << parabundle.delay_angle() 
+							<< std::endl;
+						interferestream << "#";
+						pulsearray[0].printwavelengthbins(&interferestream);
+						for (size_t r=0;r<imageMatK2.rows;++r){
+							for (size_t c=0; c<imageMatK2.cols;++c)
+								interferestream << imageMatK3.at<float>(r,c) << "\t";	
+							interferestream << "\n";
+						}
+						interferestream.close();
+						*/
+
+						std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
+					} // close OpenCV version
+				} // close non-ascii version
 
 				if (tid % 10 < 2){
 					for (size_t f=0;f<parabundle.get_nfibers();f++){
@@ -932,8 +987,11 @@ int main(int argc, char* argv[])
 #pragma omp barrier
 
 			//std::cerr << "\n\t... trying to leave parallel region 2" << std::endl;
-	} // end if (!getenv("skipimages")
-		} // end parallel region
+			if (bool(getenv("H5OUTPUT"))){
+				delete hfilePtr;
+			}
+		} // end if (!getenv("skipimages")
+	} // end parallel region
 
 	//std::cout << "\n ---- just left parallel region ----" << std::endl;
 	std::cout << "masterresponse reflectance: " << masterresponse.getreflectance() << std::endl;

@@ -14,6 +14,11 @@
 #include <algorithm>
 #include <vector>
 
+#include "hdf5.h"
+#include "H5Cpp.h"
+#include "H5Attribute.h"
+
+
 // OpenCV includes
 //#include <opencv/core.h>
 
@@ -26,6 +31,7 @@
 
 // parallel includes
 #include <omp.h>
+
 
 
 #endif
