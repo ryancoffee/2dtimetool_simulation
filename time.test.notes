@@ -1,0 +1,4 @@
+beanbox: 61 fibers, skip calib, 100 images, 4 threads, 1434 seconds
+devtools7coffee: 61 fibers, skip calib, 100 images, 4 threads, 1334 seconds
+
+devtools7coffee: 61 fibers, skip calib, 1000 images, 40 threads, 2425 seconds
