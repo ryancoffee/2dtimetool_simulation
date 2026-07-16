@@ -453,6 +453,7 @@ int main(int argc, char* argv[])
 
 #pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams)
 	{
+		std::cout << "\t\t#################Entering parallel region 2 #######################\n" << std::flush;
 		if (!getenv("skipimages"))
 		{
 			H5::H5File * hfilePtr = NULL;
@@ -508,6 +509,7 @@ int main(int argc, char* argv[])
 			}
 
 			std::cerr << "Entering parallel for loop with nimages = "  << scanparams.nimages() << "\n" << std::flush;
+
 #pragma omp for schedule(dynamic)
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //

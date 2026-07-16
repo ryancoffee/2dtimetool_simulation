@@ -4,7 +4,7 @@ starttime=$(date +%s)
 export HOSTNAME=$HOSTNAME
 export skipdisplayframes=1
 
-export nthreads=8
+export nthreads=4
 export datadir='/data/drive0/2dtimetool_simulation_data/raw/'
 export calibdir='/data/drive0/2dtimetool_simulation_data/extern/'
 unset H5OUTPUT
