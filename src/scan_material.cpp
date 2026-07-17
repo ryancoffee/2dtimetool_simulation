@@ -451,9 +451,10 @@ int main(int argc, char* argv[])
 
 	//############## Images section ##############
 
+	std::cout << "\t\t#################Entering parallel region 2 #######################\n" << std::flush;
+
 #pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams)
 	{
-		std::cout << "\t\t#################Entering parallel region 2 #######################\n" << std::flush;
 		if (!getenv("skipimages"))
 		{
 			H5::H5File * hfilePtr = NULL;
@@ -463,9 +464,9 @@ int main(int argc, char* argv[])
 			std::normal_distribution<> xrayshadow_x{double(atof(getenv("xrayshadowcorner_x"))),double(atof(getenv("xrayshadowcorner_xjitter")))};
 			std::normal_distribution<> xrayshadow_y{double(atof(getenv("xrayshadowcorner_y"))),double(atof(getenv("xrayshadowcorner_yjitter")))};
 
-			std::cout << "\t\t############ entering parallel/images ###########\n" << std::flush;
 			size_t tid = omp_get_thread_num();
 			size_t nfibers = masterbundle.get_nfibers();
+			std::cout << "\t\t############ entering parallel image: tid = " << int(tid) << " ###########\n" << std::flush;
 
 
 			FiberBundle parabundle(masterbundle);

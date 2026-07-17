@@ -7,44 +7,39 @@ export skipdisplayframes=1
 export nthreads=4
 export datadir='/data/drive0/2dtimetool_simulation_data/raw/'
 export calibdir='/data/drive0/2dtimetool_simulation_data/extern/'
+mkdir -p $datadir
+mkdir -p $calibdir
 unset H5OUTPUT
-$export H5OUTPUT=true
+export H5OUTPUT=1
 unset printASCIIimages
 #export printASCIIimages=true
 
 export carriercolumn=5; # this tells the code which of Nikita's columns to use
-export carriersdir='/data/drive0/2dtimetool_simulation_data/reference/fromNikita/OUTPUT_BSO_single_cascade_photon_hw_511000.0_t_80.0_MC_10/'
-export carriersfilename='OUTPUT_BSO_Density_derivative.dat'
 export carriersdir='/data/drive0/2dtimetool_simulation_data/reference/fromNikita/'
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat'
+#export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
-#unset usediamond
-export usediamond=true
+export usediamond=1
 export carriertag='diamond'
 #export xrayphoton_energy=1; #6.0; #40; # this is in keV
-#export carriersfilename='OUTPUT_YAG_Density_9500.dat'
-#export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 export bandgap_eV=5.47
-mkdir -p $datadir
 
 #unsetting to clear previous export commands
 unset skipcalibration
 unset skipimages
 #comment out the export definition to get this env var to act like a strict bool (e.g. true if defined, only false if unset)
 #but to be defined, we have to set it to some value
-#export skipcalibration=true;
-#export skipimages=true;
+#export skipcalibration=1;
+#export skipimages=1;
 
 # for generating a "scan" brute force calibration matrix, do this in a parallel region upstream of image production.
 export ncalibdelays=32; #8192; #256; # 128;
-
-# for Omar, testing the addition of random phase
 export addrandomphase=0;
 export phaseNoiseLowpass=10000; #10000; # this is in units of total number of time samples... and that is enormous.
 export randphase_mean=0;
 export randphase_std=2; # in units of pi
 
-export nimages=128; #32;
+export nimages=16; #128; #32;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
 export delays_std=1000;
 export reldelays_mean=500; # this is for the TXI case that has two beams being evaluated by the two different polarizations.
@@ -67,8 +62,8 @@ export lambda_width=400;
 export lambda_onoff=10;
 #export tspan=1024;
 #export tspan=4096;
-#export tspan=8192;
-export tspan=16384;
+export tspan=8192;
+#export tspan=16384;
 #export tspan=32768; ## really using this one
 #export tspan=65536; ## this one when using a 40000 fs window and a chirp in the 6000-8000 range
 #export tspan=131072;
@@ -87,8 +82,7 @@ export n_b=-13.9931;
 # YAG index 1.8
 #export etalondelay=80; #1200; #86.6; #87.; #26.; # 26fs for 2 microns SiN, 13fs for 1 micron, 
 #export etalondelay=240; # for YAG at 20 microns thick 20 mu / .3 [mu/fs] * n_yag * 2 for double pass = 240 fs roundtrip delay
-export etalondelay=1607; # 1607 for 100 microns diamond # 800=50 microns diamond  88; # 5.5 microns of diamond, = 2.41 * 2 /(.3mu/fs) * l [in mu]= 48.2/3*l 
-export etalondelay=1607; # 1607 for 10 mmm diamond 
+export etalondelay=88; # 1607 for 100 microns diamond # 800=50 microns diamond  88; # 5.5 microns of diamond, = 2.41 * 2 /(.3mu/fs) * l [in mu]= 48.2/3*l 
 export l_thickness=5.5 # used for etalon calculation
 export TmaxK=300;
 export TbaseK=300;
@@ -115,13 +109,13 @@ export nu_high=0.769; # 390nm
 ## 1 + sum_{n=1,nrows} n * 6
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
-export nfibers=109; #61; # is for the personal laptop since only 8GB memory #109; #61; #61; #109;
+export nfibers=61; #109; #61; # is for the personal laptop since only 8GB memory #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 export shuffle_fibers=1;
 export scale_fibers=1;
 export fiberdiam=0.11;
-export laserdiam=2.5.; ## this behaves properly
+export laserdiam=2.5; 
 export xraydiam=0.75;
 export xrayshadowcorner_x=2.00;
 export xrayshadowcorner_y=2.00;
@@ -135,7 +129,7 @@ export thermalcenter_y=0.;
 export bundle_fsPmm=3333.;
 
 export stepwidth=50.0;
-export attenuation=0.0; # changed the definition of attenuation, this should then be just the difference from one now
+export attenuation=0.0; # = 1 - Transmission; changed the definition of attenuation, this should then be just the difference from one now
 export phase=0.0001; #0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
 # phase should be the optical phase which is a function of optical frequency Dn(omega)*C/thickness/omega
 # Dn(omega)*thickness/C*omega = deltan*10microns/(.3micronsPfs)*2pi(nu) = 1e-3*10microns/.3micronsPfs*2pi*(0.5PHz)
@@ -194,7 +188,7 @@ export lamsamples=1024;
 
 export fsWindow=12800; # use 128000 for largest window with appropriate tspan, this is the calib scan window
 #export chirp=-16000; # -64000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
-export chirp=-4000; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
+export chirp=-1200; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
 #export interferedelay=8000; # keeping this at about 64 ps since that gives about 1/4 window separation between rise and fall edges.
 export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export xrayphoton_energy=9.5; #6.0; #40; # this is in keV
