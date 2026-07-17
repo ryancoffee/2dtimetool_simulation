@@ -451,15 +451,17 @@ int main(int argc, char* argv[])
 
 	//############## Images section ##############
 
-	H5::H5File * h5filePtr;
+	std::vector< H5::H5File * > h5filePtrVec;
 	std::string imfilename(scanparams.filebase());
 	std::stringstream filetail;
-	filetail << "interference.h5";
-	imfilename += filetail.str();
-	std::cout << "saving to h5 file:\t" << imfilename << std::endl << std::flush;
-	std::cout << "creating the single h5 file " << std::endl << std::flush;
-	h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
+	for (size_t t=0;t<nthreads;t++){
+		filetail << "interference" << std::setfill('0') << std::setw(3) << t << ".h5";
+		imfilename += filetail.str();
+		std::cout << "saving to h5 file:\t" << imfilename << std::endl << std::flush;
+		h5filePtrVec.push_back(new H5::H5File ( imfilename , H5F_ACC_TRUNC ));
+	}
 
+#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,h5filePtrVec)
 	{
 		if (!getenv("skipimages"))
 		{
@@ -508,6 +510,7 @@ int main(int argc, char* argv[])
 			std::cout << "\t\t#################Entering parallel region 2 #######################\n" << std::flush;
 
 
+#pragma omp for schedule(dynamic) 
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //
 			  	std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
@@ -551,9 +554,6 @@ int main(int argc, char* argv[])
 				mapfile.close();
 
 
-#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,parabundle,pararesponse,scanparams,h5filePtr)
-				{
-#pragma omp for schedule(dynamic) 
 				for(size_t f = 0; f < parabundle.get_nfibers(); f++)
 				{ // begin fibers loop
 					pulse = masterpulse;
@@ -669,10 +669,9 @@ int main(int argc, char* argv[])
 					//pulse.interfere(crosspulse,scanparams.interferephase());
 					//std::cerr << "\n\n\t\t\t\t============== testing... just before the push_back() ==============\n\n" << std::flush;
 					pulsearray[f] = pulse;
-				} // end parallel nfibers loop
+				} // end nfibers loop
 
 				
-				} // end parallel region 2
 
 
 				std::complex<double> z_laser = parabundle.center_Ilaser();
@@ -710,6 +709,7 @@ int main(int argc, char* argv[])
 					if (bool(getenv("H5OUTPUT"))){
 						// HERE HERE HERE HERE //
 						// Getting a double free or corruption //
+						H5::H5File * h5ptr = h5filePtrVec[tid];
 
 						const int rank(2);
 						size_t dims[2] = {pulsearray.size(),npoints};
@@ -719,8 +719,10 @@ int main(int argc, char* argv[])
 						for (int r=0;r<pulsearray.size();r++){
 							pulsearray[r].fillrow_uint16(data.data() + (parabundle.get_key(r) * npoints) , npoints);
 						}
+						std::cerr << "Made it past fillrow(data.data(),...)" << std::endl << std::flush;
+
 						H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	//(rank , dims );
-						H5::DataSet * datasetPtr = new H5::DataSet( h5filePtr->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
+						H5::DataSet * datasetPtr = new H5::DataSet( h5ptr->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
 						datasetPtr->write( data.data(), H5::PredType::NATIVE_USHORT);
 						delete datasetPtr;
 						delete dataspace;
@@ -965,23 +967,11 @@ int main(int argc, char* argv[])
 					} // close OpenCV version
 				} // close non-ascii version
 
-				/*
-				if (tid % 10 < 2){
-					for (size_t f=0;f<parabundle.get_nfibers();f++){
-						int max = boost::lexical_cast<double>(getenv("gain")) * pulsearray[f].maxsignal();
-						for (size_t i=0;i<std::log(max);++i){
-							std::cout << '.';
-						}
-						std::cout << "|";
-					}
-					std::cout << "\timg = " << n << " in tid = " << tid << "\n" << std::flush;
-				}
-				*/
-
 				std::time_t imgstop = std::time(nullptr);
 				imagetimes[n] = float(imgstop - imgstart);
 
 			} // outermost loop for nimages to produce //
+
 
 			std::cout << "\t\t############ ending parallel region 2 ###########\n" << std::flush;
 
@@ -990,7 +980,9 @@ int main(int argc, char* argv[])
 	} 
 
 	//std::cout << "\n ---- just left parallel region 2 ----" << std::endl;
-	delete h5filePtr;
+	for (size_t t=0;t<nthreads;t++)
+		delete h5filePtrVec[t];
+
 	std::cout << "masterresponse reflectance: " << masterresponse.getreflectance() << std::endl;
 	std::cout << "masterbundle fiberdiameter: " << masterbundle.fiberdiameter() << std::endl;
 	std::cout << "scanparams lambda_0: " << scanparams.lambda_0() << std::endl;

@@ -3,6 +3,9 @@
 
 Simulation for a fiber bundle based 2D timetool.
 
+# todo 
+- HDF5 must be built with --enable-threadsafe
+
 ----------
 ## To run  
 Edit the parameters you want to change in the file `set_vars`.  
