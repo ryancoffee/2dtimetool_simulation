@@ -1,31 +1,9 @@
 #include "scan_material.hpp"
-#include <cstdlib>
-#include <algorithm>
-#include <boost/lexical_cast.hpp>
-#include <complex>
-#include <memory>
-#include <fftw3.h>
-
-#include <cstdint> // for sake of defining uint16_t for the OpenCV mat to be filled.
-// OpenCV includes
-#include <opencv4/opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
-
-#include <vector>
-#include <random>
-#include <chrono>
-
 #include <DebugOps.hpp>
 #include <ScanParams.hpp>
 
-#include <cstddef> // for nullptr
-#include <cstdint> // for writing as an int32_t and int16_t
-
 using namespace Constants;
 
-/*
 H5::IntType h5uint16( H5::PredType::NATIVE_USHORT );
 H5::IntType h5int16( H5::PredType::NATIVE_SHORT );
 H5::IntType h5uint32( H5::PredType::NATIVE_UINT );
@@ -35,10 +13,11 @@ h5uint16.setOrder( H5T_ORDER_LE );
 h5int16.setOrder( H5T_ORDER_LE );
 h5uint32.setOrder( H5T_ORDER_LE );
 h5int32.setOrder( H5T_ORDER_LE );
-*/
 
-
+/***************/
 /* Here's main */
+/***************/
+
 int main(int argc, char* argv[])
 {
 	std::time_t tstart = std::time(nullptr);
@@ -68,7 +47,6 @@ int main(int argc, char* argv[])
 	std::vector<float> imagetimes(scanparams.nimages(),0); // for benchmarking the processors
 
 	scanparams.dalpha((atof(getenv("drifting_alpha")))*pi<double>()/scanparams.nimages());
-
 
 	if (scanparams.doublepulse(atoi(getenv("doublepulse")) > 0 )){
 		scanparams.doublepulsedelay(atof( getenv("doublepulsedelay") ) ) ; // this one gets used directly in atomic units
@@ -107,9 +85,6 @@ int main(int argc, char* argv[])
 				( atof( getenv("fifthODnoise") ) ) / std::pow(fsPau<float>(),int(5))
 				);
 	}
-
-
-
 
 	FiberBundle masterbundle(boost::lexical_cast<size_t>(atoi(getenv("nfibers"))));
 	masterbundle.fiberdiameter(boost::lexical_cast<float>(atof(getenv("fiberdiam"))));
@@ -449,17 +424,27 @@ int main(int argc, char* argv[])
 	} // end if (!getenv("skipcalibration"))
 
 
-	//############## Images section ##############
+	//############################################//
+	//############## Images section ##############//
+	//############################################//
 
-	std::vector< H5::H5File * > h5filePtrVec;
+	H5::H5File * h5filePtr;
 	std::string imfilename(scanparams.filebase());
 	std::stringstream filetail;
-	for (size_t t=0;t<nthreads;t++){
-		filetail << "interference" << std::setfill('0') << std::setw(3) << t << ".h5";
-		imfilename += filetail.str();
-		std::cout << "saving to h5 file:\t" << imfilename << std::endl << std::flush;
-		h5filePtrVec.push_back(new H5::H5File ( imfilename , H5F_ACC_TRUNC ));
-	}
+	filetail << "interference.h5";
+	imfilename += filetail.str();
+    std::cout << "Opening h5 file for intermittent saving:\t" << imfilename << std::endl << std::flush;
+    h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
+
+    auto localnow = std::chrono::system_clock::now();
+    std::time_t ttime = std::chrono::system_clock::to_time_t(localnow);
+    std::cout << "chrono localtime = " << std::ctime(& ttime) << std::endl;
+    std::tm * local_time = std::localtime(& ttime);
+
+    /* HDF5 create groups /dataset /runparams */
+    std::string name = 'runparams';
+    H5::Group * paramgrp = new H5::Group( h5filePtr->createGroup( name ) );
+
 
 #pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,h5filePtrVec)
 	{
@@ -728,11 +713,6 @@ int main(int argc, char* argv[])
 						delete dataspace;
 
 
-						auto localnow = std::chrono::system_clock::now();
-						std::time_t ttime = std::chrono::system_clock::to_time_t(localnow);
-						std::cout << "chrono localtime = " << std::ctime(& ttime) << std::endl;
-						std::tm * local_time = std::localtime(& ttime);
-
 					} else { // Close H5 version and use OpenCV for png output
 						size_t img_nsamples(1024);
 						size_t img_stride(10);
@@ -878,91 +858,6 @@ int main(int argc, char* argv[])
 						}
 
 
-						/*
-						for (unsigned i=0; i<imageMat_4vec.size(); ++i){
-							imageMat_4vec[i] = imageMatout_vec[i+1+4];
-						}
-						cv::merge(imageMat_4vec,imageMat_4chan);
-						cv::flip(imageMat_4chan,imageMat_4chan,0);
-						pngfilename = scanparams.filebase() + "interference.out.k5678." + std::to_string(n) + ".png";
-						cv::imwrite(pngfilename.c_str(),imageMat_4chan,compression_params);
-
-
-
-						// kernel0
-						filename = scanparams.filebase() + "interference.out.K0." + std::to_string(n);
-						interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-						interferestream << "#delay for image = \t" << t0 
-							<< "\n#Ilaser = \t" << parabundle.Ilaser()
-							<< "\n#Ixray = \t" << parabundle.Ixray()
-							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-							<< "\n#alpha = \t" << parabundle.delay_angle() 
-							<< std::endl;
-						interferestream << "#";
-						pulsearray[0].printwavelengthbins(&interferestream);
-						for (size_t r=0;r<imageMatK0.rows;++r){
-							for (size_t c=0; c<imageMatK0.cols;++c)
-								interferestream << imageMatK0.at<float>(r,c) << "\t";	
-							interferestream << "\n";
-						}
-						interferestream.close();
-						// kernel1
-						filename = scanparams.filebase() + "interference.out.K1." + std::to_string(n);
-						interferestream.open(filename.c_str(),ios::out); 
-						interferestream << "#delay for image = \t" << t0 
-							<< "\n#Ilaser = \t" << parabundle.Ilaser()
-							<< "\n#Ixray = \t" << parabundle.Ixray()
-							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-							<< "\n#alpha = \t" << parabundle.delay_angle() 
-							<< std::endl;
-						interferestream << "#";
-						pulsearray[0].printwavelengthbins(&interferestream);
-						for (size_t r=0;r<imageMatK1.rows;++r){
-							for (size_t c=0; c<imageMatK1.cols;++c)
-								interferestream << imageMatK1.at<float>(r,c) << "\t";	
-							interferestream << "\n";
-						}
-						interferestream.close();
-						// kernel2
-						filename = scanparams.filebase() + "interference.out.K2." + std::to_string(n);
-						interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-						interferestream << "#delay for image = \t" << t0 
-							<< "\n#Ilaser = \t" << parabundle.Ilaser()
-							<< "\n#Ixray = \t" << parabundle.Ixray()
-							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-							<< "\n#alpha = \t" << parabundle.delay_angle() 
-							<< std::endl;
-						interferestream << "#";
-						pulsearray[0].printwavelengthbins(&interferestream);
-						for (size_t r=0;r<imageMatK2.rows;++r){
-							for (size_t c=0; c<imageMatK2.cols;++c)
-								interferestream << imageMatK2.at<float>(r,c) << "\t";	
-							interferestream << "\n";
-						}
-						interferestream.close();
-						// kernel3
-						filename = scanparams.filebase() + "interference.out.K3." + std::to_string(n);
-						interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-						interferestream << "#delay for image = \t" << t0 
-							<< "\n#Ilaser = \t" << parabundle.Ilaser()
-							<< "\n#Ixray = \t" << parabundle.Ixray()
-							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-							<< "\n#alpha = \t" << parabundle.delay_angle() 
-							<< std::endl;
-						interferestream << "#";
-						pulsearray[0].printwavelengthbins(&interferestream);
-						for (size_t r=0;r<imageMatK2.rows;++r){
-							for (size_t c=0; c<imageMatK2.cols;++c)
-								interferestream << imageMatK3.at<float>(r,c) << "\t";	
-							interferestream << "\n";
-						}
-						interferestream.close();
-						*/
-
 						std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
 					} // close OpenCV version
 				} // close non-ascii version
@@ -975,11 +870,18 @@ int main(int argc, char* argv[])
 
 			std::cout << "\t\t############ ending parallel region 2 ###########\n" << std::flush;
 
+            /*##################################################*/
+            /*#################### HDF5 storage ################*/
+            /*##################################################*/
+
+
 			//std::cerr << "\n\t... trying to leave parallel region 2" << std::endl;
 		} // end if (!getenv("skipimages")
 	} 
 
 	//std::cout << "\n ---- just left parallel region 2 ----" << std::endl;
+
+
 	for (size_t t=0;t<nthreads;t++)
 		delete h5filePtrVec[t];
 
