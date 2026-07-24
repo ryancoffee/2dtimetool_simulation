@@ -3,7 +3,6 @@
 #include <DataOps.hpp>
 #include <exception>
 #include <algorithm>
-#include <boost/math/interpolators/barycentric_rational.hpp>
 #include <limits>
 
 MatResponse::MatResponse(MatResponse & rhs) // copy constructor
@@ -29,7 +28,7 @@ MatResponse::MatResponse(MatResponse & rhs) // copy constructor
 	std::copy(rhs.carriers.begin(),rhs.carriers.end(),carriers.begin());
 }        
 
-MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in = 0.05,double phase_in = 0.03)
+MatResponse::MatResponse(double t0_in=0.0,double width_in=10.0,double atten_in = 0.95,double phase_in = 0.03)
 : t0(t0_in / fsPau<double>())
 , twidth(width_in * root_pi<double>()/ fsPau<double>() / 2.0)
 , attenuation(atten_in)
@@ -167,7 +166,6 @@ bool MatResponse::fill_carriersvec(PulseFreq & pulse,std::ifstream & instream)
 		std::cerr << "\n\t\t===== " << c_times[i] << "\t" << c_vholes[i] << " ==========\n" << std::flush;
 	}
 
-	//boost::math::barycentric_rational<double> interpolant(c_times.data(), c_vholes.data(), c_vholes.size());
 	for (size_t i = 0 ; i < carriers.size(); i++){
 		times[i] = double(i)*pulse.getdt()*Constants::fsPau<double>(); // remember, this needs to be in femtoseconds... and getdt() returns in atomic units
 		carriers[i] = interpolate(c_times,c_vholes,times[i]);
@@ -266,10 +264,10 @@ bool MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in,dou
 			arg = std::min(int(i) - int((t0-delay_in)/pulse.getdt()) , int(carriers.size()) - 1);
 	//std::cerr << i << "," << arg << " " << std::flush;
 			if (arg>0){
-				thisamp = -attenuation * carriers[arg] * scale_in; 
+				thisamp = attenuation * carriers[arg] * scale_in; 
 				thisphase = phase * carriers[arg] * scale_in;
 			}
-			pulse.modamp[i] *= (1.+ thisamp);
+			pulse.modamp[i] *= thisamp;
 			pulse.modphase[i] += thisphase;
 		}
 	//std::cerr << "HERE again in addstepvec_both_carriers() method\n" << std::flush;
@@ -279,10 +277,10 @@ bool MatResponse::addstepvec_both_carriers(PulseFreq & pulse,double delay_in,dou
 			arg = std::min(int(i)-int(pulse.getsamples()) - int((t0-delay_in)/pulse.getdt()) , int(carriers.size()) - 1);
 	//std::cerr << i << "," << arg << " " << std::flush;
 			if (arg>0){
-				thisamp = -attenuation * carriers[arg] * scale_in;
+				thisamp = attenuation * carriers[arg] * scale_in;
 				thisphase = phase * carriers[arg] * scale_in;
 			}
-			pulse.modamp[i] *= (1.+ thisamp);
+			pulse.modamp[i] *= thisamp;
 			pulse.modphase[i] += thisphase;
 		}
 
@@ -317,7 +315,7 @@ void MatResponse::setstepvec_amp(PulseFreq & pulse,double delay_in,double scale_
 			arg -= (pulse.getdt()*pulse.getsamples());
 		}
 		if (arg > 0.0) {
-			pulse.modamp[i] = -attenuation * (a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta)));
+			pulse.modamp[i] = attenuation * (a*std::exp(-1.0*(arg*alpha)) + b*std::exp(-1.0*(arg*beta)));
 			pulse.modamp[i] *= scale * scale_in;
 			if (arg < twidth) {
 				pulse.modamp[i] *= std::pow( sin(M_PI_2*arg/twidth ) , int(2));
@@ -357,7 +355,7 @@ void MatResponse::addstepvec_amp(PulseFreq & pulse,double delay_in,double scale_
 			arg -= (pulse.getdt()*pulse.getsamples());
 		}
 		if (arg > 0.0) {
-			thisamp = -attenuation * (a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta)));
+			thisamp = attenuation * (a*exp(-1.0*(arg*alpha)) + b*exp(-1.0*(arg*beta)));
 			thisamp *= scale;
 			if (arg < twidth) {
 				thisamp *= std::pow( sin(M_PI_2*arg/twidth ) , int(2) ) ;

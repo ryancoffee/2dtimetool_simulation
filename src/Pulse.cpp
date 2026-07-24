@@ -6,11 +6,9 @@
 
 // my headers
 #include <Pulse.hpp>
-#include <boost/math/interpolators/barycentric_rational.hpp>
 #include <fftw3.h>
 #include <algorithm>
 #include <Constants.hpp>
-#include <boost/lexical_cast.hpp>
 #include <DataOps.hpp>
 #include <random>
 #include <cassert>
@@ -54,10 +52,10 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	nu0=omcenter_in/(2.0*pi<double>())*fsPau<double>();
 	phase_GDD=phase_TOD=phase_4th=phase_5th=0.0;
 	m_lamsamples = (size_t)atoi(getenv("lamsamples"));
-	m_gain = boost::lexical_cast<float>( getenv("gain"));
-	m_noisescale = boost::lexical_cast<double>( getenv("noisescale") ) ;
-	m_sampleinterval = boost::lexical_cast<size_t>(getenv("sampleinterval"));
-	m_saturate = uint16_t( boost::lexical_cast<int>( getenv("saturate")));
+	m_gain = (float)atof( getenv("gain"));
+	m_noisescale = (double)atof( getenv("noisescale") ) ;
+	m_sampleinterval = (size_t)atoi(getenv("sampleinterval"));
+	m_saturate = uint16_t( (int)atoi( getenv("saturate")));
 	std::cout << "exiting constructor PulseFreq()" << std::endl;
 }
 
@@ -311,7 +309,7 @@ bool PulseFreq::addrandomphase(void)
 		randphase[i] = randphase[sz-i];
 	}
 
-	size_t lowpass = boost::lexical_cast<size_t>(atoi(getenv("phaseNoiseLowpass")));
+	size_t lowpass = (size_t)(atoi(getenv("phaseNoiseLowpass")));
 	std::cerr << "\n======== lowpass is " << lowpass << " =======\n" << std::flush;
 
 	fftw_execute_r2r(*FTplan_r2hc_2xPtr.get(),randphase,randphaseFT);
@@ -407,12 +405,48 @@ bool PulseFreq::fillrow_uint16(uint16_t * outarray,const size_t nsamples = 256 )
 		y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
 	}
 	double dlam = (x.front()-x.back())/double(nsamples);
-	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
 	for (size_t i=0;i<nsamples;++i){
-		*(outarray+i) = uint16_t(interpolant(x.back()+i*dlam));
+        *(outarray+i) = uint16_t(interpolate(x,y,x.back()+i*dlam));
 	}
 	return true;
 }
+
+std::vector<double> & PulseFreq::getLamVec(std::vector<double> & x)
+{
+	x.resize(i_high-i_low);
+	for (size_t i=0;i<x.size();++i){
+		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
+	}
+    return x;
+}
+std::vector<double> & PulseFreq::getSigVec(std::vector<double> & y)
+{
+	y.resize(i_high-i_low);
+	for (size_t i=0;i<y.size();++i){
+		y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
+	}
+    return y;
+}
+
+void PulseFreq::fillwavelength_bytes(std::vector<double> const & x, std::vector<double > const & y,std::vector<uint16_t> & datavec,size_t const f)
+{
+	double dlam = (x.front()-x.back())/double(m_lamsamples);
+	for (size_t i=0;i<m_lamsamples;++i){
+        datavec[f*m_lamsamples + i] = uint16_t(int(1<<12)*interpolate(x,y,x.back()+i*dlam));
+	}
+    return;
+}
+
+std::vector<uint16_t> & PulseFreq::appendwavelength_bytes(std::vector<double> const & x, std::vector<double> const & y,std::vector<uint16_t> & datavec)
+{
+    datavec.resize(x.size());
+	double dlam = (x.front()-x.back())/double(m_lamsamples);
+	for (size_t i=0;i<m_lamsamples;++i){
+        datavec[i] = uint16_t(interpolate(x,y,x.back()+i*dlam));
+	}
+    return datavec;
+}
+
 void PulseFreq::appendwavelength(std::ofstream * outfile)
 {
 	std::vector<double> x(i_high-i_low);
@@ -422,9 +456,8 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 		y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
-	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
 	for (size_t i=0;i<m_lamsamples;++i){
-		(*outfile) << uint16_t(interpolant(x.back()+i*dlam)) << "\t";
+        (*outfile) << uint16_t(interpolate(x,y,x.back()+i*dlam));
 	}
 	(*outfile) << std::endl;
 	return;
@@ -441,10 +474,8 @@ void PulseFreq::appendwavelength_deriv(std::ofstream * outfile)
 		y[i] = std::pow(rhovec[i_low+i],int(2)) * m_gain;
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
-	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
 	for (size_t i=0;i<m_lamsamples;++i){
-		diffvec[i] = interpolant(x.back()+(i+1)*dlam) - interpolant(x.back()+i*dlam);
-		//diffvec[i] -= interpolant(x.back()+(i+10)*dlam) - interpolant(x.back()+(i+11)*dlam);
+        diffvec[i] = interpolate(x,y,x.back()+(i+1)*dlam) - interpolate(x,y,x.back()+i*dlam);
 	}
         double scale;
         int16_t max = std::numeric_limits<int16_t>::max();
@@ -470,9 +501,8 @@ void PulseFreq::appendwavelength_bin(std::ofstream * outfile)
 		y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
-	boost::math::barycentric_rational<double> interpolant(x.data(), y.data(), y.size());
 	for (size_t i=0;i<m_lamsamples;++i){
-		(*outfile) << int32_t(interpolant(x.back()+i*dlam));
+		(*outfile) << int32_t(interpolate(x, y, x.back()+i*dlam)) << " ";
 	}
 	return;
 }

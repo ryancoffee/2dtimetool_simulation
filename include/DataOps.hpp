@@ -15,8 +15,6 @@
 #include <math.h>
 #include <cmath>
 #include <complex>
-#include <boost/multi_array.hpp>
-#include <boost/math/tools/polynomial.hpp>
 #include <typeinfo>
 #include <Constants.hpp>
 
@@ -275,17 +273,6 @@ namespace DataOps
 			}
 			return ins;
 		}
-	/*
-	   template <typename T, int dim>
-	   std::ostream& operator << (std::ostream & outs, boost::multi_array<T,dim> & record)
-	   {
-	   for (unsigned i=0;i<record.shape()[0];++i){
-	   outs << record[i] << "\t";
-	   }
-	   outs << std::flush;
-	   return outs;
-	   }
-	 */
 
 	template <typename T,typename V>
 		std::ostream& operator << (std::ostream & outs, std::pair<T,V> outpair)
@@ -648,7 +635,7 @@ namespace DataOps
 		}
 
 	template <typename T>
-		T  interpolate(const std::vector<T> &xData, const std::vector<T> & yData,T x)
+		T  interpolate(const std::vector<T> & xData, const std::vector<T> & yData,T x)
 		{
 
 			if(x < xData.front()){return yData.front();}

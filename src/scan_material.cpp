@@ -4,6 +4,7 @@
 
 using namespace Constants;
 
+/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
 H5::IntType h5uint16( H5::PredType::NATIVE_USHORT );
 H5::IntType h5int16( H5::PredType::NATIVE_SHORT );
 H5::IntType h5uint32( H5::PredType::NATIVE_UINT );
@@ -13,6 +14,7 @@ h5uint16.setOrder( H5T_ORDER_LE );
 h5int16.setOrder( H5T_ORDER_LE );
 h5uint32.setOrder( H5T_ORDER_LE );
 h5int32.setOrder( H5T_ORDER_LE );
+*/
 
 /***************/
 /* Here's main */
@@ -86,15 +88,15 @@ int main(int argc, char* argv[])
 				);
 	}
 
-	FiberBundle masterbundle(boost::lexical_cast<size_t>(atoi(getenv("nfibers"))));
-	masterbundle.fiberdiameter(boost::lexical_cast<float>(atof(getenv("fiberdiam"))));
-	masterbundle.laserdiameter(boost::lexical_cast<float>(atof(getenv("laserdiam"))));
-	masterbundle.xraydiameter(boost::lexical_cast<float>(atof(getenv("xraydiam"))));
-	masterbundle.thermaldiameter(boost::lexical_cast<float>(atof(getenv("thermaldiam"))));
-	masterbundle.center_thermal(boost::lexical_cast<float>(atof(getenv("thermalcenter_x"))), boost::lexical_cast<float>(atof(getenv("thermalcenter_y"))));
+	FiberBundle masterbundle((size_t)(atoi(getenv("nfibers"))));
+	masterbundle.fiberdiameter((float)(atof(getenv("fiberdiam"))));
+	masterbundle.laserdiameter((float)(atof(getenv("laserdiam"))));
+	masterbundle.xraydiameter((float)(atof(getenv("xraydiam"))));
+	masterbundle.thermaldiameter((float)(atof(getenv("thermaldiam"))));
+	masterbundle.center_thermal((float)(atof(getenv("thermalcenter_x"))), (float)(atof(getenv("thermalcenter_y"))));
 
-	masterbundle.setTmax_Tbase(boost::lexical_cast<float>(atof(getenv("TmaxK"))),boost::lexical_cast<float>(atof(getenv("TbaseK"))));
-	masterbundle.set_fsPmm(boost::lexical_cast<float>(atof(getenv("bundle_fsPmm"))));
+	masterbundle.setTmax_Tbase((float)(atof(getenv("TmaxK"))),(float)(atof(getenv("TbaseK"))));
+	masterbundle.set_fsPmm((float)(atof(getenv("bundle_fsPmm"))));
 	masterbundle.scalePolarCoords();
 
 	std::vector<uint16_t>keyinds(masterbundle.get_nfibers());
@@ -139,7 +141,7 @@ int main(int argc, char* argv[])
 	MatResponse masterresponse(
 			0,															// stepdelay
 			(double)( atof( getenv("stepwidth") ) ),								// stepwidth
-			((double)( atof( getenv("attenuation") ) ) - 1.0) * masterbundle.Ixray() / scanparams.ngroupsteps() + 1.0,	// attenuation
+			(double)( -1.0*atof( getenv("attenuation") ) ) * masterbundle.Ixray() / scanparams.ngroupsteps() ,	// attenuation
 			(double)( atof( getenv("phase") ) ) * masterbundle.Ixray() / scanparams.ngroupsteps()				// phase
 			);
 	masterresponse.aalphabbeta(
@@ -188,12 +190,12 @@ int main(int argc, char* argv[])
 	std::time_t tstop = std::time(nullptr);
 	std::cout << "\tIt has taken " << (tstop-tstart) << " s so far for initializing masterpulse and building fftw plans\n" << std::flush;
 
-	CalibMat calibration(boost::lexical_cast<size_t>(atoi(getenv("ncalibdelays")))
-			, boost::lexical_cast<double>(atof(getenv("fsWindow"))));
+	CalibMat calibration((size_t)(atoi(getenv("ncalibdelays")))
+			, (double)(atof(getenv("fsWindow"))));
 	if (!getenv("skipcalibration"))
 	{
 		std::cout << "\t\t############ entering calibration ###########\n" << std::flush;
-		calibration.set_center(boost::lexical_cast<double>(atof(getenv("delays_mean"))));
+		calibration.set_center((double)(atof(getenv("delays_mean"))));
 		std::cout << "\t\t====== delays =======\n";
 		for (size_t i = 0 ; i< calibration.get_ndelays(); ++i){
 			std::cout << calibration.get_delay(i) << " ";
@@ -383,26 +385,26 @@ int main(int argc, char* argv[])
 				std::cout << "\tcalibration filename out = " << calfilename << "\n\t and \t" << bin_calfilename << std::endl;
 				*/
 				calibrationstream << "# wavelengths\n#";
-				derivstream << "# wavelengths\n#";
+				// derivstream << "# wavelengths\n#";
 				calpulsearray[0].printwavelengthbins(&calibrationstream);
 				calpulsearray[0].printwavelengthbins(&derivstream);
 				calpulsearray[0].printwavelengthbins(&calibrationstream_wavelengths);
 				calibrationstream << "# delays\n#";
-				derivstream << "# delays\n#";
+				// derivstream << "# delays\n#";
 				calibrationstream_delays << "# delays\n";
 				for (size_t i = 0 ; i< calibration.get_ndelays(); ++i){
 					calibrationstream << calibration.get_delay(i) << "\t";
-					derivstream << calibration.get_delay(i) << "\t";
+					// derivstream << calibration.get_delay(i) << "\t";
 					calibrationstream_delays << calibration.get_delay(i) << "\t";
 				}
 				calibrationstream << "\n";
-				derivstream << "\n";
+				// derivstream << "\n";
 				calibrationstream_delays << "\n";
 
 				for (size_t n=0;n<calpulsearray.size();++n){
 					calpulsearray[n].appendwavelength(&calibrationstream);
-					calpulsearray[n].appendwavelength_deriv(&derivstream);
-					//	calpulsearray[n].appendwavelength_bin(&bin_calibrationstream);
+					// calpulsearray[n].appendwavelength_deriv(&derivstream);
+					// calpulsearray[n].appendwavelength_bin(&bin_calibrationstream);
 				}
 
 				calibrationstream.close();
@@ -428,6 +430,7 @@ int main(int argc, char* argv[])
 	//############## Images section ##############//
 	//############################################//
 
+/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
 	H5::H5File * h5filePtr;
 	std::string imfilename(scanparams.filebase());
 	std::stringstream filetail;
@@ -435,6 +438,7 @@ int main(int argc, char* argv[])
 	imfilename += filetail.str();
     std::cout << "Opening h5 file for intermittent saving:\t" << imfilename << std::endl << std::flush;
     h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
+    */
 
     auto localnow = std::chrono::system_clock::now();
     std::time_t ttime = std::chrono::system_clock::to_time_t(localnow);
@@ -442,11 +446,13 @@ int main(int argc, char* argv[])
     std::tm * local_time = std::localtime(& ttime);
 
     /* HDF5 create groups /dataset /runparams */
+/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
     std::string name = 'runparams';
     H5::Group * paramgrp = new H5::Group( h5filePtr->createGroup( name ) );
+    */
 
 
-#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,h5filePtrVec)
+#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams)
 	{
 		if (!getenv("skipimages"))
 		{
@@ -495,6 +501,8 @@ int main(int argc, char* argv[])
 			std::cout << "\t\t#################Entering parallel region 2 #######################\n" << std::flush;
 
 
+            std::vector< std::vector< uint16_t > > frameblock;
+
 #pragma omp for schedule(dynamic) 
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //
@@ -539,6 +547,12 @@ int main(int argc, char* argv[])
 				mapfile.close();
 
 
+                std::vector<double> x,y;
+                frameblock.push_back(std::vector<uint16_t>(parabundle.get_nfibers()*masterpulse.get_lamsamples()));
+                std::vector< uint16_t > imdata(parabundle.get_nfibers()*masterpulse.get_lamsamples());
+                /* HERE HERE HERE HERE 
+                Fis that you fill from f* nlamsamples insie the fibers loop.
+                */
 				for(size_t f = 0; f < parabundle.get_nfibers(); f++)
 				{ // begin fibers loop
 					pulse = masterpulse;
@@ -653,18 +667,37 @@ int main(int argc, char* argv[])
 					pulse -= crosspulse;
 					//pulse.interfere(crosspulse,scanparams.interferephase());
 					//std::cerr << "\n\n\t\t\t\t============== testing... just before the push_back() ==============\n\n" << std::flush;
-					pulsearray[f] = pulse;
+                    auto minmax = pulse.minmaxvals();
+                    std::cerr << double(*minmax.second) << " ";
+					pulsearray[f] = pulse.scale(parabundle.Ilaser(f));
+					//pulsearray[f].scale(parabundle.Ilaser(f)); 
+                    if (f==0)
+                        x = pulsearray[f].getLamVec(x);
+                    pulsearray[f].fillwavelength_bytes(x,
+                                                        pulsearray[f].getSigVec(y),
+                                                        frameblock.back(),
+                                                        f);
+                    /*
+                    imdata[f] = pulsearray[f].appendwavelength_bytes(x
+                                                                ,pulsearray[f].getSigVec(y)
+                                                                ,imdata[f]
+                                                                );
+                    */
 				} // end nfibers loop
+                std::cerr << "\n";
+                std::cerr << "frameblock.size() = " << int(frameblock.size()) << std::endl;
 
-				
+                /* ########### HERE HERE HERE HERE ############
+                    pulsearray is an array of fibers now.
+                    Find/define a method inside scan_material.hpp to convert the "pulsearray" into the 2D vector of vectors.
+                    Or even just give the flattened image scaled to one byte values and stored flattened with dimensions in a dims vector added to the parameter vector.
+                    Use this array to make a 2D dataset that we append to a thread specific frame accumulation.
+                    Do the same for the parameters used, like z_laser and such.
+                    */
 
 
 				std::complex<double> z_laser = parabundle.center_Ilaser();
 				std::complex<double> z_xray = parabundle.center_Ixray();
-				for (size_t f=0;f<pulsearray.size();++f){
-					pulsearray[f].scale(parabundle.Ilaser(f)); 
-				}
-				// direct image
 
 				ofstream interferestream;
 
@@ -673,6 +706,7 @@ int main(int argc, char* argv[])
 
 
 				if (bool(getenv("printASCIIimages"))){
+                    std::cout << "\n\n \t\t ###########\tPrinting ASCII images for frame # " << int(n) << "\t#############\n\n" << std::flush;
 
 					filename = scanparams.filebase() + "interference.out." + std::to_string(n);
 					interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
@@ -690,6 +724,8 @@ int main(int argc, char* argv[])
 						pulsearray[f].appendwavelength(&interferestream);
 					}
 					interferestream.close();
+
+/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
 				} else {
 					if (bool(getenv("H5OUTPUT"))){
 						// HERE HERE HERE HERE //
@@ -711,155 +747,8 @@ int main(int argc, char* argv[])
 						datasetPtr->write( data.data(), H5::PredType::NATIVE_USHORT);
 						delete datasetPtr;
 						delete dataspace;
-
-
-					} else { // Close H5 version and use OpenCV for png output
-						size_t img_nsamples(1024);
-						size_t img_stride(10);
-						uint16_t * imdata = (uint16_t*)std::calloc(pulsearray.size() * img_stride * img_nsamples , sizeof(uint16_t));
-						for (size_t f=0;f<pulsearray.size();++f){
-							pulsearray[f].fillrow_uint16(imdata + parabundle.get_key(f) * img_stride * img_nsamples,img_nsamples);
-						}
-
-						int kr(2*7 + 1);
-						int kc(2*10 + 1);
-
-						cv::Mat imageMat_in(pulsearray.size()*img_stride, img_nsamples, CV_16UC1, imdata );	// imageMat_in is 16bit unsigned data
-						cv::Mat imageMat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1);
-						imageMat_in.convertTo(imageMat,CV_32FC1);	//imageMat is 32 bit float data
-
-						cv::Mat kernel_raw(cv::Mat::zeros(kr,kc,CV_32FC1));
-
-						// vertical bluring //
-						std::vector<float> kblur(kr);
-						DataOps::sinsqr(kblur);
-						cv::Mat cblur(kr,1,CV_32F,kblur.data());
-						std::vector<float> zeros(kc,0.);
-						zeros[zeros.size()/2] = 1.;
-						cv::flip(cblur*cv::Mat(1,kc,CV_32F,zeros.data()) , kernel_raw , -1);
-
-						// constructing raw output, but blurred in the vertical //
-						cv::Mat imageMat_raw(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
-						cv::Mat rawMatout(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_16UC1));
-						cv::filter2D(imageMat,imageMat_raw,-1,kernel_raw);
-
-						std::vector<int> compression_params;
-						compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
-						compression_params.push_back(0);
-
-						filename = scanparams.filebase() + "interference.params." + std::to_string(n);
-						interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-						interferestream << "#delay for image = \t" << t0 
-							<< "\n#Ilaser = \t" << parabundle.Ilaser()
-							<< "\n#Ixray = \t" << parabundle.Ixray()
-							<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-							<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-							<< "\n#alpha = \t" << parabundle.delay_angle() 
-							<< "\n#img_stride = \t" << img_stride 
-							<< std::endl;
-						interferestream << "#";
-						pulsearray[0].printwavelengthbins(&interferestream);
-						parabundle.print_mapping(interferestream,t0);
-						interferestream.close();
-						double min,max,scale,offset;
-						cv::minMaxLoc(imageMat_raw,&min,&max);
-						offset = -min; //*scale;
-						imageMat_raw.convertTo(rawMatout,CV_16UC1,1.0,offset);
-						cv::minMaxLoc(imageMat_raw,&min,&max);
-						scale = float(std::pow(int(2),int(16))-2)/(max-min); // HERE HERE HERE HERE trying to get saturation to be protected
-						imageMat_raw.convertTo(rawMatout,CV_16UC1,scale,0.0);
-						cv::flip(rawMatout,rawMatout,0);
-						filename = scanparams.filebase() + "interference.image." + std::to_string(n) + ".png";
-						std::cerr << "printing\t" << filename << std::endl << std::flush;
-						cv::imwrite(filename.c_str(),rawMatout,compression_params);
-
-						// HERE HERE HERE HERE // 
-
-						// initialize kernels vector //
-						const unsigned nkernels = 6; // hard coding for now since the storage will be in 2x3channel bgra png + the k0 as greyscale image
-						std::vector<cv::Mat> kernels;
-						for (unsigned k = 0; k< nkernels; ++k){
-							kernels.push_back(cv::Mat::zeros(kr,kc,CV_32FC1));
-						}
-
-						std::vector< float > leg(kc,0.);
-						for (unsigned k = 0 ; k<nkernels; ++k){		// filling kernels
-							DataOps::legendre( leg, k);
-							cv::flip(cblur*cv::Mat(1,kc,CV_32F,leg.data()) , kernels[k] , 1);
-						}
-
-							/*
-							 * OK, we should use Grahm-Schmidt to come up with orthogonal set, start with sin defined from 0..pi, then cos, then sin*cos, then sin**2, 
-							 * then cos**2 but maybe just neg of sin**2, then sin**2*cos... and so forth
-							 */
-							std::string kfilename;
-							ofstream kernelstream;
-							for (unsigned k = 0 ; k < nkernels; ++k){
-								kfilename = scanparams.filebase() + "kernel" + std::to_string(k);
-								kernelstream.open(kfilename.c_str(),ios::out); 
-								for (size_t r=0;r<kernels[k].rows;++r){
-									for (size_t c=0;c<kernels[k].cols;++c){
-										kernelstream << kernels[k].at<float>(r,c) << "\t";
-									}
-									kernelstream << "\n";
-								}
-								kernelstream.close(); 
-							}
-
-
-
-						std::vector< cv::Mat > imageMat_vec;
-						for (unsigned k = 0; k < nkernels; ++k){	// setting up imageMat_vec
-							imageMat_vec.push_back(cv::Mat(pulsearray.size()*img_stride, img_nsamples, CV_32FC1));
-						}
-
-						const unsigned nchannels = 3; // Stop using alpha channel, that is just awkward
-						std::vector< cv::Mat > imageMatout_batch;
-						for (unsigned b = 0 ; b < nkernels/nchannels; ++b){	// setting up imageMatout_batch
-							imageMatout_batch.push_back(cv::Mat(imageMat_vec[0].rows/8, imageMat_vec[0].cols/8, CV_16UC3));
-						}
-
-						for (unsigned i=0;i<nkernels;++i){ // filling imageMat_vec
-							cv::filter2D(imageMat, imageMat_vec[i], -1, kernels[i]);
-						}
-						std::vector<cv::Mat> imageMatout_vec;
-
-						for (unsigned k = 0 ; k < nkernels ; ++k ){
-							double min,max,scale,offset;
-							cv::minMaxLoc(imageMat_vec[k],&min,&max);
-							scale = float(std::pow(int(2),int(16))-1)/(max-min);
-							offset = -min*scale;
-							imageMatout_vec.push_back(cv::Mat(imageMat_vec[k].rows,imageMat_vec[k].cols,CV_16UC1));
-							imageMat_vec[k].convertTo(imageMatout_vec[k],CV_16UC1,scale,offset);
-						}
-
-						if ( !(getenv("skipdisplayframes")) ) {
-							char FrameStr[15];
-							sprintf(FrameStr,"Frame_%i",int(n));
-							cv::namedWindow(FrameStr,cv::WINDOW_NORMAL);
-							cv::resizeWindow(FrameStr,img_nsamples*5,pulsearray.size()*5);
-							cv::imshow(FrameStr, imageMatout_vec[0]);
-							cv::waitKey(0);
-							cv::destroyAllWindows();
-						}
-
-						std::string pngfilename;
-						for (unsigned b = 0; b< imageMatout_batch.size(); ++b){
-							std::vector<cv::Mat> imageMat_4vec(nchannels);
-							for (unsigned i=0; i<imageMatout_batch[b].channels(); ++i){
-								imageMat_4vec[i] = imageMatout_vec[i + b * imageMatout_batch[b].channels()];
-								for (unsigned j=0; j<3; ++j) // three times cut both dimensions in half
-									cv::pyrDown(imageMat_4vec[i],imageMat_4vec[i],cv::Size(imageMat_4vec[i].cols/2,imageMat_4vec[i].rows/2));
-							}
-							cv::merge(imageMat_4vec,imageMatout_batch[b]);
-							cv::flip(imageMatout_batch[b],imageMatout_batch[b],0);
-							pngfilename = scanparams.filebase() + "interference.out.batch" + std::to_string(b) + "." + std::to_string(n) + ".png";
-							cv::imwrite(pngfilename.c_str(),imageMatout_batch[b],compression_params);
-						}
-
-
-						std::free(imdata); // this may be able to free right after making hte cv::Mat for this.
-					} // close OpenCV version
+					} 
+*/
 				} // close non-ascii version
 
 				std::time_t imgstop = std::time(nullptr);
@@ -868,7 +757,6 @@ int main(int argc, char* argv[])
 			} // outermost loop for nimages to produce //
 
 
-			std::cout << "\t\t############ ending parallel region 2 ###########\n" << std::flush;
 
             /*##################################################*/
             /*#################### HDF5 storage ################*/
@@ -876,14 +764,20 @@ int main(int argc, char* argv[])
 
 
 			//std::cerr << "\n\t... trying to leave parallel region 2" << std::endl;
+
 		} // end if (!getenv("skipimages")
-	} 
+
+		std::cout << "\t\t############ ending parallel region 2 ###########\n" << std::flush;
+
+	} // ends parallel region 2
 
 	//std::cout << "\n ---- just left parallel region 2 ----" << std::endl;
 
 
+/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
 	for (size_t t=0;t<nthreads;t++)
 		delete h5filePtrVec[t];
+*/
 
 	std::cout << "masterresponse reflectance: " << masterresponse.getreflectance() << std::endl;
 	std::cout << "masterbundle fiberdiameter: " << masterbundle.fiberdiameter() << std::endl;

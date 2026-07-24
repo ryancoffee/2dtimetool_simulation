@@ -6,24 +6,24 @@
 #endif
 
 #include <cmath>
-#include <boost/math/constants/constants.hpp>
-#include <boost/units/systems/si/codata/universal_constants.hpp>
+//#include <boost/math/constants/constants.hpp>
+//#include <boost/units/systems/si/codata/universal_constants.hpp>
 
 namespace Constants {
 	template <typename T>
-	inline T pi(void){return boost::math::constants::pi<T>();}
+	inline T pi(void){return (T)double(M_PI);}
 	template <typename T>
-	inline T root_pi(void) { return boost::math::constants::root_pi<T>(); }
+	inline T root_pi(void) { return (T)(std::sqrt(double(M_PI))); }
 	template <typename T>
-	inline T half_pi(void) { return boost::math::constants::half_pi<T>(); }
+	inline T half_pi(void) { return (T)(T(M_PI)/2.0); }
 	template <typename T>
 	inline T pi_2(void) { return half_pi<T>(); }
 	template <typename T>
-	inline T pi_3(void){return boost::math::constants::pi<T>()/T(3);}
+	inline T pi_3(void){return T(M_PI)/T(3);}
 	template <typename T>
-	inline T pi_4(void){return boost::math::constants::pi<T>()/T(4);}
+	inline T pi_4(void){return T(M_PI)/T(4);}
 	template <typename T>
-	inline T twopi(void){return T(2)*boost::math::constants::pi<T>();}
+	inline T twopi(void){return T(2)*T(M_PI);}
 
 	template <typename T>
 	inline T Eh(void){return T(27.2113845);} // eV/Hartree

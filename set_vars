@@ -10,9 +10,9 @@ export calibdir='/data/drive0/2dtimetool_simulation_data/extern/'
 mkdir -p $datadir
 mkdir -p $calibdir
 unset H5OUTPUT
-export H5OUTPUT=1
-unset printASCIIimages
-#export printASCIIimages=true
+#export H5OUTPUT=1
+#unset printASCIIimages
+export printASCIIimages=1
 
 export carriercolumn=5; # this tells the code which of Nikita's columns to use
 export carriersdir='/data/drive0/2dtimetool_simulation_data/reference/fromNikita/'
@@ -39,11 +39,11 @@ export phaseNoiseLowpass=10000; #10000; # this is in units of total number of ti
 export randphase_mean=0;
 export randphase_std=2; # in units of pi
 
-export nimages=16; #128; #32;
+export nimages=8; #128; #32;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
-export delays_std=1000;
-export reldelays_mean=500; # this is for the TXI case that has two beams being evaluated by the two different polarizations.
-export reldelays_std=150;
+export delays_std=100;
+export reldelays_mean=50; # this is for the TXI case that has two beams being evaluated by the two different polarizations.
+export reldelays_std=15;
 
 export drifting_alpha=0.001; #0.1;
 
@@ -129,8 +129,8 @@ export thermalcenter_y=0.;
 export bundle_fsPmm=3333.;
 
 export stepwidth=50.0;
-export attenuation=0.0; # = 1 - Transmission; changed the definition of attenuation, this should then be just the difference from one now
-export phase=0.0001; #0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
+export attenuation=0.9; 
+export phase=0.001; #0.0001; # now I'm assuming based on below that 1 micron of diamond gives index to 1e-4; #1e1; #0.1; # about .1 = 1e-3 * 10* pi/.3 
 # phase should be the optical phase which is a function of optical frequency Dn(omega)*C/thickness/omega
 # Dn(omega)*thickness/C*omega = deltan*10microns/(.3micronsPfs)*2pi(nu) = 1e-3*10microns/.3micronsPfs*2pi*(0.5PHz)
 # dn = 1e-3, 10 microns/.3miconsPfs (/period in fs or * freq in PHz) * 2 pi for radians = .1 if pi=3 and 600nm=2fs period
@@ -182,15 +182,15 @@ export FODnoise=0;
 export fifthODnoise=0;
 
 export interferephase=1.000; #this doesn't work it seems.
-export gain=40000000000; #20000000;
-export saturate=65535;
+export gain= 20000000; # 40000000000; #20000000;
+export saturate=16000; #65535;
 export lamsamples=1024;
 
-export fsWindow=12800; # use 128000 for largest window with appropriate tspan, this is the calib scan window
+export fsWindow=1280; # use 128000 for largest window with appropriate tspan, this is the calib scan window
 #export chirp=-16000; # -64000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
 export chirp=-1200; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
 #export interferedelay=8000; # keeping this at about 64 ps since that gives about 1/4 window separation between rise and fall edges.
-export interferedelay=1650; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=165; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export xrayphoton_energy=9.5; #6.0; #40; # this is in keV
 
 export carriersfile=$carriersdir$carriersfilename;

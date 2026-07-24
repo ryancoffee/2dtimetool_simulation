@@ -3,7 +3,6 @@
 #ifndef PULSE_H
 #define PULSE_H
 
-
 // standard includes
 #include <cmath>
 #include <ctime>
@@ -121,10 +120,12 @@ class PulseFreq
 
 		bool fillrow_uint16(uint16_t * outarray,const size_t nsamples );
 
-		inline void scale(const double in){
+		inline PulseFreq & scale(const double in){
 			DataOps::mul(cvec,in,samples);
 			cvec2rhophi();
+            return *this;
 		}
+        inline auto minmaxvals(void ){ return std::minmax_element(rhovec.begin(),rhovec.end());}
 		inline double maxsignal(void){
 			return std::pow(*std::max_element(rhovec.begin(),rhovec.end()),int(2));
 		}
@@ -299,6 +300,12 @@ class PulseFreq
 		void appendwavelength(std::ofstream * outfile);
 		void appendwavelength_deriv(std::ofstream * outfile);
 		void appendwavelength_bin(std::ofstream * outfile);
+
+        std::vector<double> & getLamVec(std::vector<double> & x);
+        std::vector<double> & getSigVec(std::vector<double> & y);
+        void fillwavelength_bytes(std::vector<double> const & x, std::vector<double> const & y,std::vector<uint16_t> & datavec,size_t const f);
+        std::vector<uint16_t> & appendwavelength_bytes(std::vector<double> const & x, std::vector<double> const & y,std::vector<uint16_t> & datavec);
+
 		void appendfrequency(std::ofstream * outfile);
 		void appendnoisy(std::ofstream * outfile);
 		void appendfrequencybins(std::ofstream * outfile);

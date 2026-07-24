@@ -1,16 +1,21 @@
 CC=g++
-BOOSTROOT=/usr/include/boost/
 PYTHONINCLUDE=/usr/include/python3.10
 SDIR=./src
 ODIR=./objects
 IDIR=./include
-FTFLAGS=`pkg-config fftw3 --cflags`
-CVFLAGS=`pkg-config opencv4 --cflags`
-FTLIBS=`pkg-config fftw3 --libs`
-CVLIBS=`pkg-config opencv4 --libs`
-H5LIBS=-lhdf5 -lhdf5_cpp
-CFLAGS=-Wall -I/usr/local/include -I/usr/local -I/usr/local/opencv4/ -I${BOOSTROOT} -I${IDIR} -I${PYTHONINCLUDE} ${CVFLAGS} ${FTFLAGS} ${H5LIBS} -std=gnu++17 -c -D_USE_MATH_DEFINES -O3 -fopenmp
-LDFLAGS=-L/usr/local -L/usr/local/lib ${FTLIBS} ${CVLIBS} ${H5LIBS} -ldl -lrt -lpthread -lm  -fopenmp 
+
+# Commenting HDF5 for sake of laptop in flight
+#H5LIBS=-lhdf5 -lhdf5_cpp 
+#CFLAGS=-Wall -I/usr/local/include -I/usr/local -I/usr/local/opencv4/ -I${IDIR} -I${PYTHONINCLUDE} ${CVFLAGS} ${FTFLAGS} ${H5LIBS} -std=gnu++17 -c -D_USE_MATH_DEFINES -O3 -fopenmp
+#LDFLAGS=-L/usr/local -L/usr/local/lib ${FTLIBS} ${CVLIBS} ${H5LIBS} -ldl -lrt -lpthread -lm  -fopenmp 
+
+FTLIBS=-L/usr/local/lib -lfftw3
+FTCFLAGS=-I/usr/local/include
+#FTFLAGS=`pkg-config fftw3 --cflags`
+#FTLIBS=`pkg-config fftw3 --libs`
+
+CFLAGS=-Wall -I/usr/local/include -I/usr/local -I${IDIR} -I${PYTHONINCLUDE} ${FTFLAGS} -std=gnu++17 -c -D_USE_MATH_DEFINES -O3 -fopenmp
+LDFLAGS=-L/usr/local -L/usr/local/lib ${FTLIBS} -ldl -lrt -lpthread -lm  -fopenmp 
 INCFLAGS=-I/usr/local/include -I$(IDIR) 
 
 _SRCS=ScanParams.cpp Pulse.cpp MatResponse.cpp FiberBundle.cpp CalibMat.cpp scan_material.cpp
