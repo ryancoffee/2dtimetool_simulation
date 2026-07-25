@@ -421,29 +421,38 @@ int main(int argc, char* argv[])
 
 /* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
     */
+
 	H5::H5File * h5filePtr;
-	std::string imfilename(scanparams.filebase());
-	std::stringstream filetail;
-	filetail << "interference.h5";
-	imfilename += filetail.str();
-    std::cout << "Opening h5 file for intermittent saving:\t" << imfilename << std::endl << std::flush;
-    h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
+	H5::Group * paramgrp;
+	H5::Group * dsetgrp;
+	if (bool(getenv("H5OUTPUT"))){
+		std::string imfilename(scanparams.filebase());
+		std::stringstream filetail;
+		filetail << "interference.h5";
+		imfilename += filetail.str();
+		std::cout << "Opening h5 file for intermittent saving:\t" << imfilename << std::endl << std::flush;
+		h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
+    		std::string name = "/runparams";
+    		paramgrp = new H5::Group( h5filePtr->createGroup( name ) );
+    		std::string dsetname = "/datasets";
+    		dsetgrp = new H5::Group( h5filePtr->createGroup( dsetname ) );
+	}
 
-    auto localnow = std::chrono::system_clock::now();
-    std::time_t ttime = std::chrono::system_clock::to_time_t(localnow);
-    std::cout << "chrono localtime = " << std::ctime(& ttime) << std::endl;
-    std::tm * local_time = std::localtime(& ttime);
-
-    /* HDF5 create groups /dataset /runparams */
-/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
-    std::string name = 'runparams';
-    H5::Group * paramgrp = new H5::Group( h5filePtr->createGroup( name ) );
-    */
+	auto localnow = std::chrono::system_clock::now();
+	std::time_t ttime = std::chrono::system_clock::to_time_t(localnow);
+	std::cout << "chrono localtime = " << std::ctime(& ttime) << std::endl;
+	std::tm * local_time = std::localtime(& ttime);
 
 
-#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,h5filePtr)
+	size_t flatimgsize = masterbundle.get_nfibers()*masterpulse.get_lamsamples();
+	std::vector< std::vector< uint16_t > > datablock;
+	for (size_t i=0;i<scanparams.nimages()*nthreads;i++){
+		datablock.push_back(std::vector<uint16_t>(masterbundle.get_nfibers()*masterpulse.get_lamsamples()));
+	}
+
+#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,datablock)
 	{
-        size_t tid = omp_get_threadid();
+        size_t tid = omp_get_thread_num();
 		if (!getenv("skipimages"))
 		{
 			std::random_device rd{};
@@ -490,9 +499,7 @@ int main(int argc, char* argv[])
 			std::cout << "\t\t#################Entering parallel region 2 #######################\n" << std::flush;
 
 
-            std::vector< std::vector< uint16_t > > frameblock;
 
-#pragma omp for schedule(dynamic) 
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //
 			  	std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
@@ -537,7 +544,6 @@ int main(int argc, char* argv[])
 
 
                 std::vector<double> x,y;
-                frameblock.push_back(std::vector<uint16_t>(parabundle.get_nfibers()*masterpulse.get_lamsamples()));
                 std::vector< uint16_t > imdata(parabundle.get_nfibers()*masterpulse.get_lamsamples());
                 /* HERE HERE HERE HERE 
                 Fis that you fill from f* nlamsamples insie the fibers loop.
@@ -656,31 +662,20 @@ int main(int argc, char* argv[])
 					pulse -= crosspulse;
 					//pulse.interfere(crosspulse,scanparams.interferephase());
 					//std::cerr << "\n\n\t\t\t\t============== testing... just before the push_back() ==============\n\n" << std::flush;
-                    auto minmax = pulse.minmaxvals();
-                    std::cerr << double(*minmax.second) << " ";
 					pulsearray[f] = pulse.scale(parabundle.Ilaser(f));
+					//std::cerr << double(*(pulse.minmaxvals()).second) << " ";
 					//pulsearray[f].scale(parabundle.Ilaser(f)); 
                     if (f==0)
                         x = pulsearray[f].getLamVec(x);
                     pulsearray[f].fillwavelength_bytes(x,
                                                         pulsearray[f].getSigVec(y),
-                                                        frameblock.back(),
+                                                        datablock[scanparams.nimages()*tid + n],
                                                         f);
-                    /*
-                    imdata[f] = pulsearray[f].appendwavelength_bytes(x
-                                                                ,pulsearray[f].getSigVec(y)
-                                                                ,imdata[f]
-                                                                );
-                    */
 				} // end nfibers loop
-                std::cerr << "\n";
-                std::cerr << "frameblock.size() = " << int(frameblock.size()) << std::endl;
 
                 /* ########### HERE HERE HERE HERE ############
                     pulsearray is an array of fibers now.
-                    Find/define a method inside scan_material.hpp to convert the "pulsearray" into the 2D vector of vectors.
-                    Or even just give the flattened image scaled to one byte values and stored flattened with dimensions in a dims vector added to the parameter vector.
-                    Use this array to make a 2D dataset that we append to a thread specific frame accumulation.
+                    Give the flattened image scaled to one byte values and stored flattened with dimensions in a dims vector added to the parameter vector.
                     Do the same for the parameters used, like z_laser and such.
                     */
 
@@ -695,7 +690,7 @@ int main(int argc, char* argv[])
 
 
 				if (bool(getenv("printASCIIimages"))){
-                    std::cout << "\n\n \t\t ###########\tPrinting ASCII images for frame # " << int(n) << "\t#############\n\n" << std::flush;
+					std::cout << "\n\n \t\t ###########\tPrinting ASCII images for frame # " << int(n) << "\t#############\n\n" << std::flush;
 
 					filename = scanparams.filebase() + "interference.out." + std::to_string(n);
 					interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
@@ -714,31 +709,7 @@ int main(int argc, char* argv[])
 					}
 					interferestream.close();
 
-/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
-				} else {
-					if (bool(getenv("H5OUTPUT"))){
-						// HERE HERE HERE HERE //
-						// Getting a double free or corruption //
-						H5::H5File * h5ptr = h5filePtrVec[tid];
-
-						const int rank(2);
-						size_t dims[2] = {pulsearray.size(),npoints};
-
-
-						std::string imname = "/im_" + std::to_string((int)n);
-						for (int r=0;r<pulsearray.size();r++){
-							pulsearray[r].fillrow_uint16(data.data() + (parabundle.get_key(r) * npoints) , npoints);
-						}
-						std::cerr << "Made it past fillrow(data.data(),...)" << std::endl << std::flush;
-
-						H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	//(rank , dims );
-						H5::DataSet * datasetPtr = new H5::DataSet( h5ptr->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
-						datasetPtr->write( data.data(), H5::PredType::NATIVE_USHORT);
-						delete datasetPtr;
-						delete dataspace;
-					} 
-*/
-				} // close non-ascii version
+				} 
 
 				std::time_t imgstop = std::time(nullptr);
 				imagetimes[n] = float(imgstop - imgstart);
@@ -756,34 +727,24 @@ int main(int argc, char* argv[])
 
 		} // end if (!getenv("skipimages")
 
+		std::cout << "\t\t############ ending parallel region 2 for tid " << tid << "###########\n" << std::flush;
 
-#pragma omp barrier
-        {
-#pragma omp master
-        std::cout << "\t\t############ omp barrier/master ###########\n" << std::flush;
-        }
-#pragma omp barrier
-
-        if (tid==0)
-            std::cout << "\t\t############ tid = " << tid <<  "  ###########\n" << std::flush;
-#pragma omp barrier
-
-        if (tid==1)
-            std::cout << "\t\t############ tid = " << tid <<  "  ###########\n" << std::flush;
-#pragma omp barrier
-
-        if (tid==2)
-            std::cout << "\t\t############ tid = " << tid <<  "  ###########\n" << std::flush;
-#pragma omp barrier
-
-        if (tid==3)
-            std::cout << "\t\t############ tid = " << tid <<  "  ###########\n" << std::flush;
-#pragma omp barrier
-
-		std::cout << "\t\t############ ending parallel region 2 ###########\n" << std::flush;
 	} // ends parallel region 2
 
-	//std::cout << "\n ---- just left parallel region 2 ----" << std::endl;
+	std::cout << "\n ---- just left parallel region 2 ----" << std::endl;
+	if (bool(getenv("H5OUTPUT"))){
+		const int rank(1);
+		size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
+		H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	//(rank , dims );
+		H5::DataSet * datasetPtr;
+		for (size_t im=0;im<datablock.size();im++){
+			std::string imname = "/im_" + std::to_string((int)im);
+			datasetPtr = new H5::DataSet( dsetgrp->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
+			datasetPtr->write( datablock[im].data(), H5::PredType::NATIVE_USHORT);
+			delete datasetPtr;
+		}
+		std::cerr << "Made it past image fill" << std::endl << std::flush;
+	} 
 
 
 	std::cout << "masterresponse reflectance: " << masterresponse.getreflectance() << std::endl;
@@ -813,6 +774,8 @@ int main(int argc, char* argv[])
 	}
 	timesout << "\n" << std::flush;
 	timesout.close();
+
+	delete h5filePtr;
 
 	return 0;
 }
