@@ -4,17 +4,6 @@
 
 using namespace Constants;
 
-/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
-H5::IntType h5uint16( H5::PredType::NATIVE_USHORT );
-H5::IntType h5int16( H5::PredType::NATIVE_SHORT );
-H5::IntType h5uint32( H5::PredType::NATIVE_UINT );
-H5::IntType h5int32( H5::PredType::NATIVE_INT );
-H5::StrType h5string(0, H5T_VARIABLE);
-h5uint16.setOrder( H5T_ORDER_LE );
-h5int16.setOrder( H5T_ORDER_LE );
-h5uint32.setOrder( H5T_ORDER_LE );
-h5int32.setOrder( H5T_ORDER_LE );
-*/
 
 /***************/
 /* Here's main */
@@ -431,6 +420,7 @@ int main(int argc, char* argv[])
 	//############################################//
 
 /* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
+    */
 	H5::H5File * h5filePtr;
 	std::string imfilename(scanparams.filebase());
 	std::stringstream filetail;
@@ -438,7 +428,6 @@ int main(int argc, char* argv[])
 	imfilename += filetail.str();
     std::cout << "Opening h5 file for intermittent saving:\t" << imfilename << std::endl << std::flush;
     h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
-    */
 
     auto localnow = std::chrono::system_clock::now();
     std::time_t ttime = std::chrono::system_clock::to_time_t(localnow);
@@ -452,8 +441,9 @@ int main(int argc, char* argv[])
     */
 
 
-#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams)
+#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,h5filePtr)
 	{
+        size_t tid = omp_get_threadid();
 		if (!getenv("skipimages"))
 		{
 			std::random_device rd{};
@@ -461,7 +451,6 @@ int main(int argc, char* argv[])
 			std::normal_distribution<> xrayshadow_x{double(atof(getenv("xrayshadowcorner_x"))),double(atof(getenv("xrayshadowcorner_xjitter")))};
 			std::normal_distribution<> xrayshadow_y{double(atof(getenv("xrayshadowcorner_y"))),double(atof(getenv("xrayshadowcorner_yjitter")))};
 
-			size_t tid = omp_get_thread_num();
 			size_t nfibers = masterbundle.get_nfibers();
 			std::cout << "\t\t############ entering parallel image: tid = " << int(tid) << " ###########\n" << std::flush;
 
@@ -767,17 +756,35 @@ int main(int argc, char* argv[])
 
 		} // end if (!getenv("skipimages")
 
-		std::cout << "\t\t############ ending parallel region 2 ###########\n" << std::flush;
 
+#pragma omp barrier
+        {
+#pragma omp master
+        std::cout << "\t\t############ omp barrier/master ###########\n" << std::flush;
+        }
+#pragma omp barrier
+
+        if (tid==0)
+            std::cout << "\t\t############ tid = " << tid <<  "  ###########\n" << std::flush;
+#pragma omp barrier
+
+        if (tid==1)
+            std::cout << "\t\t############ tid = " << tid <<  "  ###########\n" << std::flush;
+#pragma omp barrier
+
+        if (tid==2)
+            std::cout << "\t\t############ tid = " << tid <<  "  ###########\n" << std::flush;
+#pragma omp barrier
+
+        if (tid==3)
+            std::cout << "\t\t############ tid = " << tid <<  "  ###########\n" << std::flush;
+#pragma omp barrier
+
+		std::cout << "\t\t############ ending parallel region 2 ###########\n" << std::flush;
 	} // ends parallel region 2
 
 	//std::cout << "\n ---- just left parallel region 2 ----" << std::endl;
 
-
-/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
-	for (size_t t=0;t<nthreads;t++)
-		delete h5filePtrVec[t];
-*/
 
 	std::cout << "masterresponse reflectance: " << masterresponse.getreflectance() << std::endl;
 	std::cout << "masterbundle fiberdiameter: " << masterbundle.fiberdiameter() << std::endl;

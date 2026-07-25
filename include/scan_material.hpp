@@ -21,10 +21,22 @@
 #include <chrono>
 
 /* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
+*/
 // HDF5 includes
 #include "hdf5.h"
 #include "H5Cpp.h"
 #include "H5Attribute.h"
+
+/*
+H5::IntType h5uint16( H5::PredType::NATIVE_USHORT );
+H5::IntType h5int16( H5::PredType::NATIVE_SHORT );
+H5::IntType h5uint32( H5::PredType::NATIVE_UINT );
+H5::IntType h5int32( H5::PredType::NATIVE_INT );
+H5::StrType h5string(0, H5T_VARIABLE);
+h5uint16.setOrder( H5T_ORDER_LE );
+h5int16.setOrder( H5T_ORDER_LE );
+h5uint32.setOrder( H5T_ORDER_LE );
+h5int32.setOrder( H5T_ORDER_LE );
 */
 
 // FFTW

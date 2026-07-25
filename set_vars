@@ -39,7 +39,7 @@ export phaseNoiseLowpass=10000; #10000; # this is in units of total number of ti
 export randphase_mean=0;
 export randphase_std=2; # in units of pi
 
-export nimages=8; #128; #32;
+export nimages=16; #128; #32;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
 export delays_std=100;
 export reldelays_mean=50; # this is for the TXI case that has two beams being evaluated by the two different polarizations.
@@ -182,7 +182,7 @@ export FODnoise=0;
 export fifthODnoise=0;
 
 export interferephase=1.000; #this doesn't work it seems.
-export gain= 20000000; # 40000000000; #20000000;
+export gain=20000000; # 40000000000; #20000000;
 export saturate=16000; #65535;
 export lamsamples=1024;
 
