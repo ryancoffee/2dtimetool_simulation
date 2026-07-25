@@ -422,21 +422,6 @@ int main(int argc, char* argv[])
 /* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
     */
 
-	H5::H5File * h5filePtr;
-	H5::Group * paramgrp;
-	H5::Group * dsetgrp;
-	if (bool(getenv("H5OUTPUT"))){
-		std::string imfilename(scanparams.filebase());
-		std::stringstream filetail;
-		filetail << "interference.h5";
-		imfilename += filetail.str();
-		std::cout << "Opening h5 file for intermittent saving:\t" << imfilename << std::endl << std::flush;
-		h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
-    		std::string name = "/runparams";
-    		paramgrp = new H5::Group( h5filePtr->createGroup( name ) );
-    		std::string dsetname = "/datasets";
-    		dsetgrp = new H5::Group( h5filePtr->createGroup( dsetname ) );
-	}
 
 	auto localnow = std::chrono::system_clock::now();
 	std::time_t ttime = std::chrono::system_clock::to_time_t(localnow);
@@ -512,7 +497,7 @@ int main(int argc, char* argv[])
 						<<   "\n\t\t ====         contiguous blocks for row-wise FFT as 2D         ===="
 						<<   "\n\t\t ==================================================================\n" << std::flush;
 				}
-				std::cerr << "Made it to here\t" << tid << "\n" << std::flush;
+				//std::cerr << "Made it to here\t" << tid << "\n" << std::flush;
 
 				std::time_t imgstart = std::time(nullptr);
 
@@ -733,17 +718,37 @@ int main(int argc, char* argv[])
 
 	std::cout << "\n ---- just left parallel region 2 ----" << std::endl;
 	if (bool(getenv("H5OUTPUT"))){
+		H5::H5File * h5filePtr;
+		H5::Group * paramgrp;
+		H5::Group * dsetgrp;
+
+		std::string imfilename(scanparams.filebase());
+		std::stringstream filetail;
+		filetail << "interference.h5";
+		imfilename += filetail.str();
+		std::cout << "Opening h5 file for intermittent saving:\t" << imfilename << std::endl << std::flush;
+		h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
+    		std::string name = "/runparams";
+    		paramgrp = new H5::Group( h5filePtr->createGroup( name ) );
+    		std::string dsetname = "/datasets";
+    		dsetgrp = new H5::Group( h5filePtr->createGroup( dsetname ) );
+
 		const int rank(1);
 		size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
 		H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	//(rank , dims );
-		H5::DataSet * datasetPtr;
+		std::cerr << "Made it here in H5 output\n" << std::flush;
 		for (size_t im=0;im<datablock.size();im++){
+			H5::DataSet * datasetPtr;
 			std::string imname = "/im_" + std::to_string((int)im);
 			datasetPtr = new H5::DataSet( dsetgrp->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
 			datasetPtr->write( datablock[im].data(), H5::PredType::NATIVE_USHORT);
 			delete datasetPtr;
 		}
-		std::cerr << "Made it past image fill" << std::endl << std::flush;
+		std::cerr << "Made it past H5 image fill" << std::endl << std::flush;
+		delete dataspace;
+		delete paramgrp;
+		delete dsetgrp;
+		delete h5filePtr;
 	} 
 
 
@@ -774,8 +779,8 @@ int main(int argc, char* argv[])
 	}
 	timesout << "\n" << std::flush;
 	timesout.close();
+	std::cerr << "Hmmmm, are we done yet?\n" << std::flush;
 
-	delete h5filePtr;
 
 	return 0;
 }

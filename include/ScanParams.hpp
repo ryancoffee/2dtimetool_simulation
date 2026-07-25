@@ -16,7 +16,7 @@ class ScanParams
 
 	public:
 	ScanParams();
-	~ScanParams();
+//	~ScanParams();
 
 	size_t nimages(size_t in){nimgs=in;return nimgs;}
 	inline size_t nimages(void){return nimgs;}

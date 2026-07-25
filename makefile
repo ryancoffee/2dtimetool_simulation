@@ -11,7 +11,8 @@ FTCFLAGS=-I/usr/local/include
 #FTFLAGS=`pkg-config fftw3 --cflags`
 #FTLIBS=`pkg-config fftw3 --libs`
 
-CFLAGS=-Wall -I/usr/local/include -I/usr/local -I${IDIR} -I${PYTHONINCLUDE} ${FTFLAGS} ${H5FLAGS} -std=gnu++17 -c -D_USE_MATH_DEFINES -O3 -fopenmp
+CFLAGS=-Wall -I/usr/local/include -I/usr/local -I${IDIR} -I${PYTHONINCLUDE} ${FTFLAGS} ${H5FLAGS} -std=gnu++17 -c -D_USE_MATH_DEFINES -O3 -fopenmp -g
+DEBUGFLAGS=-g
 LDFLAGS=-L/usr/local -L/usr/local/lib ${FTLIBS} ${H5LIBS} -ldl -lrt -lpthread -lm -fopenmp 
 
 _SRCS=ScanParams.cpp Pulse.cpp MatResponse.cpp FiberBundle.cpp CalibMat.cpp scan_material.cpp

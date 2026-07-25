@@ -37,6 +37,7 @@ ScanParams::ScanParams(void)
 
 }
 
+/*
 ScanParams::~ScanParams(void)
 {
 	delete delays_distributionPtr;
@@ -53,6 +54,7 @@ ScanParams::~ScanParams(void)
 		delete fifthODnoiseDistPtr;
 	}
 }
+*/
 
 
 /* =========== chirp interfaces ============= */
@@ -67,6 +69,7 @@ void ScanParams::chirp(double second, double third, double fourth = double(0), d
 
 void ScanParams::initchirpnoise(double second,double third,double fourth = double(0),double fifth = double(0))
 {
+	usechirpnoise = true;
 	chirpnoiseDistPtr = new std::normal_distribution<double>( chirpvec[0], second );
 	TODnoiseDistPtr = new std::normal_distribution<double>( chirpvec[1], third );
 	FODnoiseDistPtr = new std::normal_distribution<double>( chirpvec[2], fourth );
