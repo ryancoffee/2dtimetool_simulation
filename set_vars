@@ -4,11 +4,13 @@ starttime=$(date +%s)
 export skipdisplayframes=1
 
 export nthreads=4
-export basepath="/nvme1/2dtimetool_simulation_data/" #/data/drive0/2dtimetool_simulation_data' # "/nvme1/2dtimetool_simulation_data"
+basepath="/nvme1/2dtimetool_simulation_data/" #/data/drive0/2dtimetool_simulation_data' # "/nvme1/2dtimetool_simulation_data"
 if [[ ${HOSTNAME} -eq baratza ]]; then
-    export basepath="/data/drive0/2dtimetool_simulation_data/"
+    basepath="/data/drive0/2dtimetool_simulation_data/"
 elif [[ ${HOSTNAME} -eq coffee-office ]]; then
-    export basepath="/nvme1/2dtimetool_simulation_data/" 
+    basepath="/nvme1/2dtimetool_simulation_data/" 
+elif [[ ${HOSTNAME} -eq coffee-ThinkPad-X395 ]]; then
+    basepath="/media/coffee/9C33-6BBD/2dtimetool_simulation_data/"
 fi
 echo "basepath = $basepath"
 export datadir="${basepath}raw/"
@@ -18,7 +20,7 @@ mkdir -p $calibdir
 unset H5OUTPUT
 export H5OUTPUT=1
 unset printASCIIimages
-#export printASCIIimages=1
+export printASCIIimages=1
 
 export carriercolumn=5; # this tells the code which of Nikita's columns to use
 export carriersdir="${basepath}reference/fromNikita/"
@@ -115,7 +117,7 @@ export nu_high=0.769; # 390nm
 ## 1 + sum_{n=1,nrows} n * 6
 ## 1 7 19 37 61 91 127 169 217 271 331 397 469 547
 
-export nfibers=61; #109; #61; # is for the personal laptop since only 8GB memory #109; #61; #61; #109;
+export nfibers=7; #61; #109; #61; # is for the personal laptop since only 8GB memory #109; #61; #61; #109;
 unset shuffle_fibers;
 unset scale_fibers;
 export shuffle_fibers=1;
@@ -123,8 +125,8 @@ export scale_fibers=1;
 export fiberdiam=0.11;
 export laserdiam=2.5; 
 export xraydiam=0.75;
-export xrayshadowcorner_x=2.00;
-export xrayshadowcorner_y=2.00;
+export xrayshadowcorner_x=0.00;
+export xrayshadowcorner_y=0.00;
 export xrayshadowcorner_xjitter=.25; 
 export xrayshadowcorner_yjitter=.25; 
 unset usethermal;
