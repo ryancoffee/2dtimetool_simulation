@@ -1,12 +1,18 @@
 #!/bin/bash
 
 starttime=$(date +%s)
-export HOSTNAME=$HOSTNAME
 export skipdisplayframes=1
 
 export nthreads=4
-export datadir='/data/drive0/2dtimetool_simulation_data/raw/'
-export calibdir='/data/drive0/2dtimetool_simulation_data/extern/'
+export basepath="/nvme1/2dtimetool_simulation_data/" #/data/drive0/2dtimetool_simulation_data' # "/nvme1/2dtimetool_simulation_data"
+if [[ ${HOSTNAME} -eq baratza ]]; then
+    export basepath="/data/drive0/2dtimetool_simulation_data/"
+elif [[ ${HOSTNAME} -eq coffee-office ]]; then
+    export basepath="/nvme1/2dtimetool_simulation_data/" 
+fi
+echo "basepath = $basepath"
+export datadir="${basepath}raw/"
+export calibdir="${basepath}extern/"
 mkdir -p $datadir
 mkdir -p $calibdir
 unset H5OUTPUT
@@ -15,7 +21,7 @@ unset printASCIIimages
 #export printASCIIimages=1
 
 export carriercolumn=5; # this tells the code which of Nikita's columns to use
-export carriersdir='/data/drive0/2dtimetool_simulation_data/reference/fromNikita/'
+export carriersdir="${basepath}reference/fromNikita/"
 #export carriersfilename='OUTPUT_YAG_Density_9500.dat'
 #export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
 export carriersfilename='OUTPUT_Diamond_Density_9500.dat'
