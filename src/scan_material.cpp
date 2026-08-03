@@ -584,8 +584,8 @@ int main(int argc, char* argv[])
 										     //std::cerr << "\n\t\t ---- starting etalon at " << e << " ----\n" << std::flush;
 										     //std::cerr << "parabundle.TinK( " << f << " ) is " << parabundle.TinK(f) << "\n" << std::flush;
 										     // back propagation step //
-						double etalondelay = startdelay - double(e+1) * pararesponse.thermaletalondelay(parabundle.TinK(f)); 
-						double etalondelay1 = startdelay1 - double(e+1) * pararesponse1.thermaletalondelay(parabundle.TinK(f)); 
+						double etalondelay = startdelay; //- double(e+1) * pararesponse.thermaletalondelay(parabundle.TinK(f)); 
+						double etalondelay1 = startdelay1; //- double(e+1) * pararesponse1.thermaletalondelay(parabundle.TinK(f)); 
 						// at front surface, x-rays see counter-propagating light from one full etalon delay
 
 						etalonpulse = pulse;
@@ -629,9 +629,9 @@ int main(int argc, char* argv[])
 						//std::cerr << "etalonpulse/crossetalonpulse.domain() = " << etalonpulse.domain() << "/" << crossetalonpulse.domain() << "\n" << std::flush;
 						etalonpulse.fft_tofreq();
 						crossetalonpulse.fft_tofreq();
-						etalonpulse.delay(pararesponse.thermaletalondelay(parabundle.TinK(f))) ; // delay and attenuate in frequency domain
+						//etalonpulse.delay(pararesponse.thermaletalondelay(parabundle.TinK(f))) ; // delay and attenuate in frequency domain
 						etalonpulse.attenuate(pow(pararesponse.getreflectance(),(int)2));
-						crossetalonpulse.delay(pararesponse1.thermaletalondelay(parabundle.TinK(f)));
+						//crossetalonpulse.delay(pararesponse1.thermaletalondelay(parabundle.TinK(f)));
 						crossetalonpulse.attenuate(pow(pararesponse1.getreflectance(),(int)2));
 						etalonpulse.fft_totime();
 						crossetalonpulse.fft_totime();
@@ -689,7 +689,8 @@ int main(int argc, char* argv[])
 					interferestream << "#";
 					pulsearray[0].printwavelengthbins(&interferestream);
 					for (size_t f=0;f<pulsearray.size();f++){
-						pulsearray[f].scale(parabundle.Ilaser(f));
+						//pulsearray[f].scale(parabundle.Ilaser(f));
+						//interferestream << pulsearray[f].;
 						pulsearray[f].appendwavelength(&interferestream);
 					}
 					interferestream.close();

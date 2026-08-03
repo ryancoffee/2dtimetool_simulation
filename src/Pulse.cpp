@@ -457,7 +457,7 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 	}
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
 	for (size_t i=0;i<m_lamsamples;++i){
-        (*outfile) << uint16_t(interpolate(x,y,x.back()+i*dlam));
+        	(*outfile) << uint16_t(interpolate(x,y,x.back()+i*dlam)) << " ";
 	}
 	(*outfile) << std::endl;
 	return;

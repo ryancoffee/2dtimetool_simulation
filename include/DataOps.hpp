@@ -638,13 +638,16 @@ namespace DataOps
 		T  interpolate(const std::vector<T> & xData, const std::vector<T> & yData,T x)
 		{
 
-			if(x < xData.front()){return yData.front();}
-			if(x > xData.back()){return yData.back();}
+			if(x > xData.front()){return yData.front();} // remember that x values count backwards, so xData.front() < xData.back()
+			if(x < xData.back()){return yData.back();}
 			size_t i = 0;
 			while (x>xData[i]){++i;}
+			return yData[i];
+			/*
 			size_t l=i-1;
 			T delta=(x - xData[l])/(xData[i] - xData[l]);
 			return delta*yData[i] + (1-delta) *yData[l];
+			*/
 		}
 }
 
