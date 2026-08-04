@@ -132,6 +132,7 @@ class PulseFreq
 		inline unsigned get_samples(void) {return getsamples();}
 		inline unsigned getsamples(void) {return samples;}
 		inline unsigned get_lamsamples(void){return m_lamsamples;}
+		inline unsigned get_freqsamples(void){return unsigned(i_high-i_low);}
 
 		inline unsigned getdt(void) {return dtime;}
 		void fft_totime(void) {
@@ -303,6 +304,7 @@ class PulseFreq
 
         std::vector<double> & getLamVec(std::vector<double> & x);
         std::vector<double> & getSigVec(std::vector<double> & y);
+	void fillfrequency_bytes(std::vector<double> const & x, std::vector<double > const & y,std::vector<uint16_t> & datavec,size_t const f);
         void fillwavelength_bytes(std::vector<double> const & x, std::vector<double> const & y,std::vector<uint16_t> & datavec,size_t const f);
         std::vector<uint16_t> & appendwavelength_bytes(std::vector<double> const & x, std::vector<double> const & y,std::vector<uint16_t> & datavec);
 

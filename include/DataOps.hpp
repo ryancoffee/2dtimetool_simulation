@@ -646,7 +646,7 @@ namespace DataOps
 			/*
 			size_t l=i-1;
 			T delta=(x - xData[l])/(xData[i] - xData[l]);
-			return delta*yData[i] + (1-delta) *yData[l];
+			return delta*yData[i] + (1-delta) *yData[l]; // y2 - delta*(y2-y1)
 			*/
 		}
 }

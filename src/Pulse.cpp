@@ -428,6 +428,14 @@ std::vector<double> & PulseFreq::getSigVec(std::vector<double> & y)
     return y;
 }
 
+void PulseFreq::fillfrequency_bytes(std::vector<double> const & x, std::vector<double > const & y,std::vector<uint16_t> & datavec,size_t const f)
+{
+	for (size_t i=0;i<y.size();++i){
+		datavec[f*y.size() + i] = uint16_t(int(1<<12)*y[i]);
+	}
+    return;
+}
+
 void PulseFreq::fillwavelength_bytes(std::vector<double> const & x, std::vector<double > const & y,std::vector<uint16_t> & datavec,size_t const f)
 {
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
@@ -451,15 +459,23 @@ void PulseFreq::appendwavelength(std::ofstream * outfile)
 {
 	std::vector<double> x(i_high-i_low);
 	std::vector<double> y(i_high-i_low);	
+	std::cerr << x.size() << "\t" << y.size() << std::endl;
 	for (size_t i=0;i<y.size();++i){
 		x[i] = C_nmPfs<double>()*2.0*pi<double>()*fsPau<double>()/omega[i_low+i];
-		y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
-	}
-	double dlam = (x.front()-x.back())/double(m_lamsamples);
-	for (size_t i=0;i<m_lamsamples;++i){
-        	(*outfile) << uint16_t(interpolate(x,y,x.back()+i*dlam)) << " ";
+		y[i] = std::pow(rhovec[i_low+i],int(2)) * m_gain;
+		//y[i] = std::min(std::pow(rhovec[i_low+i],int(2)) * m_gain,double(m_saturate));
+		(*outfile) << float(y[i]) << " ";
 	}
 	(*outfile) << std::endl;
+
+	/*
+	double dlam = (x.front()-x.back())/double(m_lamsamples);
+	for (size_t i=0;i<m_lamsamples;++i){
+        	(*outfile) << float(interpolate(x,y,x.back()+i*dlam)) << " ";
+        	//(*outfile) << uint16_t(interpolate(x,y,x.back()+i*dlam)) << " ";
+	}
+	(*outfile) << std::endl;
+	*/
 	return;
 }
 void PulseFreq::appendwavelength_deriv(std::ofstream * outfile)

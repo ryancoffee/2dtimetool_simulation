@@ -652,10 +652,16 @@ int main(int argc, char* argv[])
 					//pulsearray[f].scale(parabundle.Ilaser(f)); 
                     if (f==0)
                         x = pulsearray[f].getLamVec(x);
+                    pulsearray[f].fillfrequency_bytes(x,
+                                                        pulsearray[f].getSigVec(y),
+                                                        datablock[scanparams.nimages()*tid + n],
+                                                        f);
+		    /*
                     pulsearray[f].fillwavelength_bytes(x,
                                                         pulsearray[f].getSigVec(y),
                                                         datablock[scanparams.nimages()*tid + n],
                                                         f);
+							*/
 				} // end nfibers loop
 
                 /* ########### HERE HERE HERE HERE ############
@@ -689,8 +695,7 @@ int main(int argc, char* argv[])
 					interferestream << "#";
 					pulsearray[0].printwavelengthbins(&interferestream);
 					for (size_t f=0;f<pulsearray.size();f++){
-						//pulsearray[f].scale(parabundle.Ilaser(f));
-						//interferestream << pulsearray[f].;
+						pulsearray[f].scale(parabundle.Ilaser(f));
 						pulsearray[f].appendwavelength(&interferestream);
 					}
 					interferestream.close();
@@ -735,7 +740,8 @@ int main(int argc, char* argv[])
     		dsetgrp = new H5::Group( h5filePtr->createGroup( dsetname ) );
 
 		const int rank(1);
-		size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
+		size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_freqsamples()};
+		//size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
 		H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	//(rank , dims );
 		std::cerr << "Made it here in H5 output\n" << std::flush;
 		for (size_t im=0;im<datablock.size();im++){

@@ -190,7 +190,7 @@ export FODnoise=0;
 export fifthODnoise=0;
 
 export interferephase=1.000; #this doesn't work it seems.
-export gain=20000000; # 40000000000; #20000000;
+export gain=200000; # 40000000000; #20000000;
 export saturate=16000; #65535;
 export lamsamples=1024;
 
