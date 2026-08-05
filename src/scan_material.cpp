@@ -429,10 +429,10 @@ int main(int argc, char* argv[])
 	std::tm * local_time = std::localtime(& ttime);
 
 
-	size_t flatimgsize = masterbundle.get_nfibers()*masterpulse.get_lamsamples();
+	size_t flatimgsize = masterbundle.get_nfibers()*masterpulse.get_freqsamples();
 	std::vector< std::vector< uint16_t > > datablock;
 	for (size_t i=0;i<scanparams.nimages()*nthreads;i++){
-		datablock.push_back(std::vector<uint16_t>(masterbundle.get_nfibers()*masterpulse.get_lamsamples()));
+		datablock.push_back(std::vector<uint16_t>(masterbundle.get_nfibers()*masterpulse.get_freqsamples()));
 	}
 
 #pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,datablock)
@@ -529,7 +529,7 @@ int main(int argc, char* argv[])
 
 
                 std::vector<double> x,y;
-                std::vector< uint16_t > imdata(parabundle.get_nfibers()*masterpulse.get_lamsamples());
+                std::vector< uint16_t > imdata(parabundle.get_nfibers()*masterpulse.get_freqsamples());
                 /* HERE HERE HERE HERE 
                 Fis that you fill from f* nlamsamples insie the fibers loop.
                 */
