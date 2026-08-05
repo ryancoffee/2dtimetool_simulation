@@ -1,6 +1,7 @@
 # 2dtimetool\_simulation
 ==============================
 
+Branch ryan-dev-noboost was merged into this, prematurely though, to capture updated makefile params and such.  
 
 Simulation for a fiber bundle based 2D timetool.
 
