@@ -52,7 +52,7 @@ export randphase_std=2; # in units of pi
 
 export nimages=4; #128; #32;
 export delays_mean=0; #centered #-2250;off to right side of screen #1250; off to left side
-export delays_std=100;
+export delays_std=300;
 export reldelays_mean=50; # this is for the TXI case that has two beams being evaluated by the two different polarizations.
 export reldelays_std=15;
 
@@ -73,8 +73,8 @@ export lambda_width=400;
 export lambda_onoff=10;
 #export tspan=1024;
 #export tspan=4096;
-export tspan=8192;
-#export tspan=16384;
+#export tspan=8192;
+export tspan=16384;
 #export tspan=32768; ## really using this one
 #export tspan=65536; ## this one when using a 40000 fs window and a chirp in the 6000-8000 range
 #export tspan=131072;
@@ -166,7 +166,7 @@ export beta=0.00002;
 # 500 microns GGG =
 # 500 microns CeYAG = 
 
-# indices 
+# indices ... Apologies all, I use speed of light as 3e10 cm/s, mostly just to be cagey.
 #	SiN = 2.04, R=(1.04)**2/(2.04)**2 = 0.26, reflectance R is not the amplitude and it should be R*R for twice reflected waves, but then amplitude sum, so just use R.
 # 	quartz = 1.55, R = 0.0465
 #	diamond = 2.42, R = 0.172
@@ -193,15 +193,15 @@ export FODnoise=0;
 export fifthODnoise=0;
 
 export interferephase=1.000; #this doesn't work it seems.
-export gain=200000; # 40000000000; #20000000;
-export saturate=16000; #65535;
+export gain=5000; 
+export saturate=65000; #65535;
 export lamsamples=1024;
 
-export fsWindow=1280; # use 128000 for largest window with appropriate tspan, this is the calib scan window
+export fsWindow=12800; # use 128000 for largest window with appropriate tspan, this is the calib scan window
 #export chirp=-16000; # -64000; # this gives about 1/4 ns of chirp window, using fsWindow at 128000 and staying there, this seems to work with tspan=262144, but high tspan hoses the machine;
 export chirp=-1200; #-6000; # -2000; # -2000 is normal #-1200; # typically a value of -1200 is about the usual chirp we use in spectral timing.
 #export interferedelay=8000; # keeping this at about 64 ps since that gives about 1/4 window separation between rise and fall edges.
-export interferedelay=165; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
+export interferedelay=823; #6000; #8000; #1650; #1650; #1650 matches YAG for xppc00117 run 136 #2000 seems to fit the xppc0117 data #1650; #823; #617; #2468; #617; #413; #412; #2500; #823; # nominally 823 for 2mm of alphaBBO;
 export xrayphoton_energy=9.5; #6.0; #40; # this is in keV
 
 export carriersfile=$carriersdir$carriersfilename;

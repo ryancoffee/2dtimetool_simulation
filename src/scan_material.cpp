@@ -14,11 +14,11 @@ int main(int argc, char* argv[])
 	std::time_t tstart = std::time(nullptr);
 	std::cout << "\t\t======================================\n"
 		<< "\t\t======= scan_material started ========\n"
-		<< "\t\t===== " << std::asctime(std::localtime(&tstart)) 
-		<< "\t\t===== on host " << getenv("HOSTNAME") << "\n"
-		<< "\t\t===== for " << getenv("nimages") << " images\n"
-		<< "\t\t===== with " << getenv("nfibers") << " fibers\n"
-		<< "\t\t======================================\n" << std::flush;
+		<< "\t\t===== " << std::asctime(std::localtime(&tstart)) << "====\n"
+		<< "\t\t===== on host " << getenv("HOSTNAME") << "====\n"
+		<< "\t\t===== for " << getenv("nimages") << " images ====\n"
+		<< "\t\t===== with " << getenv("nfibers") << " fibers ====\n"
+		<< "\t\t======================================\n" << std::endl << std::flush;
 
 	unsigned nthreads = (unsigned)atoi( getenv("nthreads") );
 	std::cout << "Scaling fibers =\t";
@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 	} else {
 		std::cout << "no\n";
 	}
-	std::cout << std::flush;
+	std::cout << std::endl << std::flush;
 
 
 	ScanParams scanparams;
@@ -166,11 +166,11 @@ int main(int argc, char* argv[])
 	std::cout << " xrayphoton_energy = " << xrayphoton_energy << " keV\n" << std::flush;
 	masterresponse.bandgap(double(atof(getenv("bandgap_eV")))); //
 	if (getenv("usediamond")){
-		std::cerr << "using xrayphoton_energy to compute carriers\n" << std::flush;
+		std::cout << "using xrayphoton_energy to compute carriers\n" << std::flush;
 		masterresponse.fill_carriersvec(masterpulse,xrayphoton_energy);
 	} else {
 		std::string carriersfilename = getenv("carriersfile");
-		std::cerr << "carriersfilename = " << carriersfilename << "\n" << std::flush;
+		std::cout << "carriersfilename = " << carriersfilename << "\n" << std::flush;
 		std::ifstream Nikita_file(carriersfilename.c_str(),std::ios::in);
 		masterresponse.fill_carriersvec(masterpulse,Nikita_file);
 	}
@@ -480,16 +480,16 @@ int main(int argc, char* argv[])
 
 
 
-			std::cerr << "Entering parallel for loop with nimages = "  << scanparams.nimages() << "\n" << std::flush;
+			std::cout << "Entering parallel for loop with nimages = "  << scanparams.nimages() << "\n" << std::flush;
 			std::cout << "\t\t#################Entering parallel region 2 #######################\n" << std::flush;
 
 
 
 			for (size_t n=0;n<scanparams.nimages();++n)
 			{ // outermost loop for nimages to produce //
-			  	std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
+			  	//std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
 
-				if (n<nthreads & tid==0) 
+#pragma omp master
 				{
 					std::cout << "========================================================================="
 						<<   "\n\t\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
@@ -497,7 +497,6 @@ int main(int argc, char* argv[])
 						<<   "\n\t\t ====         contiguous blocks for row-wise FFT as 2D         ===="
 						<<   "\n\t\t ==================================================================\n" << std::flush;
 				}
-				//std::cerr << "Made it to here\t" << tid << "\n" << std::flush;
 
 				std::time_t imgstart = std::time(nullptr);
 
@@ -743,7 +742,7 @@ int main(int argc, char* argv[])
 		size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_freqsamples()};
 		//size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
 		H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	//(rank , dims );
-		std::cerr << "Made it here in H5 output\n" << std::flush;
+		//std::cerr << "Made it here in H5 output\n" << std::flush;
 		for (size_t im=0;im<datablock.size();im++){
 			H5::DataSet * datasetPtr;
 			std::string imname = "/im_" + std::to_string((int)im);
@@ -751,7 +750,7 @@ int main(int argc, char* argv[])
 			datasetPtr->write( datablock[im].data(), H5::PredType::NATIVE_USHORT);
 			delete datasetPtr;
 		}
-		std::cerr << "Made it past H5 image fill" << std::endl << std::flush;
+		//std::cerr << "Made it past H5 image fill" << std::endl << std::flush;
 		delete dataspace;
 		delete paramgrp;
 		delete dsetgrp;
@@ -786,7 +785,7 @@ int main(int argc, char* argv[])
 	}
 	timesout << "\n" << std::flush;
 	timesout.close();
-	std::cerr << "Hmmmm, are we done yet?\n" << std::flush;
+	//std::cerr << "Hmmmm, are we done yet?\n" << std::flush;
 
 
 	return 0;

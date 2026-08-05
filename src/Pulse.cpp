@@ -28,7 +28,7 @@ PulseFreq::PulseFreq(const double omcenter_in=(0.55*fsPau<double>()),const doubl
 	m_noisescale(1e-3),
 	m_sampleinterval(2),
 	m_saturate(4096),
-	m_gain(1000000),
+	m_gain(5000),
 	m_lamsamples(1024),
 	sampleround(1000),
 	cvec(NULL),
@@ -431,7 +431,7 @@ std::vector<double> & PulseFreq::getSigVec(std::vector<double> & y)
 void PulseFreq::fillfrequency_bytes(std::vector<double> const & x, std::vector<double > const & y,std::vector<uint16_t> & datavec,size_t const f)
 {
 	for (size_t i=0;i<y.size();++i){
-		datavec[f*y.size() + i] = uint16_t(int(1<<12)*y[i]);
+		datavec[f*y.size() + i] = uint16_t(y[i]);
 	}
     return;
 }
@@ -440,7 +440,7 @@ void PulseFreq::fillwavelength_bytes(std::vector<double> const & x, std::vector<
 {
 	double dlam = (x.front()-x.back())/double(m_lamsamples);
 	for (size_t i=0;i<m_lamsamples;++i){
-        datavec[f*m_lamsamples + i] = uint16_t(int(1<<12)*interpolate(x,y,x.back()+i*dlam));
+        datavec[f*m_lamsamples + i] = uint16_t(interpolate(x,y,x.back()+i*dlam));
 	}
     return;
 }
