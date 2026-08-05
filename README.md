@@ -1,9 +1,14 @@
 # 2dtimetool\_simulation
 ==============================
 
+
 Simulation for a fiber bundle based 2D timetool.
 
 # todo 
+- Correct the overflow when casting as `uint16_t` for output to h5  
+- Wrap ascii output into a debug scope
+
+# done
 - (correction) HDF5 shouldn't be built with --enable-threadsafe since installing with --enable-threadsafe requires disabling c++ wrappers.  FIND ANOTHER WAY.  
 - Update a buffer of images in a system memory `std::vector<data>` way, then when this is filled, omp barrier and write out to the h5file as single thread.
 
