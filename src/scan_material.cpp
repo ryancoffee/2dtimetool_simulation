@@ -431,17 +431,18 @@ int main(int argc, char* argv[])
 
 	size_t flatimgsize = masterbundle.get_nfibers()*masterpulse.get_freqsamples();
 	std::vector< std::vector< uint16_t > > datablock;
-    std::vector< double > delay;
-	std::vector< double > ilaser;
-	std::vector< double > ixray;
-    std::vector< std::array <double,2> > laserposition;
-    std::vector< std::array <double,2> > xrayposition;
+	std::vector< double > delays(scanparams.nimages()*nthreads);
+	std::vector< double > alphas(scanparams.nimages()*nthreads);
+	std::vector< double > ilaser(scanparams.nimages()*nthreads);
+	std::vector< double > ixray(scanparams.nimages()*nthreads);
+	std::vector< std::array <double,2> > laserposition(scanparams.nimages()*nthreads);
+	std::vector< std::array <double,2> > xrayposition(scanparams.nimages()*nthreads);
 
 	for (size_t i=0;i<scanparams.nimages()*nthreads;i++){
 		datablock.push_back(std::vector<uint16_t>(masterbundle.get_nfibers()*masterpulse.get_freqsamples()));
 	}
 
-#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,datablock)
+#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,masterbundle,scanparams,datablock,ilaser,ixray,laserposition,xrayposition,delays)
 	{
         size_t tid = omp_get_thread_num();
 		if (!getenv("skipimages"))
@@ -678,7 +679,13 @@ int main(int argc, char* argv[])
 
 				std::complex<double> z_laser = parabundle.center_Ilaser();
 				std::complex<double> z_xray = parabundle.center_Ixray();
-                laserposition.push_back({z_laser.real(),z_laser.imag()})
+				laserposition[scanparams.nimages()*tid + n] = parabundle.center_Ilaser<double>();
+				xrayposition[scanparams.nimages()*tid + n] = parabundle.center_Ixray<double>();
+				alphas[scanparams.nimages()*tid + n] = parabundle.delay_angle();
+				/*
+				laserposition[scanparams.nimages()*tid + n][0] = z_laser.real();
+				laserposition[scanparams.nimages()*tid + n][1] = z_laser.imag();
+				*/
 
 
 
@@ -726,6 +733,19 @@ int main(int argc, char* argv[])
 	} // ends parallel region 2
 
 	std::cout << "\n ---- just left parallel region 2 ----" << std::endl;
+
+	/*
+	 *
+	 * Attributes of the individual images to be used as truth
+	std::vector< double > delays(scanparams.nimages()*nthreads);
+	std::vector< double > alphas(scanparams.nimages()*nthreads);
+	std::vector< double > ilaser(scanparams.nimages()*nthreads);
+	std::vector< double > ixray(scanparams.nimages()*nthreads);
+	std::vector< std::array <double,2> > laserposition(scanparams.nimages()*nthreads);
+	std::vector< std::array <double,2> > xrayposition(scanparams.nimages()*nthreads);
+	 *
+	 * The params should be the things we've been so far encoding in the filename
+	 */
 	if (bool(getenv("H5OUTPUT"))){
 		H5::H5File * h5filePtr;
 		H5::Group * paramgrp;
