@@ -7,6 +7,7 @@
 #include <random>
 #include <algorithm>
 #include <vector>
+#include <array>
 #include <complex>
 #include <iostream>
 #include <fstream>
@@ -52,6 +53,12 @@ class FiberBundle {
 		inline std::complex<double> center_Ilaser(void){return laser_center;}
 		inline std::complex<double> center_Ixray(void){return xray_center;}
 		inline std::complex<double> center_thermal(void){return thermalcenter;}
+        template <typename T>
+		inline std::array<T,2> center_Ilaser(void){return std::array<T,2>({T(laser_center.real()),T(laser_center.imag())});}
+        template <typename T>
+		inline std::array<T,2> center_Ixray(void){return std::array<T,2>({T(xray_center.real()),T(xray_center.imag())});}
+        template <typename T>
+		inline std::array<T,2> center_thermal(void){return std::array<T,2>({T(thermalcenter.real()),T(thermalcenter.imag())});}
 		inline double delay_angle(const double a){alpha = a; return alpha; }
 		inline double delay_angle(void){return alpha;}
 		inline double delay(const size_t i){ return fsPmm * (std::cos(alpha)*x(i) + std::sin(alpha)*y(i)); }

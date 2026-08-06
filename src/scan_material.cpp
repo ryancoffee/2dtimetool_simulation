@@ -431,6 +431,12 @@ int main(int argc, char* argv[])
 
 	size_t flatimgsize = masterbundle.get_nfibers()*masterpulse.get_freqsamples();
 	std::vector< std::vector< uint16_t > > datablock;
+    std::vector< double > delay;
+	std::vector< double > ilaser;
+	std::vector< double > ixray;
+    std::vector< std::array <double,2> > laserposition;
+    std::vector< std::array <double,2> > xrayposition;
+
 	for (size_t i=0;i<scanparams.nimages()*nthreads;i++){
 		datablock.push_back(std::vector<uint16_t>(masterbundle.get_nfibers()*masterpulse.get_freqsamples()));
 	}
@@ -672,13 +678,11 @@ int main(int argc, char* argv[])
 
 				std::complex<double> z_laser = parabundle.center_Ilaser();
 				std::complex<double> z_xray = parabundle.center_Ixray();
+                laserposition.push_back({z_laser.real(),z_laser.imag()})
+
+
 
 				ofstream interferestream;
-
-				const size_t npoints(1<<10);
-				std::vector< uint16_t > data(size_t( pulsearray.size() * npoints ), uint16_t(0));
-
-
 				if (bool(getenv("printASCIIimages"))){
 					std::cout << "\n\n \t\t ###########\tPrinting ASCII images for frame # " << int(n) << "\t#############\n\n" << std::flush;
 
@@ -733,7 +737,7 @@ int main(int argc, char* argv[])
 		imfilename += filetail.str();
 		std::cout << "Opening h5 file for intermittent saving:\t" << imfilename << std::endl << std::flush;
 		h5filePtr = new H5::H5File ( imfilename , H5F_ACC_TRUNC );
-    		std::string name = "/runparams";
+    		std::string name = "/params";
     		paramgrp = new H5::Group( h5filePtr->createGroup( name ) );
     		std::string dsetname = "/datasets";
     		dsetgrp = new H5::Group( h5filePtr->createGroup( dsetname ) );
@@ -745,7 +749,7 @@ int main(int argc, char* argv[])
 		//std::cerr << "Made it here in H5 output\n" << std::flush;
 		for (size_t im=0;im<datablock.size();im++){
 			H5::DataSet * datasetPtr;
-			std::string imname = "/im_" + std::to_string((int)im);
+			std::string imname = "/datasets/im_" + std::to_string((int)im);
 			datasetPtr = new H5::DataSet( dsetgrp->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
 			datasetPtr->write( datablock[im].data(), H5::PredType::NATIVE_USHORT);
 			delete datasetPtr;
