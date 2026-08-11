@@ -430,7 +430,7 @@ std::vector<double> & PulseFreq::getSigVec(std::vector<double> & y)
 
 void PulseFreq::fillfrequency_bytes(std::vector<double> const & x, std::vector<double > const & y,std::vector<uint16_t> & datavec,size_t const f)
 {
-	for (size_t i=0;i<y.size();++i){
+	for (size_t i=0;i<y.size();i++){
 		datavec[f*y.size() + i] = uint16_t(y[i]);
 	}
     return;

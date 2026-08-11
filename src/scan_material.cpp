@@ -679,13 +679,13 @@ int main(int argc, char* argv[])
 
 				std::complex<double> z_laser = parabundle.center_Ilaser();
 				std::complex<double> z_xray = parabundle.center_Ixray();
-				laserposition[scanparams.nimages()*tid + n] = parabundle.center_Ilaser<double>();
-				xrayposition[scanparams.nimages()*tid + n] = parabundle.center_Ixray<double>();
-				alphas[scanparams.nimages()*tid + n] = parabundle.delay_angle();
-				/*
-				laserposition[scanparams.nimages()*tid + n][0] = z_laser.real();
-				laserposition[scanparams.nimages()*tid + n][1] = z_laser.imag();
-				*/
+
+                laserposition[scanparams.nimages()*tid + n]=std::array<double,2>({z_laser.real(),z_laser.imag()});
+                xrayposition[scanparams.nimages()*tid + n]=std::array<double,2>({z_xray.real(),z_xray.imag()});
+                delay[scanparams.nimages()*tid + n] = double(t0);
+                alpha[scanparams.nimages()*tid + n] = double(parabundle.delay_angle();
+                ilaser[scanparams.nimages()*tid + n] = double(parabundle.Ilaser();
+                ixray[scanparams.nimages()*tid + n] = double(parabundle.Ixray();
 
 
 
@@ -764,15 +764,29 @@ int main(int argc, char* argv[])
 
 		const int rank(1);
 		size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_freqsamples()};
+		size_t posdims[1] = {2};
 		//size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
-		H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	//(rank , dims );
+		H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	
 		//std::cerr << "Made it here in H5 output\n" << std::flush;
 		for (size_t im=0;im<datablock.size();im++){
 			H5::DataSet * datasetPtr;
 			std::string imname = "/datasets/im_" + std::to_string((int)im);
 			datasetPtr = new H5::DataSet( dsetgrp->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
 			datasetPtr->write( datablock[im].data(), H5::PredType::NATIVE_USHORT);
+            H5::Attribute * attrPtr;
+            ilaserPtr = new H5::Attribute( datasetPtr->createAtribute( "Ilaser", H5::PredType::NATIVE_DOUBLE, ilaser[im]) );
+            xrayPtr = new H5::Attribute( datasetPtr->createAtribute( "Ixray", H5::PredType::NATIVE_DOUBLE, ixray[im]) );
+            poslaserPtr = new H5::Attribute( datasetPtr->createAtribute( "positionlaser", H5::PredType::NATIVE_DOUBLE, laserposition[im]) );
+            posxrayPtr = new H5::Attribute( datasetPtr->createAtribute( "positionxray", H5::PredType::NATIVE_DOUBLE, xrayposition[im]) );
+            delayPtr = new H5::Attribute( datasetPtr->createAtribute( "delay", H5::PredType::NATIVE_DOUBLE, delays[im]) );
+            anglePtr = new H5::Attribute( datasetPtr->createAtribute( "phaseangle", H5::PredType::NATIVE_DOUBLE, alphas[im]) );
 			delete datasetPtr;
+            delete ilaserPtr;
+            delete xrayPtr;
+            delete poslaserPtr;
+            delete posxrayPtr;
+            delete delayPtr;
+            delete anglePtr;
 		}
 		//std::cerr << "Made it past H5 image fill" << std::endl << std::flush;
 		delete dataspace;
