@@ -429,7 +429,6 @@ int main(int argc, char* argv[])
 	std::tm * local_time = std::localtime(& ttime);
 
 
-	size_t flatimgsize = masterbundle.get_nfibers()*masterpulse.get_freqsamples();
 	std::vector< std::vector< uint16_t > > datablock;
 	std::vector< double > delays(scanparams.nimages()*nthreads);
 	std::vector< double > alphas(scanparams.nimages()*nthreads);
@@ -534,11 +533,7 @@ int main(int argc, char* argv[])
 				mapfile.close();
 
 
-                std::vector<double> x,y;
-                std::vector< uint16_t > imdata(parabundle.get_nfibers()*masterpulse.get_freqsamples());
-                /* HERE HERE HERE HERE 
-                Fis that you fill from f* nlamsamples insie the fibers loop.
-                */
+				std::vector<double> x,y;
 				for(size_t f = 0; f < parabundle.get_nfibers(); f++)
 				{ // begin fibers loop
 					pulse = masterpulse;
@@ -656,18 +651,18 @@ int main(int argc, char* argv[])
 					pulsearray[f] = pulse.scale(parabundle.Ilaser(f));
 					//std::cerr << double(*(pulse.minmaxvals()).second) << " ";
 					//pulsearray[f].scale(parabundle.Ilaser(f)); 
-                    if (f==0)
-                        x = pulsearray[f].getLamVec(x);
-                    pulsearray[f].fillfrequency_bytes(x,
-                                                        pulsearray[f].getSigVec(y),
-                                                        datablock[scanparams.nimages()*tid + n],
-                                                        f);
-		    /*
-                    pulsearray[f].fillwavelength_bytes(x,
-                                                        pulsearray[f].getSigVec(y),
-                                                        datablock[scanparams.nimages()*tid + n],
-                                                        f);
-							*/
+					if (f==0)
+						x = pulsearray[f].getLamVec(x);
+					pulsearray[f].fillfrequency_bytes(x,
+							pulsearray[f].getSigVec(y),
+							datablock[scanparams.nimages()*tid + n],
+							f);
+					/*
+					   pulsearray[f].fillwavelength_bytes(x,
+					   pulsearray[f].getSigVec(y),
+					   datablock[scanparams.nimages()*tid + n],
+					   f);
+					   */
 				} // end nfibers loop
 
                 /* ########### HERE HERE HERE HERE ############
@@ -682,10 +677,10 @@ int main(int argc, char* argv[])
 
                 laserposition[scanparams.nimages()*tid + n]=std::array<double,2>({z_laser.real(),z_laser.imag()});
                 xrayposition[scanparams.nimages()*tid + n]=std::array<double,2>({z_xray.real(),z_xray.imag()});
-                delay[scanparams.nimages()*tid + n] = double(t0);
-                alpha[scanparams.nimages()*tid + n] = double(parabundle.delay_angle();
-                ilaser[scanparams.nimages()*tid + n] = double(parabundle.Ilaser();
-                ixray[scanparams.nimages()*tid + n] = double(parabundle.Ixray();
+                delays[scanparams.nimages()*tid + n] = double(t0);
+                alphas[scanparams.nimages()*tid + n] = double(parabundle.delay_angle());
+                ilaser[scanparams.nimages()*tid + n] = double(parabundle.Ilaser());
+                ixray[scanparams.nimages()*tid + n] = double(parabundle.Ixray());
 
 
 
@@ -762,34 +757,62 @@ int main(int argc, char* argv[])
     		std::string dsetname = "/datasets";
     		dsetgrp = new H5::Group( h5filePtr->createGroup( dsetname ) );
 
+
 		const int rank(1);
-		size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_freqsamples()};
+		size_t imshape[2] = {masterbundle.get_nfibers(), masterpulse.get_freqsamples()};
+		size_t flatimgsize = std::accumulate( imshape, imshape+1, 1LL, std::multiplies<size_t>() ); // masterbundle.get_nfibers()*masterpulse.get_freqsamples();
+		//std::cerr << "flatimgsize = " << long(flatimgsize) << "\t brute force = " << long(masterbundle.get_nfibers()*masterpulse.get_freqsamples()) << std::endl;
+		size_t dims[rank] = {flatimgsize};
+		//size_t dims[rank] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
 		size_t posdims[1] = {2};
-		//size_t dims[1] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
+		size_t shapedims[1] = {2};
 		H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	
-		//std::cerr << "Made it here in H5 output\n" << std::flush;
+		H5::DataSpace * scalarspace = new H5::DataSpace(H5S_SCALAR);
+		H5::DataSpace * tuplespace = new H5::DataSpace( 1 , posdims );
+		H5::DataSpace * shapespace = new H5::DataSpace( 1 , shapedims );
+
+		H5::Attribute * imshapePtr = new H5::Attribute( paramgrp->createAttribute( "imshape", H5::PredType::NATIVE_UINT16, *shapespace) );
+		imshapePtr->write(H5::PredType::NATIVE_UINT16,imshape);
+
+		delete imshapePtr;
+		delete shapespace;
+
+		std::cerr << "Made it here in H5 output\n" << std::flush;
 		for (size_t im=0;im<datablock.size();im++){
 			H5::DataSet * datasetPtr;
 			std::string imname = "/datasets/im_" + std::to_string((int)im);
-			datasetPtr = new H5::DataSet( dsetgrp->createDataSet( imname, H5::PredType::NATIVE_USHORT, *dataspace ) );
+			datasetPtr = new H5::DataSet( dsetgrp->createDataSet( imname, H5::PredType::NATIVE_UINT16, *dataspace ) );
 			datasetPtr->write( datablock[im].data(), H5::PredType::NATIVE_USHORT);
-            H5::Attribute * attrPtr;
-            ilaserPtr = new H5::Attribute( datasetPtr->createAtribute( "Ilaser", H5::PredType::NATIVE_DOUBLE, ilaser[im]) );
-            xrayPtr = new H5::Attribute( datasetPtr->createAtribute( "Ixray", H5::PredType::NATIVE_DOUBLE, ixray[im]) );
-            poslaserPtr = new H5::Attribute( datasetPtr->createAtribute( "positionlaser", H5::PredType::NATIVE_DOUBLE, laserposition[im]) );
-            posxrayPtr = new H5::Attribute( datasetPtr->createAtribute( "positionxray", H5::PredType::NATIVE_DOUBLE, xrayposition[im]) );
-            delayPtr = new H5::Attribute( datasetPtr->createAtribute( "delay", H5::PredType::NATIVE_DOUBLE, delays[im]) );
-            anglePtr = new H5::Attribute( datasetPtr->createAtribute( "phaseangle", H5::PredType::NATIVE_DOUBLE, alphas[im]) );
+
+			H5::Attribute * ilaserPtr = new H5::Attribute( datasetPtr->createAttribute( "Ilaser", H5::PredType::NATIVE_DOUBLE, *scalarspace) );
+			ilaserPtr->write(H5::PredType::NATIVE_DOUBLE, &(ilaser[im]) );
+			H5::Attribute * ixrayPtr = new H5::Attribute( datasetPtr->createAttribute( "Ixray", H5::PredType::NATIVE_DOUBLE, *scalarspace) );
+			ixrayPtr->write(H5::PredType::NATIVE_DOUBLE, &(ixray[im]) );
+			H5::Attribute * delayPtr = new H5::Attribute( datasetPtr->createAttribute( "delay", H5::PredType::NATIVE_DOUBLE, *scalarspace) );
+			delayPtr->write(H5::PredType::NATIVE_DOUBLE, &(delays[im]) );
+			H5::Attribute * anglePtr = new H5::Attribute( datasetPtr->createAttribute( "phaseangle", H5::PredType::NATIVE_DOUBLE, *scalarspace) );
+			anglePtr->write(H5::PredType::NATIVE_DOUBLE, &(alphas[im]) );
+
+			H5::Attribute * poslaserPtr = new H5::Attribute( datasetPtr->createAttribute( "positionlaser", H5::PredType::NATIVE_DOUBLE, *tuplespace) );
+			poslaserPtr->write(H5::PredType::NATIVE_DOUBLE,laserposition[im].data());
+			H5::Attribute * posxrayPtr = new H5::Attribute( datasetPtr->createAttribute( "positionxray", H5::PredType::NATIVE_DOUBLE, *tuplespace) );
+			posxrayPtr->write(H5::PredType::NATIVE_DOUBLE,xrayposition[im].data());
+
 			delete datasetPtr;
-            delete ilaserPtr;
-            delete xrayPtr;
-            delete poslaserPtr;
-            delete posxrayPtr;
-            delete delayPtr;
-            delete anglePtr;
+
+			delete ilaserPtr;
+			delete ixrayPtr;
+			delete delayPtr;
+			delete anglePtr;
+			delete poslaserPtr;
+			delete posxrayPtr;
 		}
 		//std::cerr << "Made it past H5 image fill" << std::endl << std::flush;
 		delete dataspace;
+
+		delete scalarspace;
+		delete tuplespace;
+
 		delete paramgrp;
 		delete dsetgrp;
 		delete h5filePtr;
