@@ -135,6 +135,25 @@ double FiberBundle::fillIxray(void)
 	return ixray;
 }
 
+
+    /*
+	out << "#delay = " << t0 << "\n"; 
+	out << "#key\tr\ttheta\tx\ty\to\tdelay\tIlas\tIxray\tTinK\n"; 
+	for (size_t i=0;i<zvals.size();++i){
+			out << inds[i] << "\t"
+			<< std::abs(zvals[i]) << "\t" 
+			<< std::arg(zvals[i]) << "\t" 
+			<< zvals[i].real() << "\t" 
+			<< zvals[i].imag() << "\t" 
+			<< ovals[i] << "\t" 
+			<< (t0+delay(i)) << "\t" 
+			<< Ilaser(i) << "\t" 
+			<< ixray_vec[i] << "\t"
+			<< TinK(i) << "\n";
+	}
+	out << std::flush;
+        */
+
 bool FiberBundle::print_mapping(std::ofstream & out,double t0 = 0.)
 {
 	if (!out.is_open() )

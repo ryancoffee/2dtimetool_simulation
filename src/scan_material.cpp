@@ -525,15 +525,17 @@ int main(int argc, char* argv[])
 
 
 				DebugOps::pushout(std::string("Running image " + std::to_string(n) + " for t0 = " + std::to_string(t0) + " in threaded for loop, thread " + std::to_string(tid)));
-				std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
-				//std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
-				std::ofstream mapfile(mapfilename.c_str(),std::ios::out);
-				if (!parabundle.print_mapping(mapfile,t0))
-					std::cerr << "Something failed in printing this fibermapping out\n" << std::flush;
-				mapfile.close();
+                                if (bool(getenv("printASCIIimages"))){
+                                    std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
+                                    //std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
+                                    std::ofstream mapfile(mapfilename.c_str(),std::ios::out);
+                                    if (!parabundle.print_mapping(mapfile,t0))
+                                        std::cerr << "Something failed in printing this fibermapping out\n" << std::flush;
+                                    mapfile.close();
+                                }
 
 
-				std::vector<double> x,y;
+                                std::vector<double> x,y;
 				for(size_t f = 0; f < parabundle.get_nfibers(); f++)
 				{ // begin fibers loop
 					pulse = masterpulse;
@@ -766,16 +768,72 @@ int main(int argc, char* argv[])
 		//size_t dims[rank] = {masterbundle.get_nfibers()*masterpulse.get_lamsamples()};
 		size_t posdims[1] = {2};
 		size_t shapedims[1] = {2};
+		size_t chirpdims[1] = {4};
+                H5::StrType vls_type(0, H5T_VARIABLE); // variable length string type in H5
 		H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	
-		H5::DataSpace * scalarspace = new H5::DataSpace(H5S_SCALAR);
+		H5::DataSpace * scalarspace = new H5::DataSpace( H5S_SCALAR );
 		H5::DataSpace * tuplespace = new H5::DataSpace( 1 , posdims );
 		H5::DataSpace * shapespace = new H5::DataSpace( 1 , shapedims );
+		H5::DataSpace * chirpspace = new H5::DataSpace( 1 , chirpdims );
+
+		H5::DataSpace * stringspace = new H5::DataSpace( H5S_SCALAR );
+		H5::DataSpace * floatspace = new H5::DataSpace( H5S_SCALAR );
+		H5::DataSpace * doublespace = new H5::DataSpace( H5S_SCALAR );
+                H5::DataSpace * uintspace = new H5::DataSpace( H5S_SCALAR );
 
 		H5::Attribute * imshapePtr = new H5::Attribute( paramgrp->createAttribute( "imshape", H5::PredType::NATIVE_UINT16, *shapespace) );
 		imshapePtr->write(H5::PredType::NATIVE_UINT16,imshape);
 
+		H5::Attribute * chirpPtr = new H5::Attribute( paramgrp->createAttribute( "chirp", H5::PredType::NATIVE_FLOAT, *chirpspace) );
+                std::vector<float> chirpvec = { atof( getenv("chirp") ) 
+                                            , atof( getenv("TOD") )
+                                            , atof( "FOD" )
+                                            , atof( "fifthOD" )};
+		chirpPtr->write(H5::PredType::NATIVE_FLOAT,chirpvec.data());
+                delete chirpPtr;
+                delete chirpspace;
+
+                H5::Attribute * fnamePtr;
+                fnamePtr = new H5::Attribute( paramgrp->createAttribute( "carriersfile" , vls_type, *stringspace) );
+                fnamePtr->write(vld_type, getenv("carriersfile"));
+                delete fnamePtr;
+                fnamePtr = new H5::Attribute( paramgrp->createAttribute( "calibfile" , vls_type, *stringspace) );
+                fnamePtr->write(vld_type, getenv("calibfile"));
+                delete fnamePtr;
+
+                H5::Attribute * stringPtr;
+                stringPtr = new H5::Attribute( paramgrp->createAttribute( "hostname", vls_type, *stringspace ) );
+                stringPtr->write( vls_type, getenv("HOSTNAME") );
+                delete stringPtr;
+
+                
+                H5::Attribute * floatPtr;
+                floatPtr = new H5::Attribute( paramgrp->createAttribute( "xray_photonenergy", H5::PredType::NATIVE_FLOAT, *floatspace ) );
+                floatPtr->write( H5::PredType::NATIVE_FLOAT, atof(getenv("xray_photonenergy")) );
+                delete floatPtr;
+                floatPtr = new H5::Attribute( paramgrp->createAttribute( "interferedelay" , H5::PredType::NATIVE_FLOAT, *floatspace ) );
+                floatPtr->write( H5::PredType::NATIVE_FLOAT, atof(getenv("interferedelay")));
+                delete floatPtr;
+                floatPtr = new H5::Attribute( paramgrp->createAttribute( "interferephase" , H5::PredType::NATIVE_FLOAT, *floatspace ) );
+                floatPtr->write( H5::PredType::NATIVE_FLOAT, atof(getenv("interferephase")));
+                delete floatPtr;
+
+                H5::Attribute * netalonPtr;
+                netalonPtr = new H5::Attribute( paragrp->createAttribute( "", H5::PredType::NATIVE_UINT8, *uintspace ) );
+                netalonPtr->write( H5::PredType::NATIVE_UINT8, atoi(getenv("netalon") ) );
+                delete netalonPtr;
+
+                // fibermap as dataset inside /params
+                std::vector<std::vector<float>> map(masterbundle.get_map<float>());
+                std::vector<uint8_t> keys(masterbundle.get_keys<uint8_t>();
+
 		delete imshapePtr;
 		delete shapespace;
+                delete stringspace;
+                delete floatspace;
+                delete doublespace;
+                delete uintspace;
+                delete uintPtr;
 
 		std::cerr << "Made it here in H5 output\n" << std::flush;
 		for (size_t im=0;im<datablock.size();im++){
@@ -806,6 +864,7 @@ int main(int argc, char* argv[])
 			delete anglePtr;
 			delete poslaserPtr;
 			delete posxrayPtr;
+                        // The images of e.g. the xray and laser intensity and individual delay can be used in the future for image specific material/delay/shadow flutuations
 		}
 		//std::cerr << "Made it past H5 image fill" << std::endl << std::flush;
 		delete dataspace;

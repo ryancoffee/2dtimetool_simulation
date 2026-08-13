@@ -24,8 +24,20 @@ class FiberBundle {
 		bool set_inds(std::vector<uint16_t> in);
 		void scalePolarCoords(void);
 		inline uint16_t get_key(const size_t f){return inds[f];}
+                template <typename T>
+                inline std::vector<T> & get_keys(void){ return std::vector<T>(inds);}
+
+                template <typename T>
+                inline std::vector< std::vector< T > > & get_map(void){
+                        std::vector< std::vector <T> > out;
+                        for (size_t i=0; i<zvals.size();i++)
+                            out.push_back( std::vector<T>{T(std::abs(zvals[i])),T(std::arg(zvals[i])),T(zvals[i].real()),T(zvals[i].imag()),T(ovals[i]),T(delay(i))} );
+                }
+
 		inline void set_fsPmm(const double x = 3333){fsPmm = x;}
 
+    
+                inline std::vector<uint8_t> & get_map(void)
 		inline void fiberdiameter(const double x){ fiberdiam = x; for (size_t i=0;i<ovals.size();++i){ovals[i] = fiberdiam * double(i);} }
 		inline double laserdiameter(const double x){ laserdiam = x; return laserdiam; }
 		inline double xraydiameter(const double x){ xraydiam = x; return xraydiam; }
