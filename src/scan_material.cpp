@@ -14,8 +14,8 @@ int main(int argc, char* argv[])
 	std::time_t tstart = std::time(nullptr);
 	std::cout << "\t\t======================================\n"
 		<< "\t\t======= scan_material started ========\n"
-		<< "\t\t===== " << std::asctime(std::localtime(&tstart)) << "====\n"
-		<< "\t\t===== on host " << getenv("HOSTNAME") << "====\n"
+		<< "\t\t===== " << std::asctime(std::localtime(&tstart)) << " ====\n"
+		<< "\t\t===== on host " << getenv("HOSTNAME") << " ====\n" 
 		<< "\t\t===== for " << getenv("nimages") << " images ====\n"
 		<< "\t\t===== with " << getenv("nfibers") << " fibers ====\n"
 		<< "\t\t======================================\n" << std::endl << std::flush;
@@ -785,47 +785,71 @@ int main(int argc, char* argv[])
 		imshapePtr->write(H5::PredType::NATIVE_UINT16,imshape);
 
 		H5::Attribute * chirpPtr = new H5::Attribute( paramgrp->createAttribute( "chirp", H5::PredType::NATIVE_FLOAT, *chirpspace) );
-                std::vector<float> chirpvec = { atof( getenv("chirp") ) 
-                                            , atof( getenv("TOD") )
-                                            , atof( "FOD" )
-                                            , atof( "fifthOD" )};
+                std::vector<float> chirpvec = { (float) atof( getenv("chirp") ) 
+                                            , (float) atof( getenv("TOD") )
+                                            , (float) atof( "FOD" )
+                                            , (float) atof( "fifthOD" )};
 		chirpPtr->write(H5::PredType::NATIVE_FLOAT,chirpvec.data());
                 delete chirpPtr;
                 delete chirpspace;
 
                 H5::Attribute * fnamePtr;
                 fnamePtr = new H5::Attribute( paramgrp->createAttribute( "carriersfile" , vls_type, *stringspace) );
-                fnamePtr->write(vld_type, getenv("carriersfile"));
+		std::string s;
+		s = std::string(getenv("carriersfile"));
+                fnamePtr->write(vls_type, s);
                 delete fnamePtr;
                 fnamePtr = new H5::Attribute( paramgrp->createAttribute( "calibfile" , vls_type, *stringspace) );
-                fnamePtr->write(vld_type, getenv("calibfile"));
+		s = std::string(getenv("calibfile"));
+                fnamePtr->write(vls_type, s);
                 delete fnamePtr;
+		s = std::string( getenv("HOSTNAME") );
+		H5::Attribute * hostPtr = new H5::Attribute( paramgrp->createAttribute( "hostname", vls_type, *stringspace ) );
+                hostPtr->write( vls_type, s );
+                delete hostPtr;
 
-                H5::Attribute * stringPtr;
-                stringPtr = new H5::Attribute( paramgrp->createAttribute( "hostname", vls_type, *stringspace ) );
-                stringPtr->write( vls_type, getenv("HOSTNAME") );
-                delete stringPtr;
-
+		float flt;
+		uint8_t uint;
                 
                 H5::Attribute * floatPtr;
                 floatPtr = new H5::Attribute( paramgrp->createAttribute( "xray_photonenergy", H5::PredType::NATIVE_FLOAT, *floatspace ) );
-                floatPtr->write( H5::PredType::NATIVE_FLOAT, atof(getenv("xray_photonenergy")) );
+		flt = (float) xrayphoton_energy;
+                floatPtr->write( H5::PredType::NATIVE_FLOAT, &flt);
                 delete floatPtr;
                 floatPtr = new H5::Attribute( paramgrp->createAttribute( "interferedelay" , H5::PredType::NATIVE_FLOAT, *floatspace ) );
-                floatPtr->write( H5::PredType::NATIVE_FLOAT, atof(getenv("interferedelay")));
+		flt = (float) scanparams.interferedelay();
+                floatPtr->write( H5::PredType::NATIVE_FLOAT, &flt);
                 delete floatPtr;
                 floatPtr = new H5::Attribute( paramgrp->createAttribute( "interferephase" , H5::PredType::NATIVE_FLOAT, *floatspace ) );
-                floatPtr->write( H5::PredType::NATIVE_FLOAT, atof(getenv("interferephase")));
+		flt = (float) scanparams.interferephase();
+                floatPtr->write( H5::PredType::NATIVE_FLOAT, &flt);
                 delete floatPtr;
 
                 H5::Attribute * netalonPtr;
-                netalonPtr = new H5::Attribute( paragrp->createAttribute( "", H5::PredType::NATIVE_UINT8, *uintspace ) );
-                netalonPtr->write( H5::PredType::NATIVE_UINT8, atoi(getenv("netalon") ) );
+                netalonPtr = new H5::Attribute( paramgrp->createAttribute( "netalon", H5::PredType::NATIVE_UINT8, *uintspace ) );
+		uint = (uint8_t) scanparams.netalon();
+                netalonPtr->write( H5::PredType::NATIVE_UINT8, &uint);
                 delete netalonPtr;
 
                 // fibermap as dataset inside /params
-                std::vector<std::vector<float>> map(masterbundle.get_map<float>());
-                std::vector<uint8_t> keys(masterbundle.get_keys<uint8_t>();
+                std::vector<std::vector<float>> map;
+		masterbundle.get_map<float>(map);
+                std::vector<uint8_t> keys;
+		masterbundle.get_keys<uint8_t>(keys);
+
+		size_t keydims[1] = {keys.size()};
+		size_t mapdims[2] = {map.size(),map[0].size()};
+		H5::DataSpace * keyspace = new H5::DataSpace( 1 , keydims );
+		H5::DataSpace * mapspace = new H5::DataSpace( 2 , mapdims );
+		H5::DataSet * fibermapPtr = new H5::DataSet( paramgrp->createDataSet( "/params/fibermap", H5::PredType::NATIVE_FLOAT, *mapspace ) );
+		fibermapPtr->write( map.data(), H5::PredType::NATIVE_FLOAT );
+		H5::DataSet * fiberkeysPtr = new H5::DataSet( paramgrp->createDataSet( "/params/fiberkeys", H5::PredType::NATIVE_UINT16, *keyspace ) );
+		fiberkeysPtr->write( keys.data(), H5::PredType::NATIVE_UINT16 );
+		delete fibermapPtr;
+		delete fiberkeysPtr;
+		delete keyspace;
+		delete mapspace;
+
 
 		delete imshapePtr;
 		delete shapespace;
@@ -833,7 +857,6 @@ int main(int argc, char* argv[])
                 delete floatspace;
                 delete doublespace;
                 delete uintspace;
-                delete uintPtr;
 
 		std::cerr << "Made it here in H5 output\n" << std::flush;
 		for (size_t im=0;im<datablock.size();im++){
@@ -887,10 +910,10 @@ int main(int argc, char* argv[])
 	tstop = std::time(nullptr);
 	tstop -= tstart;
 	std::cout << "\t\t======================================\n"
-		<< "\t\t======== scan_material stopped =======\n"
-		<< "\t\t===== " << std::asctime(std::localtime(&tstop)) 
-		<< "\t\t===== in " << tstop << " s \n"
-		<< "\t\t======================================\n" << std::flush;
+		  << "\t\t======= scan_material stopped ========\n"
+		  << "\t\t===== " << std::asctime(std::localtime(&tstop)) << " ====\n"
+		  << "\t\t===== in " << tstop << " s ===========\n"
+		  << "\t\t======================================\n" << std::flush;
 	std::string timesfilename = scanparams.filebase() + "runtimes.log";
 	std::ofstream timesout(timesfilename.c_str(),std::ios::app);
 	timesout << "#########################################\n" << std::flush;

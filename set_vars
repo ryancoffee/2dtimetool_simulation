@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export HOSTNAME
+
 starttime=$(date +%s)
 export skipdisplayframes=1
 

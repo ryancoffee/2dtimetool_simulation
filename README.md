@@ -6,7 +6,6 @@ Branch ryan-dev-noboost was merged into this, prematurely though, to capture upd
 Simulation for a fiber bundle based 2D timetool.
 
 # todo 
-- The `/params/items` in the H5 should be the things we've been so far encoding in the filename
 - Wrap ascii output into a debug scope
 - Allow image-dependent shadows/delays/materials to make a new material map for each image as an attribute that is (nfibers x (delay,xinten,lasinten,materialclass,etc) ), and have that follow the form of the current `get_map` method in `FiberBundle.cpp`
 
@@ -15,6 +14,7 @@ Simulation for a fiber bundle based 2D timetool.
 - (correction) HDF5 shouldn't be built with --enable-threadsafe since installing with --enable-threadsafe requires disabling c++ wrappers.  FIND ANOTHER WAY.  
 - Update a buffer of images in a system memory `std::vector<data>` way, then when this is filled, omp barrier and write out to the h5file as single thread.
 - Finish making Ilaser, Ixray etc. into attributes of each image in H5
+- The `/params/items` in the H5 should be the things we've been so far encoding in the filename
 
 ----------
 ## To run  

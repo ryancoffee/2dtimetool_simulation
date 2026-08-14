@@ -59,18 +59,23 @@ class ScanParams
 
 	size_t netalon(size_t in){netln = in; return netln;}
 	inline size_t netalon(void){return netln;}
+	inline void netalon(void * vPtr){vPtr = &netln; return;} // testing use of setting void* for sake of H5 writing, may need to set scanMaterial as friend class
 
 	double etalondelay(double in){ etdelay = in; return etdelay;}
 	inline double etalondelay(void){ return etdelay;}
+	inline void etalondelay(void * vp){ vp=&etdelay; return;}
 
 	double etalonreflectance(double in){ etreflect = in; return etreflect;}
 	inline double etalonreflectance(void){ return etreflect;}
+	inline void etalonreflectance(void* vp){ vp = &etreflect; return;}
 	
 	double interferedelay(double in){interferedly = in; return interferedly;}
 	inline double interferedelay(void){return interferedly;}
+	inline void interferedelay(void * vp){vp = &interferedly; return;}
 
 	double interferephase(double in){interferephs = in; return interferephs;}
 	inline double interferephase(void){return interferephs;}
+	inline void interferephase(void * vp){vp = &interferephs; return;}
 
 	/* =========== chirp interfaces ============= */
 	void chirp(double second, double third, double fourth, double fifth);
