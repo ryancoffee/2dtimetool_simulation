@@ -5,18 +5,22 @@ export HOSTNAME
 starttime=$(date +%s)
 export skipdisplayframes=1
 
-export nthreads=4
+nthreads=4
 basepath="/nvme1/2dtimetool_simulation_data/" #/data/drive0/2dtimetool_simulation_data' # "/nvme1/2dtimetool_simulation_data"
 if [[ ${HOSTNAME} == baratza ]]; then
     echo ${HOSTNAME}
     basepath="/data/drive0/2dtimetool_simulation_data/"
+    nthreads=4
 elif [[ ${HOSTNAME} == coffee-office ]]; then
     echo ${HOSTNAME}
     basepath="/nvme1/2dtimetool_simulation_data/" 
+    nthreads=16
 elif [[ ${HOSTNAME} == coffee-ThinkPad-X395 ]]; then
     echo ${HOSTNAME}
     basepath="/media/coffee/9C33-6BBD/2dtimetool_simulation_data/"
+    nthreads=4
 fi
+export nthreads
 echo "basepath = $basepath"
 export datadir="${basepath}raw/"
 export calibdir="${basepath}extern/"

@@ -196,8 +196,9 @@ int main(int argc, char* argv[])
 	{
 		// Setup the shared pulse arrays
 		std::vector< PulseFreq > calpulsearray(calibration.get_ndelays(),masterpulse);
+                std::vector< std::vector < float > > calibdata(calibration.get_ndelays());
 
-#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse)
+#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,calpulsearray,calibdata)
 		{ // begin parallel region 1
 			size_t tid = omp_get_thread_num();
 
@@ -211,31 +212,17 @@ int main(int argc, char* argv[])
 			// initialize with masterpulse/masterresponse
 			MatResponse calibresponse(masterresponse);
 
-
-
 #pragma omp for schedule(dynamic) 
 			for (size_t d=0;d<calpulsearray.size();++d)
 			{ // outermost loop for calibration.get_ndelays() to produce //
-				//std::cout << "\tinside parallel region for actual loop d = " 
-				//<< d << "\twith tid = " << tid << "\n" << std::flush;
-				std::cout << '+' << std::flush;
-				//before each delay, reset to masterpulse
-				//std::cerr << "\tmasterpulse.domain() = " << masterpulse.domain() << "\n" << std::flush;
 				calpulse = masterpulse;
 				calcrosspulse = masterpulse;
-				//std::cerr << "\tcalpulse.domain() = " << calpulse.domain() << "\n" << std::flush;
-				//std::cerr << "\tcalcrosspulse.domain() = " << calcrosspulse.domain() << "\n" << std::flush;
-				//std::cerr << "\n\n\t\t###### Made it here HERE HERE HERE debugging seg fault ######\n\n" << std::flush;
 
 				double startdelay(calibration.get_delay(d));
-
 				calcrosspulse.delay(scanparams.interferedelay()); // delay in the frequency domain
 
 				calpulse.fft_totime();
 				calcrosspulse.fft_totime();
-
-				//std::cerr << "\tafter fft_totime() calpulse.domain() = " << calpulse.domain() << "\n" << std::flush;
-				//std::cerr << "\tafter fft_totime() calcrosspulse.domain() = " << calcrosspulse.domain() << "\n" << std::flush;
 
 				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
 					calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
@@ -254,8 +241,6 @@ int main(int argc, char* argv[])
 					calcrosspulse.modulatephase_time();
 				}// end groupsteps loop
 
-
-
 				for (size_t e=0;e<scanparams.netalon();e++){ // begin etalon loop
 					// back propagation step //
 					double etalondelay = startdelay - double(e+1) * (calibresponse.getetalondelay()*(1. + float(d)/float(calpulsearray.size()) ) ); 
@@ -264,8 +249,6 @@ int main(int argc, char* argv[])
 					// reset back to calpulse for each round
 					etalonpulse = calpulse;
 					crossetalonpulse = calcrosspulse;
-					//std::cerr << "\t\t\t -- inside etalon: etalonpulse.domain() = " << etalonpulse.domain() << "\n" << std::flush;
-					//std::cerr << "\t\t\t -- inside etalon: crossetalonpulse.domain() = " << crossetalonpulse.domain() << "\n" << std::flush;
 
 					for(size_t g=0;g<scanparams.ngroupsteps();g++){
 						calibresponse.setdelay(etalondelay + g*scanparams.backstep()); 
@@ -273,26 +256,16 @@ int main(int argc, char* argv[])
 
 						calibresponse.setstepvec_both_carriers(etalonpulse);
 						calibresponse.setstepvec_both_carriers(crossetalonpulse);
-						/*
-						calibresponse.setstepvec_amp(etalonpulse);
-						calibresponse.setstepvec_phase(etalonpulse);
-						calibresponse.setstepvec_amp(crossetalonpulse);
-						calibresponse.setstepvec_phase(crossetalonpulse);
-						*/
 						if (scanparams.doublepulse()){
 							calibresponse.addstepvec_both_carriers(etalonpulse,scanparams.doublepulsedelay());
 							calibresponse.addstepvec_both_carriers(crossetalonpulse,scanparams.doublepulsedelay());
 						}
 						calibresponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						calibresponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-						//std::cerr << "\t\t\t -- inside etalon groupsteps: before: etalonpulse.domain() = " << etalonpulse.domain() << "\n" << std::flush;
-						//std::cerr << "\t\t\t -- inside etalon groupsteps: before: crossetalonpulse.domain() = " << crossetalonpulse.domain() << "\n" << std::flush;
 						etalonpulse.modulateamp_time();
 						etalonpulse.modulatephase_time();
 						crossetalonpulse.modulateamp_time();
 						crossetalonpulse.modulatephase_time();
-						//std::cerr << "\t\t\t -- inside etalon groupsteps: after: etalonpulse.domain() = " << etalonpulse.domain() << "\n" << std::flush;
-						//std::cerr << "\t\t\t -- inside etalon groupsteps: after: crossetalonpulse.domain() = " << crossetalonpulse.domain() << "\n" << std::flush;
 					}
 					// forward propagation //
 					for(size_t g=0;g<scanparams.ngroupsteps();g++){
@@ -305,17 +278,11 @@ int main(int argc, char* argv[])
 						}
 						calibresponse.buffervectors(etalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
 						calibresponse.buffervectors(crossetalonpulse); // this pulls down the tail of the response so vector is periodic on nsamples
-						//std::cerr << "\t\t\t -- inside etalon groupsteps forward prop: before: etalonpulse.domain() = " << etalonpulse.domain() << "\n" << std::flush;
-						//std::cerr << "\t\t\t -- inside etalon groupsteps forward prop: before: crossetalonpulse.domain() = " << crossetalonpulse.domain() << "\n" << std::flush;
 						etalonpulse.modulateamp_time();
 						etalonpulse.modulatephase_time();
 						crossetalonpulse.modulateamp_time();
 						crossetalonpulse.modulatephase_time();
-						//std::cerr << "\t\t\t -- inside etalon groupsteps forward prop: after: etalonpulse.domain() = " << etalonpulse.domain() << "\n" << std::flush;
-						//std::cerr << "\t\t\t -- inside etalon groupsteps forward prop: after: crossetalonpulse.domain() = " << crossetalonpulse.domain() << "\n" << std::flush;
 					}
-					//std::cerr << "\t\t\t -- inside etalon finished groupsteps: etalonpulse.domain() = " << etalonpulse.domain() << "\ttid = "<< tid << "\n" << std::flush;
-					//std::cerr << "\t\t\t -- inside etalon finished groupsteps: crossetalonpulse.domain() = " << crossetalonpulse.domain() << "\n" << std::flush;
 					etalonpulse.fft_tofreq();
 					crossetalonpulse.fft_tofreq();
 					etalonpulse.delay(calibresponse.getetalondelay() * (1. + float(d)/float(calpulsearray.size())) ); // delay and attenuate in frequency domain
@@ -324,17 +291,11 @@ int main(int argc, char* argv[])
 					crossetalonpulse.attenuate(pow(calibresponse.getreflectance(),(int)2));
 					etalonpulse.fft_totime();
 					crossetalonpulse.fft_totime();
-					//std::cerr << "\t\t\t -- end etalon: etalonpulse.domain() = " << etalonpulse.domain() << "\n" << std::flush;
-					//std::cerr << "\t\t\t -- end etalon: crossetalonpulse.domain() = " << crossetalonpulse.domain() << "\n" << std::flush;
-					//std::cerr << "\t\t\t -- end etalon: calpulse.domain() = " << calpulse.domain() << "\n" << std::flush;
-					//std::cerr << "\t\t\t -- end etalon: calcrosspulse.domain() = " << calcrosspulse.domain() << "\n" << std::flush;
 					calpulse += etalonpulse;
 					calcrosspulse += crossetalonpulse;
 				} // end etalon loop
 
 
-				//std::cerr << "\t\tbefore fft_tofreq(): calpulse.domain() = " << calpulse.domain() << "\n" << std::flush;
-				//std::cerr << "\t\tbefore fft_tofreq(): calcrosspulse.domain() = " << calcrosspulse.domain() << "\n" << std::flush;
 				calpulse.fft_tofreq();
 				calcrosspulse.fft_tofreq();
 				calpulse.delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
@@ -342,13 +303,15 @@ int main(int argc, char* argv[])
 				calpulse -= calcrosspulse;
 				// reversing order for sake of chirp calib matrix
 				calpulsearray[calpulsearray.size()-d-1] = calpulse;
+                                HERE HERE HERE HERE
+                                //calpulse.fillfrequencies_bytes(calibdata[calpulsearray.size()-d-1])
+                                        /*
+					fillfrequency_bytes(x,
+							pulsearray[f].getSigVec(y),
+							datablock[scanparams.nimages()*tid + n],
+							f);
+                                        */
 
-				/*
-				   std::cerr << "\t\tcalpulse.domain() = " << calpulse.domain() << "\n" << std::flush;
-				   std::cerr << "\t\tcalcrosspulse.domain() = " << calcrosspulse.domain() << "\n" << std::flush;
-				   std::cerr << "\t\tcalpulsearray[ " << (calpulsearray.size()-d-1) << " ].domain() = " 
-				   << calpulsearray[calpulsearray.size()-d-1].domain() << "\n" << std::flush;
-				   */
 			} // end of loop calibration.get_ndelays() to produce //
 
 
@@ -356,10 +319,17 @@ int main(int argc, char* argv[])
 
 #pragma omp master
 			{
-				std::cout << "|\t done with calibration delays\n" << std::flush;
-				//std::cerr << "\t\t###### Made it here too #####\n\t\t##### should call only once in master #######\n" << std::flush;
-				// print out the calibration as ascii for now //
-				// print rows in order, eventually in tf_record or matrix or so. //
+                            if (bool(getenv("H5OUTPUT"))){
+                                H5::H5File * calibfilePtr;
+                                H5::Group * paramgrp;
+                                H5::Group * dsetgrp;
+				std::string calfilename = scanparams.calfilebase() + "interference.calibration.h5";
+				std::cout << "Finished with the h5 file for calibration image/matrix\n" << std::flush;
+				for (size_t n=0;n<calpulsearray.size();++n){
+					calpulsearray[n].appendfreq<float>(calibdata[n]);
+				}
+                            } else {
+                                std::cout << "|\t done with calibration delays\n" << std::flush;
 				std::string calfilename = scanparams.calfilebase() + "interference.calibration";
 				std::string derivfilename = scanparams.calfilebase() + "interference.calibration.derivative";
 				std::string calfilename_delays = scanparams.calfilebase() + "interference.calibration.delays";
@@ -368,32 +338,21 @@ int main(int argc, char* argv[])
 				ofstream derivstream(derivfilename.c_str(),ios::out); 
 				ofstream calibrationstream_delays(calfilename_delays.c_str(),ios::out); 
 				ofstream calibrationstream_wavelengths(calfilename_wavelengths.c_str(),ios::out); 
-				/*
-				std::string bin_calfilename = scanparams.filebase() + "interference.calibration.bin";
-				ofstream bin_calibrationstream(bin_calfilename.c_str(),ios::out | ios::binary); 
-				std::cout << "\tcalibration filename out = " << calfilename << "\n\t and \t" << bin_calfilename << std::endl;
-				*/
 				calibrationstream << "# wavelengths\n#";
-				// derivstream << "# wavelengths\n#";
 				calpulsearray[0].printwavelengthbins(&calibrationstream);
 				calpulsearray[0].printwavelengthbins(&derivstream);
 				calpulsearray[0].printwavelengthbins(&calibrationstream_wavelengths);
 				calibrationstream << "# delays\n#";
-				// derivstream << "# delays\n#";
 				calibrationstream_delays << "# delays\n";
 				for (size_t i = 0 ; i< calibration.get_ndelays(); ++i){
 					calibrationstream << calibration.get_delay(i) << "\t";
-					// derivstream << calibration.get_delay(i) << "\t";
 					calibrationstream_delays << calibration.get_delay(i) << "\t";
 				}
 				calibrationstream << "\n";
-				// derivstream << "\n";
 				calibrationstream_delays << "\n";
 
 				for (size_t n=0;n<calpulsearray.size();++n){
 					calpulsearray[n].appendwavelength(&calibrationstream);
-					// calpulsearray[n].appendwavelength_deriv(&derivstream);
-					// calpulsearray[n].appendwavelength_bin(&bin_calibrationstream);
 				}
 
 				calibrationstream.close();
@@ -402,8 +361,7 @@ int main(int argc, char* argv[])
 				calibrationstream_wavelengths.close();
 				//bin_calibrationstream.close();
 				std::cout << "Finished with the calibration image/matrix\n" << std::flush;
-
-
+                            }
 			}
 
 #pragma omp master
@@ -418,9 +376,6 @@ int main(int argc, char* argv[])
 	//############################################//
 	//############## Images section ##############//
 	//############################################//
-
-/* Commenting out HDF5 for sake of flight, need to build hdf5 build environment for laptop
-    */
 
 
 	auto localnow = std::chrono::system_clock::now();
@@ -452,7 +407,7 @@ int main(int argc, char* argv[])
 			std::normal_distribution<> xrayshadow_y{double(atof(getenv("xrayshadowcorner_y"))),double(atof(getenv("xrayshadowcorner_yjitter")))};
 
 			size_t nfibers = masterbundle.get_nfibers();
-			std::cout << "\t\t############ entering parallel image: tid = " << int(tid) << " ###########\n" << std::flush;
+			//std::cout << "\t\t############ entering parallel image: tid = " << int(tid) << " ###########\n" << std::flush;
 
 
 			FiberBundle parabundle(masterbundle);
@@ -483,26 +438,17 @@ int main(int argc, char* argv[])
 				masterpulse.print_amp(outfile);
 				outfile.close();
 			}
-
-
-
-			std::cout << "Entering parallel for loop with nimages = "  << scanparams.nimages() << "\n" << std::flush;
-			std::cout << "\t\t#################Entering parallel region 2 #######################\n" << std::flush;
-
-
-
-			for (size_t n=0;n<scanparams.nimages();++n)
-			{ // outermost loop for nimages to produce //
-			  	//std::cerr << "\tinside the parallel region 2 for images loop n = " << n << " in thread " << tid << "\n" << std::flush;
-
 #pragma omp master
-				{
-					std::cout << "========================================================================="
-						<<   "\n\t\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
-						<<   "\n\t\t ====         use this for defining multiple fibers as         ===="
-						<<   "\n\t\t ====         contiguous blocks for row-wise FFT as 2D         ===="
-						<<   "\n\t\t ==================================================================\n" << std::flush;
-				}
+                        {
+                            std::cout << "========================================================================="
+                                <<   "\n\t\t ==== http://www.fftw.org/fftw3_doc/Advanced-Complex-DFTs.html ===="
+                                <<   "\n\t\t ====         use this for defining multiple fibers as         ===="
+                                <<   "\n\t\t ====         contiguous blocks for row-wise FFT as 2D         ===="
+                                <<   "\n\t\t ==================================================================\n" << std::flush;
+                        }
+
+                        for (size_t n=0;n<scanparams.nimages();++n)
+                        { // outermost loop for nimages to produce //
 
 				std::time_t imgstart = std::time(nullptr);
 
@@ -524,7 +470,7 @@ int main(int argc, char* argv[])
 				parabundle.shadow_xrays(xrayshadow_x(rng) , xrayshadow_y(rng));
 
 
-				DebugOps::pushout(std::string("Running image " + std::to_string(n) + " for t0 = " + std::to_string(t0) + " in threaded for loop, thread " + std::to_string(tid)));
+				//DebugOps::pushout(std::string("Running image " + std::to_string(n) + " for t0 = " + std::to_string(t0) + " in threaded for loop, thread " + std::to_string(tid)));
                                 if (bool(getenv("printASCIIimages"))){
                                     std::string mapfilename = scanparams.filebase() + "fibermap.out." + std::to_string(n);
                                     //std::cout << "fibermap file = " << mapfilename << std::endl << std::flush;
@@ -659,65 +605,50 @@ int main(int argc, char* argv[])
 							pulsearray[f].getSigVec(y),
 							datablock[scanparams.nimages()*tid + n],
 							f);
-					/*
-					   pulsearray[f].fillwavelength_bytes(x,
-					   pulsearray[f].getSigVec(y),
-					   datablock[scanparams.nimages()*tid + n],
-					   f);
-					   */
 				} // end nfibers loop
-
-                /* ########### HERE HERE HERE HERE ############
-                    pulsearray is an array of fibers now.
-                    Give the flattened image scaled to one byte values and stored flattened with dimensions in a dims vector added to the parameter vector.
-                    Do the same for the parameters used, like z_laser and such.
-                    */
-
 
 				std::complex<double> z_laser = parabundle.center_Ilaser();
 				std::complex<double> z_xray = parabundle.center_Ixray();
 
-                laserposition[scanparams.nimages()*tid + n]=std::array<double,2>({z_laser.real(),z_laser.imag()});
-                xrayposition[scanparams.nimages()*tid + n]=std::array<double,2>({z_xray.real(),z_xray.imag()});
-                delays[scanparams.nimages()*tid + n] = double(t0);
-                alphas[scanparams.nimages()*tid + n] = double(parabundle.delay_angle());
-                ilaser[scanparams.nimages()*tid + n] = double(parabundle.Ilaser());
-                ixray[scanparams.nimages()*tid + n] = double(parabundle.Ixray());
+                                laserposition[scanparams.nimages()*tid + n]=std::array<double,2>({z_laser.real(),z_laser.imag()});
+                                xrayposition[scanparams.nimages()*tid + n]=std::array<double,2>({z_xray.real(),z_xray.imag()});
+                                delays[scanparams.nimages()*tid + n] = double(t0);
+                                alphas[scanparams.nimages()*tid + n] = double(parabundle.delay_angle());
+                                ilaser[scanparams.nimages()*tid + n] = double(parabundle.Ilaser());
+                                ixray[scanparams.nimages()*tid + n] = double(parabundle.Ixray());
 
-
-
-				ofstream interferestream;
 				if (bool(getenv("printASCIIimages"))){
-					std::cout << "\n\n \t\t ###########\tPrinting ASCII images for frame # " << int(n) << "\t#############\n\n" << std::flush;
+                                    ofstream interferestream;
+                                    std::cout << "\n\n \t\t ###########\tPrinting ASCII images for frame # " << int(n) << "\t#############\n\n" << std::flush;
 
-					filename = scanparams.filebase() + "interference.out." + std::to_string(n);
-					interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
-					interferestream << "#delay for image = \t" << t0 << "and\t" << t1
-						<< "\n#Ilaser = \t" << parabundle.Ilaser()
-						<< "\n#Ixray = \t" << parabundle.Ixray()
-						<< "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
-						<< "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
-						<< "\n#alpha = \t" << parabundle.delay_angle() 
-						<< std::endl;
-					interferestream << "#";
-					pulsearray[0].printwavelengthbins(&interferestream);
-					for (size_t f=0;f<pulsearray.size();f++){
-						pulsearray[f].scale(parabundle.Ilaser(f));
-						pulsearray[f].appendwavelength(&interferestream);
-					}
-					interferestream.close();
+                                    filename = scanparams.filebase() + "interference.out." + std::to_string(n);
+                                    interferestream.open(filename.c_str(),ios::out); // use app to append delays to same file.
+                                    interferestream << "#delay for image = \t" << t0 << "and\t" << t1
+                                        << "\n#Ilaser = \t" << parabundle.Ilaser()
+                                        << "\n#Ixray = \t" << parabundle.Ixray()
+                                        << "\n#center laser = \t" << z_laser.real() << "\t" << z_laser.imag() 
+                                        << "\n#center xray = \t" << z_xray.real() << "\t" << z_xray.imag()
+                                        << "\n#alpha = \t" << parabundle.delay_angle() 
+                                        << std::endl;
+                                    interferestream << "#";
+                                    pulsearray[0].printwavelengthbins(&interferestream);
+                                    for (size_t f=0;f<pulsearray.size();f++){
+                                        pulsearray[f].scale(parabundle.Ilaser(f));
+                                        pulsearray[f].appendwavelength(&interferestream);
+                                    }
+                                    interferestream.close();
 
-				} 
+                                } 
 
-				std::time_t imgstop = std::time(nullptr);
-				imagetimes[n] = float(imgstop - imgstart);
+                                std::time_t imgstop = std::time(nullptr);
+                                imagetimes[n] = float(imgstop - imgstart);
 
-			} // outermost loop for nimages to produce //
+                        } // outermost loop for nimages to produce //
 
 
 
-            /*##################################################*/
-            /*#################### HDF5 storage ################*/
+                        /*##################################################*/
+                        /*#################### HDF5 storage ################*/
             /*##################################################*/
 
 
