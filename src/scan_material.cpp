@@ -53,8 +53,6 @@ int main(int argc, char* argv[])
 	scanparams.backdelay(atof(getenv("backdelay")));
 	scanparams.netalon(atoi(getenv("netalon")));
 
-
-
 	scanparams.etalonreflectance(atof(getenv("etalon")));
 	scanparams.etalondelay(double(atof(getenv("etalondelay"))));
 	scanparams.interferedelay((double)atof(getenv("interferedelay")));
@@ -192,43 +190,47 @@ int main(int argc, char* argv[])
 		std::cout << std::endl << std::flush;
 	}
 
-	if (!getenv("skipcalibration"))
-	{
-		// Setup the shared pulse arrays
-		std::vector< PulseFreq > calpulsearray(calibration.get_ndelays(),masterpulse);
-                std::vector< std::vector < float > > calibdata(calibration.get_ndelays());
+        if (!getenv("skipcalibration"))
+        {
+            // Setup the shared pulse arrays
+            std::vector< PulseFreq > calpulsearray(calibration.get_ndelays(),masterpulse);
+            std::vector< uint16_t > calibdata(size_t(calibration.get_ndelays() * masterpulse.get_freqsamples()));
+            std::vector<float> x;
+            masterpulse.getLamVec(x);
 
-#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,calpulsearray,calibdata)
-		{ // begin parallel region 1
-			size_t tid = omp_get_thread_num();
+#pragma omp parallel num_threads(nthreads) default(shared) shared(masterpulse,calpulsearray,calibdata,x)
+            { // begin parallel region 1
 
-			// all non-shared objects must be created inside the parallel section for default is shared if defined outside
-			// http://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-data.html
-			PulseFreq etalonpulse(masterpulse);
-			PulseFreq crossetalonpulse(masterpulse);
-			PulseFreq calpulse(masterpulse);
-			PulseFreq calcrosspulse(masterpulse);
+                size_t tid = omp_get_thread_num();
 
-			// initialize with masterpulse/masterresponse
-			MatResponse calibresponse(masterresponse);
+                std::vector<float> y(x.size());
+                // all non-shared objects must be created inside the parallel section for default is shared if defined outside
+                // http://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-data.html
+                PulseFreq etalonpulse(masterpulse);
+                PulseFreq crossetalonpulse(masterpulse);
+                PulseFreq calpulse(masterpulse);
+                PulseFreq calcrosspulse(masterpulse);
+
+                // initialize with masterpulse/masterresponse
+                MatResponse calibresponse(masterresponse);
 
 #pragma omp for schedule(dynamic) 
-			for (size_t d=0;d<calpulsearray.size();++d)
-			{ // outermost loop for calibration.get_ndelays() to produce //
-				calpulse = masterpulse;
-				calcrosspulse = masterpulse;
+                for (size_t d=0;d<calpulsearray.size();++d)
+                { // outermost loop for calibration.get_ndelays() to produce //
+                    calpulse = masterpulse;
+                    calcrosspulse = masterpulse;
 
-				double startdelay(calibration.get_delay(d));
-				calcrosspulse.delay(scanparams.interferedelay()); // delay in the frequency domain
+                    double startdelay(calibration.get_delay(d));
+                    calcrosspulse.delay(scanparams.interferedelay()); // delay in the frequency domain
 
-				calpulse.fft_totime();
-				calcrosspulse.fft_totime();
+                    calpulse.fft_totime();
+                    calcrosspulse.fft_totime();
 
-				for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
-					calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
-					calibresponse.setstepvec_both_carriers(calpulse);
-					calibresponse.setstepvec_both_carriers(calcrosspulse);
-					if (scanparams.doublepulse()){
+                    for(size_t g=0;g<scanparams.ngroupsteps();g++){ // begin groupsteps loop
+                        calibresponse.setdelay(startdelay - g*scanparams.groupstep()); // forward propagating, x-rays advance on the optical
+                        calibresponse.setstepvec_both_carriers(calpulse);
+                        calibresponse.setstepvec_both_carriers(calcrosspulse);
+                        if (scanparams.doublepulse()){
 						calibresponse.addstepvec_both_carriers(calpulse,scanparams.doublepulsedelay());
 						calibresponse.addstepvec_both_carriers(calcrosspulse,scanparams.doublepulsedelay());
 					}
@@ -301,74 +303,75 @@ int main(int argc, char* argv[])
 				calpulse.delay(scanparams.interferedelay()); // expects this in fs // time this back up to the crosspulse
 
 				calpulse -= calcrosspulse;
-				// reversing order for sake of chirp calib matrix
-				calpulsearray[calpulsearray.size()-d-1] = calpulse;
-                                HERE HERE HERE HERE
-                                //calpulse.fillfrequencies_bytes(calibdata[calpulsearray.size()-d-1])
-                                        /*
-					fillfrequency_bytes(x,
-							pulsearray[f].getSigVec(y),
-							datablock[scanparams.nimages()*tid + n],
+				size_t f = calpulsearray.size()-d-1; // reversing order for sake of chirp calib matrix
+				calpulsearray[f] = calpulse;
+
+				calpulse.fillfrequency_bytes(x,
+							calpulse.getSigVec(y),
+							calibdatablock[f],
 							f);
-                                        */
 
 			} // end of loop calibration.get_ndelays() to produce //
 
-
-#pragma omp barrier
-
-#pragma omp master
-			{
-                            if (bool(getenv("H5OUTPUT"))){
-                                H5::H5File * calibfilePtr;
-                                H5::Group * paramgrp;
-                                H5::Group * dsetgrp;
-				std::string calfilename = scanparams.calfilebase() + "interference.calibration.h5";
-				std::cout << "Finished with the h5 file for calibration image/matrix\n" << std::flush;
-				for (size_t n=0;n<calpulsearray.size();++n){
-					calpulsearray[n].appendfreq<float>(calibdata[n]);
-				}
-                            } else {
-                                std::cout << "|\t done with calibration delays\n" << std::flush;
-				std::string calfilename = scanparams.calfilebase() + "interference.calibration";
-				std::string derivfilename = scanparams.calfilebase() + "interference.calibration.derivative";
-				std::string calfilename_delays = scanparams.calfilebase() + "interference.calibration.delays";
-				std::string calfilename_wavelengths = scanparams.calfilebase() + "interference.calibration.wavelengths";
-				ofstream calibrationstream(calfilename.c_str(),ios::out); 
-				ofstream derivstream(derivfilename.c_str(),ios::out); 
-				ofstream calibrationstream_delays(calfilename_delays.c_str(),ios::out); 
-				ofstream calibrationstream_wavelengths(calfilename_wavelengths.c_str(),ios::out); 
-				calibrationstream << "# wavelengths\n#";
-				calpulsearray[0].printwavelengthbins(&calibrationstream);
-				calpulsearray[0].printwavelengthbins(&derivstream);
-				calpulsearray[0].printwavelengthbins(&calibrationstream_wavelengths);
-				calibrationstream << "# delays\n#";
-				calibrationstream_delays << "# delays\n";
-				for (size_t i = 0 ; i< calibration.get_ndelays(); ++i){
-					calibrationstream << calibration.get_delay(i) << "\t";
-					calibrationstream_delays << calibration.get_delay(i) << "\t";
-				}
-				calibrationstream << "\n";
-				calibrationstream_delays << "\n";
-
-				for (size_t n=0;n<calpulsearray.size();++n){
-					calpulsearray[n].appendwavelength(&calibrationstream);
-				}
-
-				calibrationstream.close();
-				derivstream.close();
-				calibrationstream_delays.close();
-				calibrationstream_wavelengths.close();
-				//bin_calibrationstream.close();
-				std::cout << "Finished with the calibration image/matrix\n" << std::flush;
-                            }
-			}
 
 #pragma omp master
 			{
 				std::cout << "\t\t############ ending parallel region 1 ###########\n" << std::flush;
 			}
 		} // end parallel region 1
+
+                if (bool(getenv("H5OUTPUT"))){
+                    H5::H5File * calibfilePtr;
+                    H5::Group * paramgrp;
+                    H5::Group * dsetgrp;
+                    std::string calfilename = scanparams.calfilebase() + "interference.calibration.h5";
+		    calibfilePtr = new H5::H5File ( calibfilename , H5F_ACC_TRUNC );
+                    size_t dims[1] = {calibdata.size()};
+                    size_t rank = 1;
+		    H5::DataSpace * dataspace = new H5::DataSpace( rank , dims ); 	
+
+                    std::vector< float > delayvec;
+                    calibration.fill_delays<float>(delayvec);
+                    HERE HERE HERE HERE;
+                    delete calibfilePtr;
+                    delete dataspace;
+                    std::cout << "Finished with the h5 file for calibration image/matrix\n" << std::flush;
+                } else {
+                    std::cout << "|\t done with calibration delays\n" << std::flush;
+                    std::string calfilename = scanparams.calfilebase() + "interference.calibration";
+                    std::string derivfilename = scanparams.calfilebase() + "interference.calibration.derivative";
+                    std::string calfilename_delays = scanparams.calfilebase() + "interference.calibration.delays";
+                    std::string calfilename_wavelengths = scanparams.calfilebase() + "interference.calibration.wavelengths";
+                    ofstream calibrationstream(calfilename.c_str(),ios::out); 
+                    ofstream derivstream(derivfilename.c_str(),ios::out); 
+                    ofstream calibrationstream_delays(calfilename_delays.c_str(),ios::out); 
+                    ofstream calibrationstream_wavelengths(calfilename_wavelengths.c_str(),ios::out); 
+                    calibrationstream << "# wavelengths\n#";
+                    calpulsearray[0].printwavelengthbins(&calibrationstream);
+                    calpulsearray[0].printwavelengthbins(&derivstream);
+                    calpulsearray[0].printwavelengthbins(&calibrationstream_wavelengths);
+                    calibrationstream << "# delays\n#";
+                    calibrationstream_delays << "# delays\n";
+                    for (size_t i = 0 ; i< calibration.get_ndelays(); ++i){
+                        calibrationstream << calibration.get_delay(i) << "\t";
+                        calibrationstream_delays << calibration.get_delay(i) << "\t";
+                    }
+                    calibrationstream << "\n";
+                    calibrationstream_delays << "\n";
+
+                    for (size_t n=0;n<calpulsearray.size();++n){
+                        calpulsearray[n].appendwavelength(&calibrationstream);
+                    }
+
+                    calibrationstream.close();
+                    derivstream.close();
+                    calibrationstream_delays.close();
+                    calibrationstream_wavelengths.close();
+                    //bin_calibrationstream.close();
+                    std::cout << "Finished with the calibration image/matrix\n" << std::flush;
+                }
+
+
 
 	} // end if (!getenv("skipcalibration"))
 
@@ -727,7 +730,11 @@ int main(int argc, char* argv[])
                 H5::Attribute * fnamePtr;
                 fnamePtr = new H5::Attribute( paramgrp->createAttribute( "carriersfile" , vls_type, *stringspace) );
 		std::string s;
-		s = std::string(getenv("carriersfile"));
+                if gettenv("usediamond"){
+                    s = std::string("UsingDiamond_no_carriers_file_only_xray_photonenergy")
+                } else {
+		    s = std::string(getenv("carriersfile"));
+                }
                 fnamePtr->write(vls_type, s);
                 delete fnamePtr;
                 fnamePtr = new H5::Attribute( paramgrp->createAttribute( "calibfile" , vls_type, *stringspace) );
