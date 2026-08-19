@@ -25,7 +25,7 @@ class CalibMat {
 		inline void fill_delays(std::vector<T> & dv){ 
                     dv.resize(ndelays); 
                     for (size_t i=0;i<ndelays;i++)
-                        nd[i] = T(fsCenter + fsWindow * (double(i)/double(ndelays)-0.5)); 
+                        dv[i] = T(fsCenter + fsWindow * (double(i)/double(ndelays)-0.5)); 
                     return; 
                     }
 

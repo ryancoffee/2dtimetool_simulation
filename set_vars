@@ -29,7 +29,7 @@ mkdir -p $calibdir
 unset H5OUTPUT
 export H5OUTPUT=1
 unset printASCIIimages
-export printASCIIimages=1
+#export printASCIIimages=1
 
 export carriercolumn=5; # this tells the code which of Nikita's columns to use
 export carriersdir="${basepath}reference/fromNikita/"
